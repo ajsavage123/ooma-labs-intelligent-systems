@@ -39,47 +39,51 @@ const ProductCard = ({ product, index }: { product: typeof products[0]; index: n
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0 }}
-      animate={isInView ? { opacity: 1 } : {}}
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 1 }}
-      className="border-t border-border/30 py-16 md:py-24"
+      className="editorial-card group relative mb-12 p-8 md:p-12 rounded-[2rem] glass"
     >
-      <div className={`grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 ${isReversed ? "" : ""}`}>
+      <div className={`grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center`}>
         {/* Number + text */}
-        <div className={`lg:col-span-5 flex flex-col justify-between ${isReversed ? "lg:order-2" : ""}`}>
+        <div className={`lg:col-span-5 flex flex-col justify-center ${isReversed ? "lg:order-2" : ""}`}>
           <div>
-            <motion.span
-              initial={{ opacity: 0, x: -20 }}
-              animate={isInView ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="font-serif text-6xl md:text-8xl text-primary/20"
-            >
-              {product.num}
-            </motion.span>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: 1 } : {}}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="counter-label mt-4 mb-3"
-            >
-              {product.tagline}
-            </motion.p>
+            <div className="flex items-center gap-4 mb-6">
+              <motion.span
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={isInView ? { opacity: 1, scale: 1 } : {}}
+                transition={{ duration: 0.8 }}
+                className="w-12 h-12 flex items-center justify-center rounded-full border border-primary/30 text-primary font-serif text-xl"
+              >
+                {product.num}
+              </motion.span>
+              <div className="h-px w-12 bg-primary/30" />
+              <span className="text-[10px] tracking-[0.3em] uppercase text-primary/60 font-medium">An Ooma Labs Product</span>
+            </div>
 
             <motion.h3
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="font-serif text-4xl md:text-5xl tracking-tight text-foreground mb-6"
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="font-serif text-5xl md:text-6xl tracking-tighter text-gradient mb-6"
             >
               {product.name}
             </motion.h3>
 
             <motion.p
+              initial={{ opacity: 0 }}
+              animate={isInView ? { opacity: 1 } : {}}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="counter-label text-primary/80 mb-4"
+            >
+              {product.tagline}
+            </motion.p>
+
+            <motion.p
               initial={{ opacity: 0, y: 15 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8, delay: 0.5 }}
-              className="text-sm text-muted-foreground leading-relaxed max-w-md font-body"
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="text-sm text-foreground/70 leading-relaxed max-w-md font-body mb-8"
             >
               {product.description}
             </motion.p>
@@ -88,11 +92,11 @@ const ProductCard = ({ product, index }: { product: typeof products[0]; index: n
           <motion.div
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : {}}
-            transition={{ duration: 0.8, delay: 0.7 }}
-            className="flex flex-wrap gap-2 mt-8"
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="flex flex-wrap gap-3"
           >
             {product.features.map((f) => (
-              <span key={f} className="text-[11px] tracking-[0.15em] uppercase text-muted-foreground border border-border px-4 py-2">
+              <span key={f} className="text-[10px] tracking-[0.1em] uppercase text-foreground/60 glass px-4 py-2 rounded-full border-white/5 group-hover:border-primary/20 transition-colors">
                 {f}
               </span>
             ))}
@@ -101,19 +105,22 @@ const ProductCard = ({ product, index }: { product: typeof products[0]; index: n
 
         {/* Image */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.9 }}
           animate={isInView ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 1, delay: 0.3 }}
+          transition={{ duration: 1.2, delay: 0.1 }}
           className={`lg:col-span-7 ${isReversed ? "lg:order-1" : ""}`}
         >
-          <div className="relative overflow-hidden aspect-[16/10]">
+          <div className="relative overflow-hidden aspect-[16/10] rounded-[1.5rem] shadow-2xl glow-border">
             <img
               src={product.image}
               alt={product.name}
-              className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000"
+              className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000 ease-out"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+            
+            {/* Hover Overlay */}
+            <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
           </div>
         </motion.div>
       </div>
@@ -123,20 +130,23 @@ const ProductCard = ({ product, index }: { product: typeof products[0]; index: n
 
 const ProductSection = () => {
   return (
-    <section id="products" className="section-padding max-w-[1400px] mx-auto">
+    <section id="products" className="section-padding max-w-[1400px] mx-auto py-24">
       <motion.div
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
-        className="flex items-center gap-6 mb-4"
+        className="flex flex-col items-center mb-20 text-center"
       >
-        <span className="counter-label">Our Products</span>
-        <div className="flex-1 line-accent" />
+        <span className="counter-label mb-4">The Intelligent Core</span>
+        <h2 className="font-serif text-5xl md:text-7xl text-gradient mb-6">Our Ecosystem</h2>
+        <div className="w-24 h-px bg-primary/40" />
       </motion.div>
 
-      {products.map((product, i) => (
-        <ProductCard key={product.name} product={product} index={i} />
-      ))}
+      <div className="space-y-12">
+        {products.map((product, i) => (
+          <ProductCard key={product.name} product={product} index={i} />
+        ))}
+      </div>
     </section>
   );
 };
