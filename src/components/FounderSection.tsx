@@ -1,6 +1,5 @@
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { useInView } from "framer-motion";
 
 const FounderSection = () => {
   const ref = useRef(null);
@@ -8,31 +7,46 @@ const FounderSection = () => {
 
   return (
     <section className="py-32 section-padding" ref={ref}>
-      <div className="max-w-4xl mx-auto text-center">
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-sm uppercase tracking-[0.3em] text-accent mb-6"
-        >
-          Founder
-        </motion.p>
+      <div className="max-w-[1400px] mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Left — label + visual */}
+          <div className="lg:col-span-5">
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={isInView ? { opacity: 1 } : {}}
+              transition={{ duration: 0.6 }}
+              className="counter-label mb-8 block"
+            >
+              Founder
+            </motion.span>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="glass-card p-12 md:p-16 max-w-2xl mx-auto"
-        >
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent mx-auto mb-8 flex items-center justify-center">
-            <span className="text-2xl font-bold text-primary-foreground font-display">AN</span>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={isInView ? { opacity: 1, scale: 1 } : {}}
+              transition={{ duration: 1, delay: 0.3 }}
+              className="w-32 h-32 md:w-40 md:h-40 border border-border flex items-center justify-center"
+            >
+              <span className="font-serif text-5xl md:text-6xl text-primary/40">AN</span>
+            </motion.div>
           </div>
-          <h3 className="text-3xl md:text-4xl font-bold mb-4 font-display">Ajay Narava</h3>
-          <p className="text-sm uppercase tracking-[0.2em] text-accent mb-6">Founder, Ooma Labs</p>
-          <p className="text-muted-foreground leading-relaxed text-lg">
-            Focused on building technology platforms that improve real-world coordination and response systems. Driven by the belief that intelligent systems can solve the most critical operational challenges across industries.
-          </p>
-        </motion.div>
+
+          {/* Right — info */}
+          <div className="lg:col-span-7">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 1, delay: 0.4 }}
+            >
+              <h3 className="font-serif text-4xl md:text-6xl tracking-tight mb-4">
+                Ajay Narava
+              </h3>
+              <div className="line-accent max-w-[120px] mb-6" />
+              <p className="text-sm text-muted-foreground leading-relaxed max-w-lg font-body">
+                Focused on building technology platforms that improve real-world coordination and response systems. Driven by the belief that intelligent systems can solve the most critical operational challenges across industries.
+              </p>
+            </motion.div>
+          </div>
+        </div>
       </div>
     </section>
   );

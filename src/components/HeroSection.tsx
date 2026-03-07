@@ -3,99 +3,85 @@ import logo from "@/assets/ooma-logo.png";
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Animated background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-20 blur-[120px]"
-          style={{ background: "radial-gradient(circle, hsl(220 70% 55% / 0.4), transparent 70%)" }} />
-        <div className="absolute top-1/4 right-1/4 w-[400px] h-[400px] rounded-full opacity-10 blur-[100px] animate-pulse-glow"
-          style={{ background: "radial-gradient(circle, hsl(200 100% 60% / 0.5), transparent 70%)" }} />
-      </div>
+    <section className="relative min-h-screen flex flex-col justify-end overflow-hidden pb-20 md:pb-32">
+      {/* Geometric line accents */}
+      <div className="absolute top-0 left-12 md:left-20 w-px h-full bg-gradient-to-b from-transparent via-border/40 to-transparent" />
+      <div className="absolute top-0 right-12 md:right-20 w-px h-full bg-gradient-to-b from-transparent via-border/40 to-transparent" />
 
-      {/* Floating particles */}
-      {[...Array(20)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-1 h-1 rounded-full bg-accent/30"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-          }}
-          animate={{
-            y: [0, -30, 0],
-            opacity: [0.2, 0.8, 0.2],
-          }}
-          transition={{
-            duration: 3 + Math.random() * 4,
-            repeat: Infinity,
-            delay: Math.random() * 3,
-          }}
-        />
-      ))}
+      {/* Subtle warm glow */}
+      <div className="absolute top-1/3 right-0 w-[500px] h-[500px] opacity-[0.04]"
+        style={{ background: "radial-gradient(circle, hsl(38 90% 55%), transparent 70%)" }} />
 
-      <div className="relative z-10 text-center section-padding max-w-5xl mx-auto">
+      <div className="relative z-10 section-padding max-w-[1400px] mx-auto w-full">
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          className="mb-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.5 }}
+          className="mb-12"
         >
-          <img src={logo} alt="Ooma Labs" className="w-20 h-20 mx-auto mb-6 invert" />
+          <img src={logo} alt="Ooma Labs" className="w-10 h-10 invert opacity-60" />
         </motion.div>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.3 }}
-          className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tight mb-6 glow-text font-display"
-        >
-          Ooma Labs
-        </motion.h1>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+          <div className="lg:col-span-8">
+            <motion.h1
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.2, delay: 0.3, ease: [0.25, 0.1, 0, 1] }}
+              className="font-serif text-[clamp(3.5rem,10vw,9rem)] leading-[0.9] tracking-tight text-foreground"
+            >
+              Designing<br />
+              Technology<br />
+              That <em className="text-primary">Solves</em>
+            </motion.h1>
+          </div>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.6 }}
-          className="text-xl md:text-2xl lg:text-3xl font-light text-muted-foreground mb-6 tracking-wide"
-        >
-          Designing Technology That Solves Real Problems
-        </motion.p>
-
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.8 }}
-          className="text-base md:text-lg text-muted-foreground/70 max-w-2xl mx-auto mb-12 leading-relaxed"
-        >
-          Ooma Labs builds intelligent platforms that solve critical operational problems using technology, data systems, and AI-driven coordination.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 1 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center"
-        >
-          <a href="#products" className="btn-primary-glow text-base tracking-wide">
-            Explore Products
-          </a>
-          <a href="#innovation" className="btn-outline-glow text-base tracking-wide">
-            Discover Innovation
-          </a>
-        </motion.div>
-      </div>
-
-      {/* Scroll indicator */}
-      <motion.div
-        className="absolute bottom-10 left-1/2 -translate-x-1/2"
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
-      >
-        <div className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex justify-center pt-2">
-          <div className="w-1 h-2 rounded-full bg-muted-foreground/50" />
+          <div className="lg:col-span-4 pb-4">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.8 }}
+            >
+              <div className="line-accent mb-6" />
+              <p className="text-sm text-muted-foreground leading-relaxed font-body mb-8 max-w-sm">
+                Ooma Labs builds intelligent platforms that solve critical operational problems using technology, data systems, and AI-driven coordination.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <a href="#products" className="btn-solid">Explore</a>
+                <a href="#innovation" className="btn-ghost">Discover</a>
+              </div>
+            </motion.div>
+          </div>
         </div>
-      </motion.div>
+
+        {/* Bottom counter bar */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: 1.5 }}
+          className="mt-20 pt-6 border-t border-border/30 flex items-center justify-between"
+        >
+          <div className="flex gap-12">
+            {[
+              { num: "03", label: "Products" },
+              { num: "04", label: "Innovation Areas" },
+              { num: "∞", label: "Possibilities" },
+            ].map((stat) => (
+              <div key={stat.label}>
+                <span className="font-serif text-2xl text-primary">{stat.num}</span>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground mt-1">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+          <motion.div
+            animate={{ y: [0, 6, 0] }}
+            transition={{ duration: 2.5, repeat: Infinity }}
+            className="text-muted-foreground text-xs tracking-[0.3em] uppercase hidden md:block"
+          >
+            Scroll ↓
+          </motion.div>
+        </motion.div>
+      </div>
     </section>
   );
 };
