@@ -16,8 +16,8 @@ const Index = () => {
       <VisionSection />
       <FounderSection />
       <CTASection />
-      <footer className="py-12 text-center border-t border-border/30 section-padding">
-        <p className="text-sm text-muted-foreground tracking-wide">
+      <footer className="py-16 text-center border-t border-border/20 section-padding">
+        <p className="text-[11px] tracking-[0.3em] uppercase text-muted-foreground font-body">
           © 2026 Ooma Labs. All rights reserved.
         </p>
       </footer>
