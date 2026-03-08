@@ -4,7 +4,8 @@ import rakshith360 from "@/assets/rakshith360.jpg";
 import medexpert from "@/assets/medexpert.jpg";
 import codebluer from "@/assets/codebluer.jpg";
 
-const products = [
+// static featured products that are always shown
+const staticProducts = [
   {
     num: "01",
     name: "Rakshith 360",
@@ -31,121 +32,107 @@ const products = [
   },
 ];
 
-const ProductCard = ({ product, index }: { product: typeof products[0]; index: number }) => {
+
+interface ProductItem {
+  num: string;
+  name: string;
+  tagline: string;
+  description: string;
+  features: string[];
+  image?: string;
+}
+
+const ProductCard = ({ product, index }: { product: ProductItem; index: number }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
-  const isReversed = index % 2 !== 0;
 
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 1 }}
-      className="editorial-card group relative mb-12 p-8 md:p-12 rounded-[2rem] glass"
+      transition={{ duration: 0.6 }}
+      className="group relative rounded-lg overflow-hidden transition-all duration-500 hover:shadow-xl"
     >
-      <div className={`grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center`}>
-        {/* Number + text */}
-        <div className={`lg:col-span-5 flex flex-col justify-center ${isReversed ? "lg:order-2" : ""}`}>
+      {/* Card Container */}
+      <div className="glass p-6 h-full flex flex-col">
+        {/* Header with number */}
+        <div className="flex items-start justify-between mb-4">
           <div>
-            <div className="flex items-center gap-4 mb-6">
-              <motion.span
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={isInView ? { opacity: 1, scale: 1 } : {}}
-                transition={{ duration: 0.8 }}
-                className="w-12 h-12 flex items-center justify-center rounded-full border border-primary/30 text-primary font-serif text-xl"
-              >
-                {product.num}
-              </motion.span>
-              <div className="h-px w-12 bg-primary/30" />
-              <span className="text-[10px] tracking-[0.3em] uppercase text-primary/60 font-medium">An Ooma Labs Product</span>
-            </div>
-
-            <motion.h3
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="font-serif text-5xl md:text-6xl tracking-tighter text-gradient mb-6"
-            >
-              {product.name}
-            </motion.h3>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: 1 } : {}}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="counter-label text-primary/80 mb-4"
-            >
-              {product.tagline}
-            </motion.p>
-
-            <motion.p
-              initial={{ opacity: 0, y: 15 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-sm text-foreground/70 leading-relaxed max-w-md font-body mb-8"
-            >
-              {product.description}
-            </motion.p>
+            <span className="inline-block w-8 h-8 rounded-full border border-primary/40 flex items-center justify-center text-primary text-sm font-serif mb-3">
+              {product.num}
+            </span>
+            <h3 className="text-xl font-serif text-foreground font-bold">{product.name}</h3>
           </div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={isInView ? { opacity: 1 } : {}}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="flex flex-wrap gap-3"
-          >
-            {product.features.map((f) => (
-              <span key={f} className="text-[10px] tracking-[0.1em] uppercase text-foreground/60 glass px-4 py-2 rounded-full border-white/5 group-hover:border-primary/20 transition-colors">
-                {f}
-              </span>
-            ))}
-          </motion.div>
         </div>
 
-        {/* Image */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={isInView ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 1.2, delay: 0.1 }}
-          className={`lg:col-span-7 ${isReversed ? "lg:order-1" : ""}`}
-        >
-          <div className="relative overflow-hidden aspect-[16/10] rounded-[1.5rem] shadow-2xl glow-border">
+        {/* Image - Compact */}
+        {product.image && (
+          <div className="relative overflow-hidden aspect-[16/10] rounded-lg mb-4 shadow-md">
             <img
               src={product.image}
               alt={product.name}
-              className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000 ease-out"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
-            
-            {/* Hover Overlay */}
-            <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
           </div>
-        </motion.div>
+        )}
+
+        {/* Tagline */}
+        <p className="text-sm text-primary/80 font-medium mb-2">{product.tagline}</p>
+
+        {/* Description */}
+        <p className="text-xs text-foreground/70 leading-relaxed mb-4 flex-grow">
+          {product.description}
+        </p>
+
+        {/* Features - Compact */}
+        <div className="flex flex-wrap gap-2">
+          {product.features.slice(0, 2).map((f) => (
+            <span key={f} className="text-[10px] tracking-widest uppercase text-foreground/60 border border-border/50 px-2 py-1 rounded group-hover:border-primary/30 transition-colors">
+              {f}
+            </span>
+          ))}
+          {product.features.length > 2 && (
+            <span className="text-[10px] tracking-widest uppercase text-foreground/60 border border-border/50 px-2 py-1 rounded">
+              +{product.features.length - 2}
+            </span>
+          )}
+        </div>
       </div>
     </motion.div>
   );
 };
 
 const ProductSection = () => {
-  return (
-    <section id="products" className="section-padding max-w-[1400px] mx-auto py-24">
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        className="flex flex-col items-center mb-20 text-center"
-      >
-        <span className="counter-label mb-4">The Intelligent Core</span>
-        <h2 className="font-serif text-5xl md:text-7xl text-gradient mb-6">Our Ecosystem</h2>
-        <div className="w-24 h-px bg-primary/40" />
-      </motion.div>
+  // Only show static products - no dynamic products from state
+  const productsToShow = staticProducts;
 
-      <div className="space-y-12">
-        {products.map((product, i) => (
-          <ProductCard key={product.name} product={product} index={i} />
-        ))}
+  return (
+    <section id="products" className="py-16 px-6 md:px-10 bg-background">
+      <div className="w-full max-w-6xl mx-auto">
+        {/* Section Header - Compact */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="mb-12"
+        >
+          <span className="text-xs tracking-widest uppercase text-primary/60 font-medium">Featured Products</span>
+          <h2 className="font-serif text-3xl md:text-4xl text-foreground mt-2">Our Ecosystem</h2>
+          <div className="flex gap-4 items-center mt-4">
+            <div className="h-px w-12 bg-primary/40" />
+            <p className="text-sm text-foreground/60">Specialized platforms solving critical operational gaps</p>
+          </div>
+        </motion.div>
+
+        {/* Product Grid - 3 columns */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {productsToShow.map((product, i) => (
+            <ProductCard key={product.name + i} product={product} index={i} />
+          ))}
+        </div>
       </div>
     </section>
   );

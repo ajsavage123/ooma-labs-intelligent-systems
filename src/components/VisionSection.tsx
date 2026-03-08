@@ -8,14 +8,14 @@ const VisionSection = () => {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="vision" className="py-32 md:py-60 section-padding relative overflow-hidden" ref={ref}>
+    <section id="vision" className="py-16 md:py-24 px-6 md:px-10 relative overflow-hidden" ref={ref}>
       {/* Ambient background glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 blur-[160px] rounded-full opacity-50" />
       
       {/* Ambient lines */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-64 bg-gradient-to-b from-transparent via-primary/20 to-transparent" />
 
-      <div className="max-w-[1400px] mx-auto text-center relative z-10">
+      <div className="max-w-6xl mx-auto text-center relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}

@@ -14,11 +14,11 @@ const InnovationSection = () => {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="innovation" className="py-32 md:py-48 section-padding relative overflow-hidden" ref={ref}>
+    <section id="innovation" className="py-16 md:py-24 px-6 md:px-10 relative overflow-hidden" ref={ref}>
       {/* Background Decorative element */}
       <div className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-primary/5 blur-[120px] rounded-full -translate-x-1/2" />
       
-      <div className="max-w-[1400px] mx-auto relative z-10">
+      <div className="max-w-6xl mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24">
           {/* Left — headline */}
           <div className="lg:col-span-5 lg:sticky lg:top-32 lg:self-start">

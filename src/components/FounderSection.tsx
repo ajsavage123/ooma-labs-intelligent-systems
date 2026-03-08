@@ -7,11 +7,11 @@ const FounderSection = () => {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section className="py-32 md:py-48 section-padding relative overflow-hidden" ref={ref}>
+    <section className="py-16 md:py-24 px-6 md:px-10 relative overflow-hidden" ref={ref}>
       {/* Decorative vertical line */}
       <div className="absolute top-0 right-[20%] w-px h-full bg-gradient-to-b from-transparent via-primary/10 to-transparent hidden lg:block" />
 
-      <div className="max-w-[1400px] mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 items-center">
           {/* Left — label + visual */}
           <div className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left">

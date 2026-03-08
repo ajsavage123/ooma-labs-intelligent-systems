@@ -71,3 +71,17 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+---
+
+## Ooma Workspace (New Feature)
+
+The site now includes a private **Ooma Workspace** for approved partners. Key points:
+
+1. **Access control** – click **Open Ooma Workspace** in the navbar. Partners must be logged in and have `workspace_access=true`.
+2. **Apply for partnership** via `/partnership`; applications are reviewed in an admin dashboard (/admin).
+3. **Partner projects** – create new projects, track stages, log activity, explore tools, and submit for product approval.
+4. **Admin tools** – review applications, monitor all projects, and approve or reject completed projects for publication.
+5. **Product list** – approved projects appear on the products page and in the homepage product section.
+
+The implementation uses a lightweight React context with localStorage backing; replace with a real backend as needed.

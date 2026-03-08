@@ -4,78 +4,68 @@ import { EcosystemVisual } from "./EcosystemVisual";
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-screen flex flex-col justify-end overflow-hidden pb-20 md:pb-32 mesh-gradient noise">
-      {/* Geometric line accents */}
-      <div className="absolute top-0 left-12 md:left-20 w-px h-full bg-gradient-to-b from-transparent via-border/40 to-transparent" />
-      <div className="absolute top-0 right-12 md:right-20 w-px h-full bg-gradient-to-b from-transparent via-border/40 to-transparent" />
-
-      {/* Background visual element */}
-      <div className="absolute top-1/4 right-[-10%] w-[60%] h-auto opacity-40 hidden lg:block">
+    <section className="relative h-screen flex items-center overflow-hidden mesh-gradient noise">
+      {/* Background visual element - subtle */}
+      <div className="absolute top-1/2 right-0 w-1/3 h-auto opacity-20 hidden lg:block transform -translate-y-1/2">
         <EcosystemVisual />
       </div>
 
-      <div className="relative z-10 section-padding max-w-[1400px] mx-auto w-full">
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
-          <div className="lg:col-span-8">
-            <motion.h1
-              initial={{ opacity: 0, y: 60 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.2, delay: 0.3, ease: [0.25, 0.1, 0, 1] }}
-              className="font-serif text-[clamp(2.5rem,8vw,8rem)] leading-[0.9] tracking-tighter text-gradient pb-4"
-            >
-              Building the<br />
-              Infrastructure<br />
-              of <em className="text-primary italic">Intelligence</em>
-            </motion.h1>
-          </div>
-
-          <div className="lg:col-span-4 pb-4">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.8 }}
-              className="glass p-8 rounded-2xl glow-border"
-            >
-              <div className="line-accent mb-6" />
-              <p className="text-sm text-foreground/80 leading-relaxed font-body mb-8 max-w-sm">
-                Ooma Labs is a parent ecosystem powering specialized platforms that solve critical operational gaps through data coordination and AI.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <a href="#products" className="btn-solid">The Ecosystem</a>
-                <a href="#innovation" className="btn-ghost">Case Studies</a>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Bottom counter bar */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 1.5 }}
-          className="mt-20 pt-6 border-t border-border/30 flex items-center justify-between"
-        >
-          <div className="flex gap-12">
-            {[
-              { num: "03", label: "Products" },
-              { num: "04", label: "Innovation Areas" },
-              { num: "∞", label: "Possibilities" },
-            ].map((stat) => (
-              <div key={stat.label}>
-                <span className="font-serif text-2xl text-primary">{stat.num}</span>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground mt-1">{stat.label}</p>
-              </div>
-            ))}
-          </div>
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-6 md:px-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left: Main content */}
           <motion.div
-            animate={{ y: [0, 6, 0] }}
-            transition={{ duration: 2.5, repeat: Infinity }}
-            className="text-muted-foreground text-xs tracking-[0.3em] uppercase hidden md:block"
+            initial={{ opacity: 0, x: -40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
           >
-            Scroll ↓
+            <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl leading-tight tracking-tighter text-gradient mb-6">
+              Building Infrastructure<br />of <em className="text-primary italic">Intelligence</em>
+            </h1>
+            <p className="text-base md:text-lg text-foreground/70 leading-relaxed mb-8 max-w-lg">
+              Ooma Labs powers specialized platforms through data coordination and AI to solve critical operational challenges.
+            </p>
+            
+            {/* Stats - Horizontal */}
+            <div className="flex gap-8 mb-8">
+              {[
+                { num: "03", label: "Products" },
+                { num: "04", label: "Innovation Areas" },
+              ].map((stat) => (
+                <div key={stat.label}>
+                  <span className="font-serif text-3xl text-primary block">{stat.num}</span>
+                  <p className="text-xs tracking-widest uppercase text-muted-foreground mt-1">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <a href="#products" className="btn-solid">Explore Ecosystem</a>
+              <a href="#innovation" className="btn-ghost">Learn More</a>
+            </div>
           </motion.div>
-        </motion.div>
+
+          {/* Right: Visual callout */}
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="hidden lg:block"
+          >
+            <div className="glass p-8 rounded-2xl glow-border">
+              <div className="line-accent mb-4" />
+              <h3 className="text-xl font-serif mb-4 text-primary">About Ooma Labs</h3>
+              <p className="text-sm text-foreground/70 leading-relaxed">
+                We're a parent ecosystem powering specialized platforms that bridge critical operational gaps through intelligent data coordination.
+              </p>
+              <div className="mt-6 flex items-center gap-4 pt-4 border-t border-border/30">
+                <div>
+                  <p className="text-2xl font-serif text-primary">∞</p>
+                  <p className="text-xs text-muted-foreground">Possibilities</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </section>
   );
