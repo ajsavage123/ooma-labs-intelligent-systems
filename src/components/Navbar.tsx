@@ -14,8 +14,6 @@ import { ChevronDown, Briefcase, Rocket, BookOpen, Users, Compass } from "lucide
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 
 interface NavbarProps {
   onOpenPartner: () => void;
@@ -32,13 +30,12 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const [showDenial, setShowDenial] = useState(false);
-
   const handleWorkspaceClick = () => {
     if (state.currentUser && state.currentUser.workspace_access) {
       navigate("/workspace");
     } else {
-      setShowDenial(true);
+      // Take to login page
+      navigate("/login");
     }
   };
 
@@ -146,13 +143,7 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
               </>
             ) : (
               <button
-                onClick={() => {
-                  // Scroll to CTA section
-                  const element = document.getElementById('connect');
-                  if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
+                onClick={handleWorkspaceClick}
                 className="px-4 py-2 text-xs tracking-widest uppercase rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
               >
                 OOMA Workspace
