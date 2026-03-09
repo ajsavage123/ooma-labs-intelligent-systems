@@ -6,24 +6,19 @@ import WorkspaceHome from "./WorkspaceHome";
 import ProjectPage from "./ProjectPage";
 
 const WorkspaceRoutes: React.FC = () => {
-  const { state } = useAuth();
+  const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
 
-  if (!state.currentUser) {
-    toast("You need to login before accessing the workspace", {
-      action: { label: "Login", onClick: () => navigate("/login") },
-    });
-    navigate("/");
-    return null;
-  }
-  if (!state.currentUser.workspace_access) {
-    toast(
-      "Ooma Workspace is available only for approved partners.",
-      {
-        action: { label: "Apply for Partnership", onClick: () => navigate("/partnership") },
-      }
-    );
-    navigate("/");
+  if (loading) return <div>Loading...</div>;
+
+  if (!user) {
+    // We use a small delay or useEffect to avoid React warning about navigating during render
+    React.useEffect(() => {
+      toast("You need to login before accessing the workspace", {
+        action: { label: "Login", onClick: () => navigate("/login") },
+      });
+      navigate("/login");
+    }, []);
     return null;
   }
 

@@ -2,8 +2,8 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useAuth, makeApplication } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormMessage, FormControl } from "@/components/ui/form";
@@ -27,7 +27,6 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 const PartnershipPage: React.FC = () => {
-  const { state, dispatch } = useAuth();
   const navigate = useNavigate();
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -45,18 +44,24 @@ const PartnershipPage: React.FC = () => {
 
   const onSubmit = async (values: FormValues) => {
     try {
-      const app = makeApplication({
-        name: values.name,
-        email: values.email,
-        phoneNumber: values.phoneNumber,
-        cityCountry: values.cityCountry,
-        currentProfession: values.currentProfession,
-        areaOfExpertise: values.areaOfExpertise,
-        linkedinProfile: values.linkedinProfile,
-        collaborateIn: values.collaborateIn,
-      });
+      // 1. Save to Supabase
+      const { error: supabaseError } = await supabase
+        .from('partnership_requests')
+        .insert({
+          name: values.name,
+          email: values.email,
+          phone: values.phoneNumber,
+          location: values.cityCountry,
+          profession: values.currentProfession,
+          expertise: values.areaOfExpertise,
+          linkedin: values.linkedinProfile,
+          interest: values.collaborateIn,
+          status: 'pending'
+        });
 
-      // Send email to admin with all partner details
+      if (supabaseError) throw supabaseError;
+
+      // 2. Send email to admin via EmailJS
       try {
         const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
         const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
@@ -79,10 +84,9 @@ const PartnershipPage: React.FC = () => {
           });
         }
       } catch (emailError) {
-        console.warn("Email sent with warning", emailError);
+        console.warn("Email notification failed to send", emailError);
       }
 
-      dispatch({ type: "SUBMIT_APPLICATION", payload: app });
       toast.success("Thank you! We will reach you through mail");
       navigate("/");
     } catch (error) {

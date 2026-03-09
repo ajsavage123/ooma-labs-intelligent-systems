@@ -21,7 +21,7 @@ interface NavbarProps {
 
 const Navbar = ({ onOpenPartner }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
-  const { state, dispatch } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,22 +31,17 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
   }, []);
 
   const handleWorkspaceClick = () => {
-    if (state.currentUser && state.currentUser.workspace_access) {
+    if (user) {
       navigate("/workspace");
     } else {
-      // Take to login page
-      navigate("/login");
+      // Visitors who click “Ooma Workspace” must be redirected to the partnership form.
+      navigate("/partnership");
     }
   };
 
-  const handleLoginLogout = () => {
-    if (state.currentUser) {
-      dispatch({ type: "LOGOUT" });
-      navigate("/");
-    } else {
-      // Direct to partnership form instead of login
-      navigate("/partnership");
-    }
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
   };
 
   return (
@@ -118,9 +113,9 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
 
           {/* Auth Buttons */}
           <div className="flex items-center gap-3">
-            {state.currentUser ? (
+            {user ? (
               <>
-                {state.currentUser.role === "admin" && (
+                {profile?.role === "admin" && (
                   <Link
                     to="/admin"
                     className="hidden sm:inline-block px-4 py-2 text-xs tracking-widest uppercase rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
@@ -135,19 +130,27 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                   Workspace
                 </button>
                 <button
-                  onClick={handleLoginLogout}
+                  onClick={handleLogout}
                   className="px-4 py-2 text-xs tracking-widest uppercase rounded-md bg-red-600/20 text-red-400 hover:bg-red-600/30 transition-colors font-medium"
                 >
                   Logout
                 </button>
               </>
             ) : (
-              <button
-                onClick={handleWorkspaceClick}
-                className="px-4 py-2 text-xs tracking-widest uppercase rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
-              >
-                OOMA Workspace
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleWorkspaceClick}
+                  className="px-4 py-2 text-xs tracking-widest uppercase rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
+                >
+                  OOMA Workspace
+                </button>
+                <Link
+                  to="/login"
+                  className="px-4 py-2 text-xs tracking-widest uppercase rounded-md border border-border hover:bg-accent transition-colors font-medium"
+                >
+                  Login
+                </Link>
+              </div>
             )}
           </div>
         </div>

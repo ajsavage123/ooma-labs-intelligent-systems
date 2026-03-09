@@ -1,72 +1,89 @@
 // Shared types across the application
 
-export type Role = "user" | "partner" | "admin";
+export type Role = "partner" | "admin";
 
-export interface User {
+export type Designation =
+  | "Innovation & Research Team"
+  | "Developer & Engineering Team"
+  | "Business Strategy & Marketing Team";
+
+export interface UserProfile {
   id: string;
-  name: string;
-  email: string;
+  username: string;
+  designation: Designation | null;
   role: Role;
-  workspace_access: boolean;
-  organization?: string; // What organization/team they belong to
-  password?: string; // For partner users
-  collaborateIn?: "innovations_research" | "developer_engineer" | "business_marketing"; // Role they applied for
-  createdAt?: string;
+  created_at?: string;
 }
 
-export interface PartnershipApplication {
+export interface PartnershipRequest {
   id: string;
   name: string;
   email: string;
-  phoneNumber: string;
-  cityCountry: string;
-  currentProfession: string;
-  areaOfExpertise: string;
-  linkedinProfile: string;
-  collaborateIn: "innovations_research" | "developer_engineer" | "business_marketing";
-  organization?: string;
-  role?: string;
-  status: "Pending" | "Approved" | "Rejected";
-  submittedAt?: string;
+  phone?: string;
+  location?: string;
+  profession?: string;
+  expertise: string;
+  linkedin?: string;
+  interest: string;
+  reason?: string;
+  status: "pending" | "approved" | "rejected";
+  created_at?: string;
 }
 
-export interface LogEntry {
+export interface TimelineLog {
   id: string;
-  date: string; // ISO
-  team: string;
-  description: string;
+  project_id: string;
+  user_name: string;
+  designation: string;
+  stage: string;
+  update_text: string;
+  created_at?: string;
 }
 
-export interface Stage {
-  id: string;
-  name: string;
-  logs: LogEntry[];
-}
-
-export type ProjectStatus =
-  | "in_progress"
-  | "completed"
-  | "pending_approval"
-  | "approved"
-  | "rejected";
+export type ProjectStage =
+  | "Ideology & Concept"
+  | "Research"
+  | "Development"
+  | "Deployment"
+  | "Business Strategy"
+  | "Marketing Planning"
+  | "Customer Feedback"
+  | "Admin Review";
 
 export interface Project {
   id: string;
   name: string;
   description: string;
-  owner: string;
-  teamMembers: string[];
-  stages: Stage[];
-  currentStageIndex: number;
-  lastUpdated: string;
-  status: ProjectStatus;
+  drive_link?: string;
+  github_link?: string;
+  current_stage: ProjectStage;
+  progress: number;
+  created_by: string;
+  created_at: string;
 }
 
-export interface Product {
+export interface AdminRating {
   id: string;
-  projectId: string;
+  project_id: string;
+  problem_importance: number;
+  technical_feasibility: number;
+  market_demand: number;
+  impact_potential: number;
+  development_complexity: number;
+  innovation_score: number;
+  notes?: string;
+  rated_at: string;
+}
+
+// Keeping these for potential migration/reference
+export interface LegacyProject {
+  id: string;
   name: string;
   description: string;
-  launchStatus: string;
-  team: string[];
+  owner: string;
+  teamMembers: string[];
+  stages: any[];
+  currentStageIndex: number;
+  lastUpdated: string;
+  status: string;
 }

@@ -1,105 +1,147 @@
-import React from "react";
-import { useAuth } from "../../context/AuthContext";
-import { FolderOpen, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { supabase } from "../../lib/supabase";
+import { Project, TimelineLog } from "../../types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart, TrendingUp, Activity, CheckCircle, PieChart } from "lucide-react";
+import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 const ProjectsOverviewPage: React.FC = () => {
-  const { state } = useAuth();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "in_progress":
-        return <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"><Clock size={14} /> In Progress</span>;
-      case "completed":
-        return <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"><CheckCircle2 size={14} /> Completed</span>;
-      case "pending_approval":
-        return <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"><AlertCircle size={14} /> Pending</span>;
-      case "approved":
-        return <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"><CheckCircle2 size={14} /> Approved</span>;
-      case "rejected":
-        return <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"><AlertCircle size={14} /> Rejected</span>;
-      default:
-        return <span className="text-xs text-gray-600">{status}</span>;
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    const { data: projData, error: projError } = await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!projError) {
+      setProjects(projData || []);
     }
+    setLoading(false);
   };
 
+  const getStats = () => {
+    const activeProjects = projects.length;
+    const researchCount = projects.filter(p => p.current_stage === 'Research' || p.current_stage === 'Ideology & Concept').length;
+    const developmentCount = projects.filter(p => p.current_stage === 'Development' || p.current_stage === 'Deployment').length;
+    const launchCount = projects.filter(p => p.current_stage === 'Business Strategy' || p.current_stage === 'Marketing Planning' || p.current_stage === 'Customer Feedback' || p.current_stage === 'Admin Review').length;
+
+    return { activeProjects, researchCount, developmentCount, launchCount };
+  };
+
+  const stats = getStats();
+
+  if (loading) return <div className="p-10 text-center text-sm opacity-50">Loading project overview...</div>;
+
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-      <div className="mb-8">
-        <h2 className="text-3xl sm:text-4xl font-bold mb-2">All Projects</h2>
-        <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-          {state.projects.length} total project{state.projects.length !== 1 ? "s" : ""}
-        </p>
+    <div className="max-w-6xl mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold mb-8">Ooma Labs Innovation Dashboard</h1>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <Card className="glass-dark border-border shadow-xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium opacity-60 flex items-center gap-2 tracking-widest uppercase">
+              <TrendingUp size={16} className="text-primary" /> Active Projects
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{stats.activeProjects}</div>
+          </CardContent>
+        </Card>
+        <Card className="glass-dark border-border shadow-xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium opacity-60 flex items-center gap-2 tracking-widest uppercase">
+              <Activity size={16} className="text-primary" /> Research Phase
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{stats.researchCount}</div>
+          </CardContent>
+        </Card>
+        <Card className="glass-dark border-border shadow-xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium opacity-60 flex items-center gap-2 tracking-widest uppercase">
+              <PieChart size={16} className="text-primary" /> Development
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{stats.developmentCount}</div>
+          </CardContent>
+        </Card>
+        <Card className="glass-dark border-border shadow-xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium opacity-60 flex items-center gap-2 tracking-widest uppercase">
+              <CheckCircle size={16} className="text-primary" /> Launch Phase
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{stats.launchCount}</div>
+          </CardContent>
+        </Card>
       </div>
 
-      {state.projects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 sm:py-20">
-          <FolderOpen size={48} className="text-gray-400 dark:text-gray-600 mb-4" />
-          <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
-            No projects found.
-          </p>
+      {/* Projects List */}
+      <div className="glass-dark rounded-3xl border border-border overflow-hidden shadow-2xl">
+        <div className="px-8 py-6 border-b border-border/50 flex justify-between items-center">
+          <h2 className="text-xl font-bold">All Projects</h2>
+          <span className="text-xs tracking-widest uppercase font-bold text-primary">Monitoring {projects.length} Pipelines</span>
         </div>
-      ) : (
         <div className="overflow-x-auto">
-          <div className="space-y-3 sm:space-y-4">
-            {state.projects.map((proj) => (
-              <div
-                key={proj.id}
-                className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-md p-4 sm:p-5 bg-white dark:bg-gray-900/50 backdrop-blur-sm"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 sm:gap-4 items-center">
-                  {/* Project Name */}
-                  <div className="md:col-span-1">
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">
-                      Project
-                    </p>
-                    <p className="font-bold text-gray-900 dark:text-white text-sm sm:text-base line-clamp-1">
-                      {proj.name}
-                    </p>
-                  </div>
-
-                  {/* Owner */}
-                  <div className="md:col-span-1">
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">
-                      Owner
-                    </p>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">
-                      {proj.owner}
-                    </p>
-                  </div>
-
-                  {/* Current Stage */}
-                  <div className="md:col-span-1">
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">
-                      Stage
-                    </p>
-                    <p className="text-sm text-gray-900 dark:text-gray-100 line-clamp-1">
-                      {proj.stages[proj.currentStageIndex]?.name}
-                    </p>
-                  </div>
-
-                  {/* Status */}
-                  <div className="md:col-span-1">
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">
-                      Status
-                    </p>
-                    {getStatusBadge(proj.status)}
-                  </div>
-
-                  {/* Last Updated */}
-                  <div className="md:col-span-1 text-right">
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">
-                      Updated
-                    </p>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">
-                      {new Date(proj.lastUpdated).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-border/20 text-xs tracking-widest uppercase font-bold text-foreground/40">
+                <th className="px-8 py-6">Project Name</th>
+                <th className="px-8 py-6">Current Stage</th>
+                <th className="px-8 py-6">Progress</th>
+                <th className="px-8 py-6">Last Update</th>
+                <th className="px-8 py-6 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/20">
+              {projects.map((proj) => (
+                <tr key={proj.id} className="hover:bg-primary/5 transition-colors group">
+                  <td className="px-8 py-6">
+                    <div className="font-bold text-sm">{proj.name}</div>
+                    <div className="text-xs text-foreground/50 line-clamp-1">{proj.description}</div>
+                  </td>
+                  <td className="px-8 py-6">
+                    <span className="px-3 py-1 bg-primary/20 text-primary text-[10px] font-bold rounded-full uppercase tracking-wider">
+                      {proj.current_stage}
+                    </span>
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-16 h-1.5 bg-border/30 rounded-full overflow-hidden">
+                        <div className="h-full bg-primary" style={{ width: `${proj.progress}%` }} />
+                      </div>
+                      <span className="text-xs font-bold">{proj.progress}%</span>
+                    </div>
+                  </td>
+                  <td className="px-8 py-6 text-xs text-foreground/50">
+                    {new Date(proj.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-8 py-6 text-right">
+                    <Link
+                      to={`/workspace/projects/${proj.id}`}
+                      className="text-xs tracking-widest uppercase font-bold text-primary hover:underline"
+                    >
+                      View Full Details
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
     </div>
   );
 };

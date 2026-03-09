@@ -1,233 +1,169 @@
-import React, { useState } from "react";
-import { useAuth } from "../../context/AuthContext";
+import React, { useState, useEffect } from "react";
+import { supabase } from "../../lib/supabase";
+import { PartnershipRequest, Designation } from "../../types";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Mail, Briefcase, Copy, Check } from "lucide-react";
-
-const WORKSPACE_PASSWORD = "ooma2001";
+import { Mail, Briefcase, User, Check, X, Loader2 } from "lucide-react";
+import emailjs from "@emailjs/browser";
 
 const ApplicationsPage: React.FC = () => {
-  const { state, dispatch } = useAuth();
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [applications, setApplications] = useState<PartnershipRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const generateAccessLink = (appId: string) => {
-    const baseUrl = window.location.origin;
-    // Check if user already exists
-    const app = state.applications.find((a) => a.id === appId);
-    if (!app) return "";
+  useEffect(() => {
+    fetchApplications();
+  }, []);
 
-    const existingUser = state.users.find((u) => u.email === app.email && u.role === "partner");
-    const userId = existingUser?.id || appId;
-    
-    return `${baseUrl}/workspace-access?user=${userId}`;
+  const fetchApplications = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('partnership_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      toast.error("Failed to fetch applications");
+    } else {
+      setApplications(data || []);
+    }
+    setLoading(false);
   };
 
-  const ensureUserExists = (appId: string) => {
-    const app = state.applications.find((a) => a.id === appId);
-    if (!app) return;
+  const handleApprove = async (app: PartnershipRequest) => {
+    setProcessingId(app.id);
+    try {
+      // 1. Generate random password
+      const password = Math.random().toString(36).slice(-8);
+      const username = app.name.split(' ')[0].toLowerCase() + Math.floor(Math.random() * 1000);
+      const email = `${username}@oomalabs.com`;
 
-    const existing = state.users.find((u) => u.email === app.email && u.role === "partner");
-    if (!existing) {
-      dispatch({
-        type: "REGISTER_USER",
-        payload: {
-          id: appId,
-          name: app.name,
-          email: app.email,
-          role: "partner",
-          workspace_access: true,
-          organization: app.organization,
-        },
-      });
+      // 2. Map interest to designation
+      let designation: Designation = "Innovation & Research Team";
+      if (app.interest === "developer_engineer") designation = "Developer & Engineering Team";
+      if (app.interest === "business_marketing") designation = "Business Strategy & Marketing Team";
+
+      // 3. Note: Supabase Client SDK cannot create Auth users directly from the client without
+      // service role permissions (which must NOT be used on frontend).
+      // The admin will need to manually create the user account in Supabase Dashboard
+      // or set up a Supabase Edge Function to automate this.
+      // For now, we will update the partnership_requests status and assume the Auth user
+      // will be provisioned by the admin before sending the credentials.
+
+      const { error: updateError } = await supabase
+        .from('partnership_requests')
+        .update({ status: 'approved' })
+        .eq('id', app.id);
+
+      if (updateError) throw updateError;
+
+      // 4. Send Approval Email via EmailJS
+      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+      const templateId = import.meta.env.VITE_EMAILJS_APPROVAL_TEMPLATE_ID || import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+      if (serviceId && templateId && publicKey) {
+        emailjs.init(publicKey);
+        await emailjs.send(serviceId, templateId, {
+          to_email: app.email,
+          partner_name: app.name,
+          workspace_link: window.location.origin + "/login",
+          username: email,
+          password: password,
+          designation: designation,
+        });
+      }
+
+      toast.success(`Application for ${app.name} approved and email sent.`);
+      fetchApplications();
+    } catch (error: any) {
+      toast.error(error.message || "Approval failed");
+    } finally {
+      setProcessingId(null);
     }
   };
 
-  const handleCopyLink = (appId: string) => {
-    ensureUserExists(appId);
-    const link = generateAccessLink(appId);
-    navigator.clipboard.writeText(link);
-    setCopiedId(appId);
-    setTimeout(() => setCopiedId(null), 2000);
-    toast.success("Link copied!");
+  const handleReject = async (id: string) => {
+    const { error } = await supabase
+      .from('partnership_requests')
+      .update({ status: 'rejected' })
+      .eq('id', id);
+
+    if (error) {
+      toast.error("Failed to reject application");
+    } else {
+      toast.success("Application rejected");
+      fetchApplications();
+    }
   };
 
+  if (loading) return <div className="p-10 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
+
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-      <div className="mb-8">
-        <h2 className="text-3xl sm:text-4xl font-bold mb-2">Partnership Applications</h2>
-        <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-          {state.applications.length} application{state.applications.length !== 1 ? "s" : ""} received
-        </p>
-      </div>
+    <div className="max-w-6xl mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold mb-8">Partnership Applications</h1>
 
-      {state.applications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 sm:py-20">
-          <Briefcase size={48} className="text-gray-400 dark:text-gray-600 mb-4" />
-          <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
-            No partnership applications yet.
-          </p>
-        </div>
+      {applications.length === 0 ? (
+        <p className="text-center opacity-50">No applications found.</p>
       ) : (
-        <div className="space-y-4 sm:space-y-6">
-          {state.applications.map((app) => (
-            <div
-              key={app.id}
-              className="rounded-xl border-2 border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg p-5 sm:p-6 bg-white dark:bg-gray-900/50 backdrop-blur-sm"
-            >
-              <div className="space-y-4">
-                {/* Header Row */}
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-2">
-                      {app.name}
-                    </h3>
-                    <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                      <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        <Mail size={16} />
-                        <span>{app.email}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        <Briefcase size={16} />
-                        <span className="font-semibold">{app.currentProfession}</span>
-                      </div>
-                    </div>
+        <div className="grid gap-6">
+          {applications.map((app) => (
+            <div key={app.id} className="glass-dark p-6 rounded-2xl border border-border flex flex-col md:flex-row justify-between gap-6">
+              <div className="space-y-4 flex-1">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                    {app.name[0]}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">{app.name}</h3>
+                    <p className="text-sm opacity-60 flex items-center gap-1"><Mail size={14} /> {app.email}</p>
                   </div>
                 </div>
 
-                {/* Details Section */}
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                        Phone Number
-                      </p>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
-                        {app.phoneNumber}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                        City / Country
-                      </p>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
-                        {app.cityCountry}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                        Area of Expertise
-                      </p>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
-                        {app.areaOfExpertise}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                        Collaborate In
-                      </p>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
-                        {app.collaborateIn === "innovations_research" && "Innovations and Research"}
-                        {app.collaborateIn === "developer_engineer" && "Developer or Engineer"}
-                        {app.collaborateIn === "business_marketing" && "Business and Marketing"}
-                      </p>
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="block opacity-50 text-xs uppercase font-bold tracking-wider">Expertise</span>
+                    {app.expertise}
                   </div>
-                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                      LinkedIn Profile
-                    </p>
-                    <a href={app.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 dark:text-blue-400 hover:underline break-all">
-                      {app.linkedinProfile}
-                    </a>
+                  <div>
+                    <span className="block opacity-50 text-xs uppercase font-bold tracking-wider">Interest</span>
+                    {app.interest.replace('_', ' & ')}
                   </div>
                 </div>
 
-                {/* Access Link Ready Section */}
-                <div className="border-t border-green-200 dark:border-green-900/40 pt-4 bg-green-50 dark:bg-green-900/20 rounded-lg p-4 -mx-5 sm:-mx-6 px-5 sm:px-6">
-                  <p className="text-xs sm:text-sm font-semibold text-green-700 dark:text-green-300 mb-4">
-                    ✅ Ready to Send - Copy Credentials Below
-                  </p>
-
-                  {/* Email */}
-                  <div className="mb-4">
-                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Partner Email (for login):</p>
-                    <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded p-3 border border-green-200 dark:border-green-800">
-                      <code className="flex-1 text-xs sm:text-sm font-mono text-gray-900 dark:text-gray-100 break-all">
-                        {app.email}
-                      </code>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          navigator.clipboard.writeText(app.email);
-                          setCopiedId(`email-${app.id}`);
-                          setTimeout(() => setCopiedId(null), 2000);
-                          toast.success("Email copied!");
-                        }}
-                        className="ml-2"
-                      >
-                        {copiedId === `email-${app.id}` ? (
-                          <Check size={16} className="text-green-600" />
-                        ) : (
-                          <Copy size={16} />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Access Link */}
-                  <div className="mb-4">
-                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Workspace Access Link:</p>
-                    <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded p-3 border border-green-200 dark:border-green-800">
-                      <code className="flex-1 text-xs sm:text-sm font-mono text-gray-900 dark:text-gray-100 break-all">
-                        {generateAccessLink(app.id)}
-                      </code>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleCopyLink(app.id)}
-                        className="ml-2"
-                      >
-                        {copiedId === app.id ? (
-                          <Check size={16} className="text-green-600" />
-                        ) : (
-                          <Copy size={16} />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Password */}
-                  <div className="mb-3">
-                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Workspace Password:</p>
-                    <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded p-3 border border-green-200 dark:border-green-800">
-                      <code className="flex-1 text-xs sm:text-sm font-mono text-gray-900 dark:text-gray-100">
-                        {WORKSPACE_PASSWORD}
-                      </code>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          navigator.clipboard.writeText(WORKSPACE_PASSWORD);
-                          setCopiedId(`pwd-${app.id}`);
-                          setTimeout(() => setCopiedId(null), 2000);
-                          toast.success("Password copied!");
-                        }}
-                        className="ml-2"
-                      >
-                        {copiedId === `pwd-${app.id}` ? (
-                          <Check size={16} className="text-green-600" />
-                        ) : (
-                          <Copy size={16} />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-green-700 dark:text-green-400 text-center">
-                    Copy email, link, and password. Send link with instructions to partner.
-                  </p>
+                <div>
+                  <span className="block opacity-50 text-xs uppercase font-bold tracking-wider">Reason</span>
+                  <p className="text-sm">{app.reason || 'No reason provided.'}</p>
                 </div>
+              </div>
+
+              <div className="flex flex-row md:flex-col justify-end gap-3 min-w-[150px]">
+                {app.status === 'pending' ? (
+                  <>
+                    <Button
+                      onClick={() => handleApprove(app)}
+                      disabled={processingId === app.id}
+                      className="bg-green-600 hover:bg-green-700 text-white gap-2"
+                    >
+                      {processingId === app.id ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                      Approve
+                    </Button>
+                    <Button
+                      onClick={() => handleReject(app.id)}
+                      variant="outline"
+                      className="border-red-500/50 text-red-500 hover:bg-red-500/10 gap-2"
+                    >
+                      <X size={16} />
+                      Reject
+                    </Button>
+                  </>
+                ) : (
+                  <div className={`text-center px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest ${
+                    app.status === 'approved' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'
+                  }`}>
+                    {app.status}
+                  </div>
+                )}
               </div>
             </div>
           ))}
