@@ -11,6 +11,7 @@ import LoginPage from "./pages/Login";
 import PartnershipPage from "./pages/Partnership";
 import WorkspaceAccess from "./pages/WorkspaceAccess";
 import WorkspaceRoutes from "./pages/workspace/WorkspaceRoutes";
+import AdminRoutes from "./pages/admin/AdminRoutes";
 import ProductsPage from "./pages/Products";
 
 import { AuthProvider } from "./context/AuthContext";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/partnership" element={<PartnershipPage />} />
             <Route path="/workspace-access" element={<WorkspaceAccess />} />
             <Route path="/workspace/*" element={<WorkspaceRoutes />} />
+            <Route path="/admin/*" element={<AdminRoutes />} />
             <Route path="/products" element={<ProductsPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useAuth, makeProject } from "../../context/AuthContext";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,55 +8,80 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Stage } from "../../types";
+import { Project } from "../../types";
 import { toast } from "sonner";
-import { Plus, FolderOpen, Users, Calendar, TrendingUp } from "lucide-react";
+import { Plus, FolderOpen, Users, Calendar, TrendingUp, Layout, Activity } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import ActivityFeed from "@/components/ActivityFeed";
 
 const projectSchema = z.object({
   name: z.string().min(2),
   description: z.string().min(2),
-  owner: z.string().min(1),
   teamMembers: z.string().optional(),
+  drive_link: z.string().url("Must be a valid URL"),
 });
 
 type FormValues = z.infer<typeof projectSchema>;
 
-// generate default template stages
-function defaultStages(): Stage[] {
-  const names = [
-    "Ideology & Concept",
-    "Research",
-    "Development",
-    "Deployment / Launch",
-    "Business Strategy & Marketing",
-    "Customer Feedback & Improvements",
-  ];
-  return names.map((n) => ({ id: n, name: n, logs: [] } as Stage));
-}
-
 const WorkspaceHome: React.FC = () => {
-  const { state, dispatch } = useAuth();
+  const { profile, user } = useAuth();
   const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      toast.error("Failed to fetch projects");
+    } else {
+      setProjects(data || []);
+    }
+    setLoading(false);
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(projectSchema),
-    defaultValues: { name: "", description: "", owner: state.currentUser?.name || "", teamMembers: "" },
+    defaultValues: { name: "", description: "", teamMembers: "", drive_link: "" },
   });
 
-  const onSubmit = (values: FormValues) => {
-    const project = makeProject({
-      name: values.name,
-      description: values.description,
-      owner: values.owner,
-      teamMembers: values.teamMembers ? values.teamMembers.split(",").map((s) => s.trim()) : [],
-      stages: defaultStages(),
-    });
-    dispatch({ type: "ADD_PROJECT", payload: project });
-    toast.success("Project created");
-    setIsDialogOpen(false);
-    navigate(`projects/${project.id}`);
+  const onSubmit = async (values: FormValues) => {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .insert({
+          name: values.name,
+          description: values.description,
+          team_members: values.teamMembers,
+          drive_link: values.drive_link,
+          current_stage: 'Ideology & Concept',
+          progress: 0,
+          created_by: user?.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Project created");
+      setIsDialogOpen(false);
+      fetchProjects();
+      navigate(`projects/${data.id}`);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create project");
+    }
   };
+
+  const showCreateButton = profile?.designation === "Innovation & Research Team" || profile?.role === "admin";
 
   return (
     <div className="min-h-screen bg-background">
@@ -65,41 +90,49 @@ const WorkspaceHome: React.FC = () => {
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl md:text-3xl font-serif font-bold text-foreground">Your Projects</h1>
+              <h1 className="text-2xl md:text-3xl font-serif font-bold text-foreground">Project Timeline Dashboard</h1>
               <p className="text-sm text-foreground/60 mt-1">
-                {state.projects.length === 0 ? "Create your first project to get started" : `Managing ${state.projects.length} project${state.projects.length !== 1 ? "s" : ""}`}
+                {loading ? "Loading projects..." : projects.length === 0 ? "No projects found" : `Managing ${projects.length} project${projects.length !== 1 ? "s" : ""}`}
               </p>
             </div>
-            <Button
-              onClick={() => setIsDialogOpen(true)}
-              size="sm"
-              className="w-full sm:w-auto gap-2"
-            >
-              <Plus size={18} />
-              <span>New Project</span>
-            </Button>
+            {showCreateButton && (
+              <Button
+                onClick={() => setIsDialogOpen(true)}
+                size="sm"
+                className="w-full sm:w-auto gap-2"
+              >
+                <Plus size={18} />
+                <span>New Project</span>
+              </Button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-6 md:px-10 py-8">
-        {state.projects.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <p>Loading projects...</p>
+          </div>
+        ) : projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
             <FolderOpen size={56} className="text-foreground/30 mb-4" />
             <p className="text-lg text-foreground/60 mb-6">No projects yet</p>
-            <Button
-              onClick={() => setIsDialogOpen(true)}
-              size="default"
-              className="gap-2"
-            >
-              <Plus size={18} />
-              Create Your First Project
-            </Button>
+            {showCreateButton && (
+              <Button
+                onClick={() => setIsDialogOpen(true)}
+                size="default"
+                className="gap-2"
+              >
+                <Plus size={18} />
+                Create Your First Project
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {state.projects.map((proj) => (
+            {projects.map((proj) => (
               <Link
                 key={proj.id}
                 to={`projects/${proj.id}`}
@@ -112,15 +145,9 @@ const WorkspaceHome: React.FC = () => {
                 <div className="relative p-6 bg-card/50 backdrop-blur-sm">
                   {/* Status Badge */}
                   <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded text-xs font-semibold ${
-                      proj.status === "completed"
-                        ? "bg-green-500/20 text-green-600 dark:text-green-400"
-                        : proj.status === "pending_approval"
-                        ? "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400"
-                        : "bg-primary/20 text-primary"
-                    }`}>
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded text-xs font-semibold bg-primary/20 text-primary">
                       <TrendingUp size={14} />
-                      {proj.status === "in_progress" ? "In Progress" : proj.status.replace(/_/g, " ")}
+                      Active
                     </span>
                   </div>
 
@@ -133,19 +160,12 @@ const WorkspaceHome: React.FC = () => {
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center gap-2 text-xs text-foreground/60">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    <span>Stage: <span className="font-semibold text-foreground">{proj.stages[proj.currentStageIndex]?.name}</span></span>
+                    <span>Stage: <span className="font-semibold text-foreground">{proj.current_stage}</span></span>
                   </div>
                   
-                  {proj.teamMembers.length > 0 && (
-                    <div className="flex items-start gap-2 text-xs text-foreground/60">
-                      <Users size={14} className="mt-0.5 flex-shrink-0" />
-                      <span className="line-clamp-1">{proj.teamMembers.join(", ")}</span>
-                    </div>
-                  )}
-
                   <div className="flex items-center gap-2 text-xs text-foreground/60">
                     <Calendar size={14} />
-                    <span>Updated {new Date(proj.lastUpdated).toLocaleDateString()}</span>
+                    <span>Updated {new Date(proj.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
 
@@ -154,13 +174,13 @@ const WorkspaceHome: React.FC = () => {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-semibold text-foreground/60">Progress</span>
                     <span className="text-xs font-semibold text-foreground">
-                      {Math.round(((proj.currentStageIndex + 1) / proj.stages.length) * 100)}%
+                      {proj.progress}%
                     </span>
                   </div>
                   <div className="w-full h-2 bg-border/30 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-primary to-primary/50 transition-all duration-300"
-                      style={{ width: `${((proj.currentStageIndex + 1) / proj.stages.length) * 100}%` }}
+                      style={{ width: `${proj.progress}%` }}
                     />
                   </div>
                 </div>
@@ -169,6 +189,17 @@ const WorkspaceHome: React.FC = () => {
           ))}
         </div>
       )}
+      </div>
+
+      {/* Activity Feed Section */}
+      <div className="max-w-6xl mx-auto px-6 md:px-10 py-12 border-t border-border/20">
+        <div className="flex items-center gap-3 mb-8">
+          <Activity className="text-primary" size={24} />
+          <h2 className="text-2xl font-bold">Global Activity Feed</h2>
+        </div>
+        <div className="glass-dark p-8 rounded-3xl border border-border shadow-2xl">
+          <ActivityFeed limit={10} />
+        </div>
       </div>
 
       {/* Create Project Dialog */}
@@ -213,13 +244,13 @@ const WorkspaceHome: React.FC = () => {
               />
               <FormField
                 control={form.control}
-                name="owner"
+                name="teamMembers"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Project Owner *</FormLabel>
+                    <FormLabel>Team Members *</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Your name" 
+                        placeholder="e.g. John Doe, Jane Smith"
                         {...field} 
                       />
                     </FormControl>
@@ -229,13 +260,13 @@ const WorkspaceHome: React.FC = () => {
               />
               <FormField
                 control={form.control}
-                name="teamMembers"
+                name="drive_link"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Team Members</FormLabel>
+                    <FormLabel>Google Drive Folder Link *</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Comma separated (optional)" 
+                        placeholder="https://drive.google.com/..."
                         {...field} 
                       />
                     </FormControl>

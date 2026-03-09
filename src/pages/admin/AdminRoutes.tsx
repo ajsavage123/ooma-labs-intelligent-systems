@@ -7,13 +7,17 @@ import ProductsApprovalPage from "./ProductsApprovalPage.tsx";
 import ProjectsOverviewPage from "./ProjectsOverviewPage.tsx";
 
 const AdminRoutes: React.FC = () => {
-  const { state } = useAuth();
+  const { profile, user, loading } = useAuth();
   const navigate = useNavigate();
 
+  if (loading) return <div>Loading...</div>;
+
   // simple guard
-  if (!state.currentUser || state.currentUser.role !== "admin") {
-    toast("Admin access required");
-    navigate("/");
+  if (!user || profile?.role !== "admin") {
+    React.useEffect(() => {
+      toast("Admin access required");
+      navigate("/");
+    }, []);
     return null;
   }
 

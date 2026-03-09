@@ -2,64 +2,68 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useAuth, makeUser } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormMessage, FormControl } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 const loginSchema = z.object({
-  name: z.string().min(2, "Name required"),
-  password: z.string().min(4, "Password required"),
+  username: z.string().min(2, "Username required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  designation: z.string().min(1, "Designation required"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage: React.FC = () => {
-  const { state, dispatch } = useAuth();
   const navigate = useNavigate();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { name: "", password: "" },
+    defaultValues: { username: "", password: "", designation: "" },
   });
 
-  const onSubmit = (values: LoginFormValues) => {
-    if (isSignUp) {
-      // Sign Up - Create new user
-      const existingUser = state.users.find((u) => u.name.toLowerCase() === values.name.toLowerCase());
-      if (existingUser) {
-        toast.error("User already exists");
+  const onSubmit = async (values: LoginFormValues) => {
+    setLoading(true);
+    try {
+      // In a real Supabase Auth flow, we'd use email.
+      // But Task 3 specifically asks for Username, Password, Designation.
+      // We will assume username is used as the email prefix or handled by a custom edge function,
+      // but for standard Supabase Auth we'll use email = username + "@oomalabs.com"
+      const email = `${values.username.toLowerCase()}@oomalabs.com`;
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: values.password,
+      });
+
+      if (error) throw error;
+
+      // Verify designation matches
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
+        .select('designation, role')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (profile.designation !== values.designation && profile.role !== 'admin') {
+        await supabase.auth.signOut();
+        toast.error("Invalid designation for this user");
         return;
       }
-      const newUser = makeUser(values.name, `${values.name.toLowerCase()}@ooma.com`, "partner");
-      newUser.password = values.password;
-      newUser.workspace_access = true;
-      dispatch({ type: "REGISTER_USER", payload: newUser });
-      toast.success("Account created! Logging in...");
-      dispatch({ type: "LOGIN", payload: newUser });
+
+      toast.success(`Welcome back, ${values.username}!`);
       navigate("/workspace");
-    } else {
-      // Sign In - Find user and verify password
-      const user = state.users.find((u) => u.name.toLowerCase() === values.name.toLowerCase());
-      if (!user) {
-        toast.error("User not found");
-        return;
-      }
-      if (user.password !== values.password) {
-        toast.error("Invalid password");
-        form.reset({ name: values.name, password: "" });
-        return;
-      }
-      if (!user.workspace_access) {
-        toast.error("You don't have workspace access");
-        return;
-      }
-      dispatch({ type: "LOGIN", payload: user });
-      toast.success(`Welcome, ${user.name}!`);
-      navigate("/workspace");
+    } catch (error: any) {
+      toast.error(error.message || "Login failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,28 +71,24 @@ const LoginPage: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md glass-dark rounded-2xl p-6 sm:p-8">
         <div className="mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-2">
-            {isSignUp ? "Create Account" : "OOMA Workspace Login"}
-          </h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2">OOMA Workspace Login</h2>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-            {isSignUp 
-              ? "Create a new account to access the workspace"
-              : "Sign in with your name and password"}
+            Sign in with your credentials and designation
           </p>
         </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Name Field */}
+            {/* Username Field */}
             <FormField
               control={form.control}
-              name="name"
+              name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm sm:text-base">Name</FormLabel>
+                  <FormLabel className="text-sm sm:text-base">Username</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Your name" 
+                      placeholder="Your username"
                       className="h-10 sm:h-11"
                       {...field} 
                     />
@@ -118,42 +118,36 @@ const LoginPage: React.FC = () => {
               )}
             />
 
+            {/* Designation Field */}
+            <FormField
+              control={form.control}
+              name="designation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm sm:text-base">Designation</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="h-10 sm:h-11">
+                        <SelectValue placeholder="Select designation" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Innovation & Research Team">Innovation & Research Team</SelectItem>
+                      <SelectItem value="Developer & Engineering Team">Developer & Engineering Team</SelectItem>
+                      <SelectItem value="Business Strategy & Marketing Team">Business Strategy & Marketing Team</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* Submit Button */}
-            <Button type="submit" className="w-full h-10 sm:h-11 text-sm sm:text-base">
-              {isSignUp ? "Create Account" : "Sign In"}
+            <Button type="submit" className="w-full h-10 sm:h-11 text-sm sm:text-base" disabled={loading}>
+              {loading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
         </Form>
-
-        {/* Toggle Sign In / Sign Up */}
-        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3">
-            {isSignUp ? "Already have an account?" : "Don't have an account?"}
-          </p>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              form.reset();
-            }}
-          >
-            {isSignUp ? "Sign In Instead" : "Create New Account"}
-          </Button>
-        </div>
-
-        {/* Test Credentials */}
-        {!isSignUp && (
-          <div className="mt-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-            <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2">Test Credentials:</p>
-            <p className="text-xs text-blue-600 dark:text-blue-400">
-              <strong>Name:</strong> Test User
-            </p>
-            <p className="text-xs text-blue-600 dark:text-blue-400">
-              <strong>Password:</strong> test1234
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
