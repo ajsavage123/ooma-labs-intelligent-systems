@@ -14,7 +14,7 @@ const VisionSection = () => {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="vision" className="py-16 md:py-48 bg-[#050505] relative overflow-hidden" ref={ref}>
+    <section id="vision" className="py-12 md:py-32 bg-[#050505] relative overflow-hidden" ref={ref}>
       <div className="absolute top-1/2 left-0 w-full h-1/2 bg-[#0a0a0a] border-y border-white/5 skew-y-6 -translate-y-1/2 z-0" />
       
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">

@@ -149,7 +149,7 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                onClick={handleWorkspaceClick}
                className="sm:hidden w-8 h-8 flex items-center justify-center bg-[#FFD700] text-black rounded-full"
             >
-               <Rocket className="w-4 h-4" />
+               <Briefcase className="w-4 h-4" />
             </button>
           </div>
         </div>

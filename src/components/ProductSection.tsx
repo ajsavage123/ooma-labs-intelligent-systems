@@ -79,7 +79,7 @@ const ProductCard = ({ product, index }: { product: any; index: number }) => {
 
 const ProductSection = () => {
   return (
-    <section id="products" className="py-16 md:py-32 bg-[#050505] relative overflow-hidden">
+    <section id="products" className="py-12 md:py-24 bg-[#050505] relative overflow-hidden">
       <div className="max-w-5xl mx-auto px-6 md:px-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

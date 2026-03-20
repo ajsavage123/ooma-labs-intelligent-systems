@@ -24,7 +24,7 @@ const Index = () => {
       <VisionSection />
       <FounderSection />
       <CTASection onOpenPartner={openPartnership} />
-      <footer className="py-12 text-center border-t border-white/10 bg-[#0a0a0a]">
+      <footer className="py-8 text-center border-t border-white/10 bg-[#0a0a0a]">
         <p className="text-xs tracking-widest uppercase text-white/40 font-bold">
           © {new Date().getFullYear()} OOMA LABS. All rights reserved.
         </p>

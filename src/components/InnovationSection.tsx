@@ -34,7 +34,7 @@ const steps = [
 
 const InnovationSection = () => {
   return (
-    <section id="innovation" className="py-16 md:py-32 bg-[#050505] relative overflow-hidden stitch-grid">
+    <section id="innovation" className="py-12 md:py-24 bg-[#050505] relative overflow-hidden stitch-grid">
       <div className="absolute inset-0 bg-[#050505]/90 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10">

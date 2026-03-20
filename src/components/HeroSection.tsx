@@ -3,7 +3,7 @@ import { ArrowRight, Lightbulb, Shield, Code } from "lucide-react";
 
 const HeroSection = () => {
   return (
-    <section className="relative pt-24 pb-16 md:pt-48 md:pb-32 overflow-hidden stitch-grid bg-[#050505]">
+    <section className="relative pt-24 pb-12 md:pt-48 md:pb-24 overflow-hidden stitch-grid bg-[#050505]">
       {/* Decorative blobs for "Stitch" vibe with smooth animation */}
       <motion.div 
         animate={{ 
@@ -26,16 +26,6 @@ const HeroSection = () => {
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10 w-full">
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="mb-6"
-          >
-            <span className="badge-google">
-              Technology Solutions for the Real World
-            </span>
-          </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -43,9 +33,7 @@ const HeroSection = () => {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="text-responsive-h1 font-bold text-white mb-8 font-display"
           >
-            Solving <span className="text-[#4285F4]">real-world</span> challenges
-            <br className="hidden sm:block" />{" "}
-            through <span className="text-gradient-google">purposeful</span> tech.
+            Solving <span className="text-[#4285F4]">real-world</span> challenges through <span className="text-gradient-google">purposeful</span> tech.
           </motion.h1>
 
           <motion.p
@@ -67,7 +55,10 @@ const HeroSection = () => {
               Explore Our Solutions
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </button>
-            <button className="btn-google-outline w-full sm:w-auto">
+            <button 
+              onClick={() => document.getElementById('innovation')?.scrollIntoView({ behavior: 'smooth' })}
+              className="btn-google-outline w-full sm:w-auto"
+            >
               Learn Our Process
             </button>
           </motion.div>
