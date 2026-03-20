@@ -16,7 +16,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background mesh-gradient noise selection:bg-primary/20">
+    <div className="min-h-screen bg-[#050505] selection:bg-[#4285F4]/30 selection:text-white">
       <Navbar onOpenPartner={openPartnership} />
       <HeroSection />
       <ProductSection />
@@ -24,9 +24,9 @@ const Index = () => {
       <VisionSection />
       <FounderSection />
       <CTASection onOpenPartner={openPartnership} />
-      <footer className="py-16 text-center border-t border-border/20 section-padding">
-        <p className="text-[11px] tracking-[0.3em] uppercase text-muted-foreground font-body">
-          © 2026 Ooma Labs. All rights reserved.
+      <footer className="py-12 text-center border-t border-white/10 bg-[#0a0a0a]">
+        <p className="text-xs tracking-widest uppercase text-white/40 font-bold">
+          © {new Date().getFullYear()} OOMA LABS. All rights reserved.
         </p>
       </footer>
     </div>
