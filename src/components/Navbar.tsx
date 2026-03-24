@@ -60,28 +60,31 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
-        className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-500 ${scrolled || menuOpen ? "py-3 backdrop-blur-xl bg-[#050505]/80 border-b border-white/10" : "py-5"}`}
+        className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-500 ${scrolled || menuOpen ? "py-4 md:py-5 backdrop-blur-2xl bg-[#050505]/90 border-b border-white/10" : "py-6 md:py-8"}`}
       >
         <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2 sm:gap-3 group shrink-0 relative z-[70]">
-            <div className="relative w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
-              <svg viewBox="0 0 100 100" className="w-full h-full group-hover:scale-110 transition-transform duration-300 fill-none stroke-[#FFD700] stroke-[8] sm:stroke-[6]" style={{ strokeLinecap: 'round' }}>
+          <a href="/" className="flex items-center gap-3 sm:gap-4 group shrink-0 relative z-[70]">
+            <div className="relative w-8 h-8 sm:w-12 md:w-10 sm:h-12 md:h-10 flex items-center justify-center">
+              <svg viewBox="0 0 100 100" className="w-full h-full group-hover:scale-110 transition-transform duration-300 fill-none stroke-[#FFD700] stroke-[10] md:stroke-[12]" style={{ strokeLinecap: 'round' }}>
                 <path d="M 35 15 A 40 40 0 1 1 20 35" />
               </svg>
             </div>
-            <span className="text-[10px] sm:text-xs md:text-sm font-display tracking-[0.15em] sm:tracking-widest font-bold text-white uppercase truncate">OOMA LABS</span>
+            <div className="flex flex-col">
+              <span className="text-sm sm:text-lg md:text-base font-display tracking-[0.2em] sm:tracking-[0.3em] font-black text-white uppercase leading-none">OOMA LABS</span>
+              <span className="text-[8px] tracking-[0.4em] text-[#FFD700] font-bold mt-1 hidden sm:block">INTELLIGENT SYSTEMS</span>
+            </div>
           </a>
 
           {/* Right Side Buttons */}
-          <div className="flex items-center gap-4 sm:gap-6 relative z-[70]">
+          <div className="flex items-center gap-6 sm:gap-10 relative z-[70]">
             {/* Desktop Quick Links */}
-            <div className="hidden md:flex items-center gap-8 mr-4">
+            <div className="hidden md:flex items-center gap-10">
               {['Services', 'Portfolio'].map((item) => (
                 <a
                   key={item}
                   href={`#${item.toLowerCase()}`}
-                  className="text-[10px] font-bold tracking-widest uppercase text-white/50 hover:text-white transition-colors"
+                  className="text-xs font-black tracking-[0.2em] uppercase text-white/40 hover:text-white transition-colors"
                 >
                   {item}
                 </a>
@@ -90,12 +93,12 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
 
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="group flex items-center gap-3 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all active:scale-95"
+              className="group flex items-center gap-4 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all active:scale-95 shadow-xl"
             >
-              <span className="text-[10px] font-bold tracking-widest uppercase text-white/70 hidden sm:block">
+              <span className="text-xs font-black tracking-[0.2em] uppercase text-white/70 hidden sm:block">
                 {menuOpen ? 'Close' : 'Menu'}
               </span>
-              <div className="relative w-4 h-4 flex items-center justify-center">
+              <div className="relative w-5 h-5 flex items-center justify-center">
                 <AnimatePresence mode="wait">
                   {menuOpen ? (
                     <motion.div
@@ -105,7 +108,7 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                       exit={{ rotate: 90, opacity: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <X className="w-4 h-4 text-white" />
+                      <X className="w-5 h-5 text-white" />
                     </motion.div>
                   ) : (
                     <motion.div
@@ -115,7 +118,7 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                       exit={{ rotate: -90, opacity: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Menu className="w-4 h-4 text-white" />
+                      <Menu className="w-5 h-5 text-white" />
                     </motion.div>
                   )}
                 </AnimatePresence>
