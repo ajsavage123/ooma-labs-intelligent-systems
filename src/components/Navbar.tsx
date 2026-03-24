@@ -52,6 +52,7 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
     { label: 'Portfolio', href: '#portfolio' },
     { label: 'Vision', href: '#vision' },
     { label: 'About', href: '#founder-section' },
+    { label: 'Contact Us', href: '#connect' },
   ];
 
   return (
@@ -60,19 +61,19 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
-        className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-500 ${scrolled || menuOpen ? "py-4 md:py-5 backdrop-blur-2xl bg-[#050505]/90 border-b border-white/10" : "py-6 md:py-8"}`}
+        className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-500 ${scrolled || menuOpen ? "py-2 backdrop-blur-2xl bg-[#050505]/90 border-b border-white/10" : "py-4 md:py-4"}`}
       >
         <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-3 sm:gap-4 group shrink-0 relative z-[70]">
-            <div className="relative w-8 h-8 sm:w-12 md:w-10 sm:h-12 md:h-10 flex items-center justify-center">
-              <svg viewBox="0 0 100 100" className="w-full h-full group-hover:scale-110 transition-transform duration-300 fill-none stroke-[#FFD700] stroke-[10] md:stroke-[12]" style={{ strokeLinecap: 'round' }}>
+          <a href="/" className="flex items-center gap-2 group shrink-0 relative z-[70]">
+            <div className="relative w-6 h-6 sm:w-8 md:w-7 sm:h-8 md:h-7 flex items-center justify-center">
+              <svg viewBox="0 0 100 100" className="w-full h-full group-hover:scale-110 transition-transform duration-300 fill-none stroke-[#FFD700] stroke-[4] md:stroke-[5]" style={{ strokeLinecap: 'round' }}>
                 <path d="M 35 15 A 40 40 0 1 1 20 35" />
               </svg>
             </div>
             <div className="flex flex-col">
-              <span className="text-sm sm:text-lg md:text-base font-display tracking-[0.2em] sm:tracking-[0.3em] font-black text-white uppercase leading-none">OOMA LABS</span>
-              <span className="text-[8px] tracking-[0.4em] text-[#FFD700] font-bold mt-1 hidden sm:block">INTELLIGENT SYSTEMS</span>
+              <span className="text-xs sm:text-base md:text-sm font-display tracking-[0.2em] sm:tracking-[0.3em] font-black text-white uppercase leading-none">OOMA LABS</span>
+              <span className="text-[7px] tracking-[0.4em] text-[#FFD700] font-bold mt-1 hidden sm:block">INTELLIGENT SYSTEMS</span>
             </div>
           </a>
 
