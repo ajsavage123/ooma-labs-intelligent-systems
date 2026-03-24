@@ -51,7 +51,10 @@ const HeroSection = () => {
             transition={{ duration: 0.7, delay: 0.4 }}
             className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto px-6 sm:px-0"
           >
-            <button className="btn-google-blue flex items-center justify-center gap-2 group shadow-md w-full sm:w-auto">
+            <button 
+              onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}
+              className="btn-google-blue flex items-center justify-center gap-2 group shadow-md w-full sm:w-auto"
+            >
               Explore Our Solutions
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </button>
