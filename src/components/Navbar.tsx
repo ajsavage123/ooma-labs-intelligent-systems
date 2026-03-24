@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import {
   DropdownMenu,
@@ -6,9 +6,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuLabel,
-  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Briefcase, Rocket, BookOpen } from "lucide-react";
+import { ChevronDown, Rocket, BookOpen, Menu, X, ArrowRight, Instagram, Twitter, Linkedin } from "lucide-react";
 
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -19,6 +18,7 @@ interface NavbarProps {
 
 const Navbar = ({ onOpenPartner }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { state, dispatch } = useAuth();
   const navigate = useNavigate();
 
@@ -28,13 +28,14 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleWorkspaceClick = () => {
-    if (state.currentUser && state.currentUser.workspace_access) {
-      navigate("/workspace");
+  // Prevent scrolling when menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = 'hidden';
     } else {
-      navigate("/login");
+      document.body.style.overflow = 'unset';
     }
-  };
+  }, [menuOpen]);
 
   const handleLoginLogout = () => {
     if (state.currentUser) {
@@ -45,17 +46,25 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
     }
   };
 
+  const navItems = [
+    { label: 'Home', href: '/' },
+    { label: 'Services', href: '#services' },
+    { label: 'Portfolio', href: '#portfolio' },
+    { label: 'Vision', href: '#vision' },
+    { label: 'About', href: '#founder-section' },
+  ];
+
   return (
     <>
       <motion.nav
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? "py-3 backdrop-blur-xl bg-[#050505]/80 border-b border-white/10" : "py-5"}`}
+        className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-500 ${scrolled || menuOpen ? "py-3 backdrop-blur-xl bg-[#050505]/80 border-b border-white/10" : "py-5"}`}
       >
         <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2 sm:gap-3 group shrink-0">
+          <a href="/" className="flex items-center gap-2 sm:gap-3 group shrink-0 relative z-[70]">
             <div className="relative w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
               <svg viewBox="0 0 100 100" className="w-full h-full group-hover:scale-110 transition-transform duration-300 fill-none stroke-[#FFD700] stroke-[8] sm:stroke-[6]" style={{ strokeLinecap: 'round' }}>
                 <path d="M 35 15 A 40 40 0 1 1 20 35" />
@@ -64,96 +73,161 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
             <span className="text-[10px] sm:text-xs md:text-sm font-display tracking-[0.15em] sm:tracking-widest font-bold text-white uppercase truncate">OOMA LABS</span>
           </a>
 
-          {/* Navigation Links (Desktop) */}
-          <div className="hidden lg:flex items-center gap-8 xl:gap-10">
-            {['Products', 'Innovation', 'Vision'].map((item) => (
-              <a
-                key={item}
-                href={item === 'Products' ? '/products' : `#${item.toLowerCase()}`}
-                className="text-sm font-medium text-white/70 hover:text-[#4285F4] transition-colors duration-200"
-              >
-                {item}
-              </a>
-            ))}
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium text-white/70 hover:text-[#4285F4] transition-colors duration-200 outline-none">
-                More <ChevronDown className="w-4 h-4 opacity-50" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-[#0a0a0a] border-white/10 p-2 min-w-[220px] rounded-xl shadow-2xl z-[60]">
-                <DropdownMenuLabel className="text-[10px] tracking-widest uppercase text-white/40 px-3 py-2">Exploration</DropdownMenuLabel>
-                <DropdownMenuItem onClick={onOpenPartner} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors focus:bg-white/5">
-                  <Briefcase className="w-4 h-4 text-[#4285F4]" />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-white/90">Partnership</span>
-                    <span className="text-[11px] text-white/40">Collaborate with us</span>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-white/10 my-1" />
-                <DropdownMenuItem className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors focus:bg-white/5">
-                  <Rocket className="w-4 h-4 text-[#34A853]" />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-white/90">Future Roadmap</span>
-                    <span className="text-[11px] text-white/40">Our upcoming journey</span>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors focus:bg-white/5">
-                  <BookOpen className="w-4 h-4 text-[#FBBC05]" />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-white/90">Case Library</span>
-                    <span className="text-[11px] text-white/40">Learn from our builds</span>
-                  </div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* Auth Buttons / Mobile Menu Toggle */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className="hidden sm:flex items-center gap-3">
-              {state.currentUser ? (
-                <>
-                  {state.currentUser.role === "admin" && (
-                    <Link
-                      to="/admin"
-                      className="px-4 py-2 text-[10px] font-bold tracking-widest uppercase rounded-full bg-white/5 text-white hover:bg-white/10 border border-white/10 transition-colors"
-                    >
-                      Admin
-                    </Link>
-                  )}
-                  <button
-                    onClick={handleWorkspaceClick}
-                    className="px-4 py-2 bg-[#4285F4]/10 text-[#4285F4] text-[10px] font-bold uppercase tracking-widest rounded-full hover:bg-[#4285F4]/20 transition-all border border-[#4285F4]/20"
-                  >
-                    Workspace
-                  </button>
-                  <button
-                    onClick={handleLoginLogout}
-                    className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-full bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 transition-colors"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={handleWorkspaceClick}
-                  className="px-5 py-2.5 bg-[#FFD700] text-black text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-full hover:bg-[#e6c200] transition-all active:scale-95"
+          {/* Right Side Buttons */}
+          <div className="flex items-center gap-4 sm:gap-6 relative z-[70]">
+            {/* Desktop Quick Links */}
+            <div className="hidden md:flex items-center gap-8 mr-4">
+              {['Services', 'Portfolio'].map((item) => (
+                <a
+                  key={item}
+                  href={`#${item.toLowerCase()}`}
+                  className="text-[10px] font-bold tracking-widest uppercase text-white/50 hover:text-white transition-colors"
                 >
-                  OOMA Workspace
-                </button>
-              )}
+                  {item}
+                </a>
+              ))}
             </div>
 
-            {/* Mobile Workspace Toggle (Visible only on very small screens) */}
             <button
-               onClick={handleWorkspaceClick}
-               className="sm:hidden w-8 h-8 flex items-center justify-center bg-[#FFD700] text-black rounded-full"
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="group flex items-center gap-3 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all active:scale-95"
             >
-               <Briefcase className="w-4 h-4" />
+              <span className="text-[10px] font-bold tracking-widest uppercase text-white/70 hidden sm:block">
+                {menuOpen ? 'Close' : 'Menu'}
+              </span>
+              <div className="relative w-4 h-4 flex items-center justify-center">
+                <AnimatePresence mode="wait">
+                  {menuOpen ? (
+                    <motion.div
+                      key="close"
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: 90, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="menu"
+                      initial={{ rotate: 90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: -90, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Menu className="w-4 h-4 text-white" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </button>
           </div>
         </div>
       </motion.nav>
+
+      {/* Full Screen Menu Overlay / Mobile Drawer */}
+      <AnimatePresence>
+        {menuOpen && (
+          <>
+            {/* Backdrop for Mobile/Desktop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMenuOpen(false)}
+              className="fixed inset-0 z-[50] bg-black/60 backdrop-blur-sm lg:hidden"
+            />
+            
+            <motion.div
+              initial={window.innerWidth < 1024 ? { y: '100%' } : { opacity: 0 }}
+              animate={window.innerWidth < 1024 ? { y: 0 } : { opacity: 1 }}
+              exit={window.innerWidth < 1024 ? { y: '100%' } : { opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200, duration: 0.4 }}
+              className={`fixed z-[55] bg-[#050505] flex flex-col overflow-y-auto overflow-x-hidden
+                ${window.innerWidth < 1024 
+                  ? "bottom-0 left-0 right-0 h-[85vh] rounded-t-[3rem] border-t border-white/10 px-6 py-12" 
+                  : "inset-0 pt-32 pb-12 px-6 md:px-12"
+                }`}
+            >
+              {/* Background Texture/Grid */}
+              <div className="absolute inset-0 stitch-grid opacity-10 pointer-events-none" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#4285F4]/5 blur-[150px] rounded-full pointer-events-none" />
+
+              {/* Mobile Handle */}
+              <div className="lg:hidden absolute top-4 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-white/10 rounded-full" />
+
+              <div className="max-w-7xl mx-auto w-full flex-grow grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+                {/* Left Side: Navigation Links */}
+                <div className="flex flex-col gap-4 sm:gap-8">
+                  <span className="text-[10px] tracking-widest uppercase text-[#4285F4] font-bold mb-4">Navigation</span>
+                  {navItems.map((item, i) => (
+                    <motion.a
+                      key={item.label}
+                      initial={{ opacity: 0, x: -30 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 + i * 0.1, duration: 0.5 }}
+                      href={item.href}
+                      onClick={() => setMenuOpen(false)}
+                      className="group flex items-center gap-6"
+                    >
+                      <span className="text-4xl sm:text-5xl lg:text-8xl font-display font-bold text-white/20 group-hover:text-white transition-all duration-500 group-hover:pl-4">
+                        {item.label}
+                      </span>
+                      <ArrowRight className="w-6 h-6 lg:w-12 lg:h-12 text-[#4285F4] opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500" />
+                    </motion.a>
+                  ))}
+                </div>
+
+                {/* Right Side: About & Info */}
+                <div className="flex flex-col gap-8 lg:gap-12 lg:max-w-md">
+                  <div>
+                    <span className="text-[10px] tracking-widest uppercase text-[#EA4335] font-bold block mb-4 lg:mb-6">About Ooma Labs</span>
+                    <p className="text-lg lg:text-2xl text-white/60 leading-relaxed font-medium">
+                      A strategic tech engineering firm dedicated to building purposeful platforms that bridge efficiency gaps in complex business operations.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 lg:gap-12">
+                    <div>
+                      <span className="text-[10px] tracking-widest uppercase text-white/30 font-bold block mb-4 lg:mb-6">Collaborate</span>
+                      <a href="mailto:hello@oomalabs.com" className="text-base lg:text-lg text-white hover:text-[#4285F4] transition-colors block mb-2">hello@oomalabs.com</a>
+                    </div>
+                    <div>
+                      <span className="text-[10px] tracking-widest uppercase text-white/30 font-bold block mb-4 lg:mb-6">HQ</span>
+                      <p className="text-base lg:text-lg text-white">Innovation District</p>
+                    </div>
+                  </div>
+
+                  {/* Socials */}
+                  <div className="flex gap-6 mt-4">
+                    {[Twitter, Linkedin, Instagram].map((Icon, i) => (
+                      <motion.a 
+                        key={i}
+                        whileHover={{ y: -5, color: '#4285F4' }}
+                        href="#" 
+                        className="text-white/40 transition-all"
+                      >
+                        <Icon className="w-6 h-6" />
+                      </motion.a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Footer Info */}
+              <div className="max-w-7xl mx-auto w-full mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-6">
+                 <p className="text-[10px] tracking-widest uppercase text-white/20 font-bold">
+                   © {new Date().getFullYear()} OOMA LABS. ALL RIGHTS RESERVED.
+                 </p>
+                 <div className="flex gap-8">
+                   <a href="#" className="text-[10px] tracking-widest uppercase text-white/20 hover:text-white transition-colors font-bold">Privacy Policy</a>
+                   <a href="#" className="text-[10px] tracking-widest uppercase text-white/20 hover:text-white transition-colors font-bold">Terms of Service</a>
+                 </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 };

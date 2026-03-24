@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import ProductSection from "@/components/ProductSection";
+import PortfolioSection from "@/components/ProductSection";
+import ServicesSection from "@/components/ServicesSection";
 import InnovationSection from "@/components/InnovationSection";
 import VisionSection from "@/components/VisionSection";
 import FounderSection from "@/components/FounderSection";
@@ -19,11 +20,12 @@ const Index = () => {
     <div className="min-h-screen bg-[#050505] selection:bg-[#4285F4]/30 selection:text-white">
       <Navbar onOpenPartner={openPartnership} />
       <HeroSection />
-      <ProductSection />
+      <ServicesSection />
+      <PortfolioSection />
       <InnovationSection />
       <VisionSection />
       <FounderSection />
-      <CTASection onOpenPartner={openPartnership} />
+      <CTASection />
       <footer className="py-8 text-center border-t border-white/10 bg-[#0a0a0a]">
         <p className="text-xs tracking-widest uppercase text-white/40 font-bold">
           © {new Date().getFullYear()} OOMA LABS. All rights reserved.
