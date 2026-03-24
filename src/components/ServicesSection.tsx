@@ -124,10 +124,10 @@ const ServiceCard = ({ category, index }: { category: any; index: number }) => {
               {category.title}
             </h3>
             <motion.div
-              animate={{ rotate: isExpanded ? 180 : 0, opacity: isExpanded ? 0 : 0.5 }}
-              className="mt-2"
+              animate={{ rotate: isExpanded ? 180 : 0, opacity: isExpanded ? 0 : 1 }}
+              className="mt-3 animate-bounce"
             >
-              <ChevronDown className="w-5 h-5 text-white/40" />
+              <ChevronDown className={`w-8 h-8 ${category.color} transition-all`} />
             </motion.div>
           </div>
         </div>
