@@ -194,7 +194,7 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 lg:gap-12">
                     <div>
                       <span className="text-[10px] tracking-widest uppercase text-white/30 font-bold block mb-4 lg:mb-6">Collaborate</span>
-                      <a href="mailto:hello@oomalabs.com" className="text-base lg:text-lg text-white hover:text-[#4285F4] transition-colors block mb-2">hello@oomalabs.com</a>
+                      <a href="mailto:oomalabs@gmail.com?body=hi%20i%20am%20looking%20for%20colabration%20in%20your%20company%20and%20my%20name%20is%20....." className="text-base lg:text-lg text-white hover:text-[#4285F4] transition-colors block mb-2">oomalabs@gmail.com</a>
                     </div>
                     <div>
                       <span className="text-[10px] tracking-widest uppercase text-white/30 font-bold block mb-4 lg:mb-6">HQ</span>

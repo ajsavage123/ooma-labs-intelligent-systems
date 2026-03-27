@@ -1,15 +1,41 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Lightbulb, Shield, Code } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import HeroThreeDBackground from "@/components/HeroThreeDBackground";
 import { Suspense } from "react";
 
 const HeroSection = () => {
+  const isMobile = useIsMobile();
+  
   return (
     <section className="relative pt-16 pb-12 md:pt-40 md:pb-24 overflow-hidden stitch-grid bg-[#050505]">
-      {/* 3D Animated Technology/Innovation Background */}
-      <Suspense fallback={null}>
-        <HeroThreeDBackground />
-      </Suspense>
+      {/* Mobile: Lightweight Motion Blobs | Desktop: 3D High-Fidelity Background */}
+      {isMobile ? (
+        <>
+          <motion.div
+            animate={{
+              x: [0, -50, 0, 50, 0],
+              y: [0, 50, 0, -50, 0],
+              scale: [1, 1.1, 1, 1.2, 1]
+            }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#4285F4]/15 blur-[120px] rounded-full -mr-48 -mt-24 pointer-events-none"
+          />
+          <motion.div
+            animate={{
+              x: [0, 50, 0, -50, 0],
+              y: [0, -50, 0, 50, 0],
+              scale: [1, 1.2, 1, 1.1, 1]
+            }}
+            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#EA4335]/10 blur-[100px] rounded-full -ml-40 -mb-20 pointer-events-none"
+          />
+        </>
+      ) : (
+        <Suspense fallback={null}>
+          <HeroThreeDBackground />
+        </Suspense>
+      )}
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10 w-full">
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto">

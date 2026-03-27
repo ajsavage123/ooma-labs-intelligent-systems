@@ -10,7 +10,7 @@ const FounderSection = () => {
   const socialLinks = [
     { icon: Linkedin, href: "https://www.linkedin.com/in/ajay-kumar-28ab50234?utm_source=share_via&utm_content=profile&utm_medium=member_android", color: "hover:text-[#0077B5]" },
     { icon: Instagram, href: "https://www.instagram.com/aj._.savage/", color: "hover:text-[#E4405F]" },
-    { icon: Mail, href: "mailto:oomalabs@gmail.com", color: "hover:text-[#EA4335]" }
+    { icon: Mail, href: "mailto:oomalabs@gmail.com?body=hi%20i%20am%20looking%20for%20colabration%20in%20your%20company%20and%20my%20name%20is%20.....", color: "hover:text-[#EA4335]" }
   ];
 
   return (
