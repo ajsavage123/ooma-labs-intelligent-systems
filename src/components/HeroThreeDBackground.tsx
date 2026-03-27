@@ -90,7 +90,7 @@ const InnovationHub = ({ isMobile }: { isMobile: boolean }) => {
   );
 };
 
-const TechnologyParticleGlow = ({ count = 3000 }) => {
+const TechnologyParticleGlow = ({ count }: { count: number }) => {
   const points = useMemo(() => {
     const p = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
@@ -126,21 +126,30 @@ const TechnologyParticleGlow = ({ count = 3000 }) => {
 const HeroThreeDBackground = () => {
   const isMobile = useIsMobile();
   
+  // DRATICALLY reduce counts for mobile performance
+  const starCount = isMobile ? 800 : 5000;
+  const particleCount = isMobile ? 500 : 3000;
+  const dprValue = isMobile ? 1 : [1, 2] as any;
+  
   return (
     <div className="absolute inset-0 z-0 pointer-events-none opacity-50 overflow-hidden">
       <Canvas 
-        shadows 
-        dpr={[1, 2]} 
+        shadows={!isMobile} 
+        dpr={dprValue} 
         camera={{ position: [0, 0, isMobile ? 12 : 8], fov: 50 }}
-        gl={{ alpha: true, antialias: true }}
+        gl={{ 
+            alpha: true, 
+            antialias: !isMobile,
+            powerPreference: 'high-performance'
+        }}
       >
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} intensity={2} color="#4285F4" />
         <pointLight position={[-10, -10, -10]} intensity={1.5} color="#EA4335" />
         <spotLight position={[0, 5, 0]} angle={0.3} penumbra={1} intensity={1} color="#FBBC05" />
         
-        <Stars radius={100} depth={50} count={5000} factor={4} saturation={1} fade speed={1} />
-        <TechnologyParticleGlow />
+        <Stars radius={100} depth={50} count={starCount} factor={4} saturation={isMobile ? 0 : 1} fade speed={1} />
+        <TechnologyParticleGlow count={particleCount} />
         
         <Suspense fallback={null}>
           <InnovationHub isMobile={isMobile} />
