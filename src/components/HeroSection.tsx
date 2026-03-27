@@ -1,28 +1,15 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Lightbulb, Shield, Code } from "lucide-react";
+import HeroThreeDBackground from "@/components/HeroThreeDBackground";
+import { Suspense } from "react";
 
 const HeroSection = () => {
   return (
-    <section className="relative pt-24 pb-12 md:pt-48 md:pb-24 overflow-hidden stitch-grid bg-[#050505]">
-      {/* Decorative blobs for "Stitch" vibe with smooth animation */}
-      <motion.div
-        animate={{
-          x: [0, -50, 0, 50, 0],
-          y: [0, 50, 0, -50, 0],
-          scale: [1, 1.1, 1, 1.2, 1]
-        }}
-        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#4285F4]/15 blur-[120px] rounded-full -mr-48 -mt-24 pointer-events-none"
-      />
-      <motion.div
-        animate={{
-          x: [0, 50, 0, -50, 0],
-          y: [0, -50, 0, 50, 0],
-          scale: [1, 1.2, 1, 1.1, 1]
-        }}
-        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#EA4335]/10 blur-[100px] rounded-full -ml-40 -mb-20 pointer-events-none"
-      />
+    <section className="relative pt-16 pb-12 md:pt-40 md:pb-24 overflow-hidden stitch-grid bg-[#050505]">
+      {/* 3D Animated Technology/Innovation Background */}
+      <Suspense fallback={null}>
+        <HeroThreeDBackground />
+      </Suspense>
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10 w-full">
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
@@ -42,7 +29,7 @@ const HeroSection = () => {
             transition={{ duration: 0.7, delay: 0.3 }}
             className="text-responsive-body text-white/60 mb-10 max-w-2xl mx-auto"
           >
-            Ooma Labs is a strategic tech engineering firm. We architect and build high-performance applications and ecosystems that solve structural inefficiencies for startups and enterprises.
+            Ooma Labs is a strategic tech engineering firm. We architect and build high-performance applications or new innovative technology that solve structural inefficiencies for startups and enterprises.
           </motion.p>
 
           <motion.div
@@ -51,7 +38,7 @@ const HeroSection = () => {
             transition={{ duration: 0.7, delay: 0.4 }}
             className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto px-6 sm:px-0"
           >
-            <button 
+            <button
               onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}
               className="btn-google-blue flex items-center justify-center gap-2 group shadow-md w-full sm:w-auto"
             >
@@ -70,11 +57,11 @@ const HeroSection = () => {
         {/* Dynamic Mobile View (Horizontal Scroll) */}
         <div className="mt-20 sm:mt-24">
           <div className="carousel-container pb-8 md:grid md:grid-cols-3 md:gap-8 md:pb-0">
-             {[
-               { icon: Lightbulb, color: 'text-[#FBBC05]', bg: 'bg-[#FBBC05]/10', border: 'hover:border-[#FBBC05]/40', title: 'Deep Discovery', desc: 'We identify structural inefficiencies that standard solutions often miss.' },
-               { icon: Code, color: 'text-[#4285F4]', bg: 'bg-[#4285F4]/10', border: 'hover:border-[#4285F4]/40', title: 'Strategic Engineering', desc: 'Performance-critical web and mobile systems built for scale and reliability.' },
-               { icon: Shield, color: 'text-[#EA4335]', bg: 'bg-[#EA4335]/10', border: 'hover:border-[#EA4335]/40', title: 'Ecosystem Resilience', desc: 'Ensuring your digital infrastructure remains secure and future-proof.' }
-             ].map((feature, i) => (
+            {[
+              { icon: Lightbulb, color: 'text-[#FBBC05]', bg: 'bg-[#FBBC05]/10', border: 'hover:border-[#FBBC05]/40', title: 'Deep Discovery', desc: 'We identify structural inefficiencies that standard solutions often miss.' },
+              { icon: Code, color: 'text-[#4285F4]', bg: 'bg-[#4285F4]/10', border: 'hover:border-[#4285F4]/40', title: 'Strategic Engineering', desc: 'Performance-critical web and mobile systems built for scale and reliability.' },
+              { icon: Shield, color: 'text-[#EA4335]', bg: 'bg-[#EA4335]/10', border: 'hover:border-[#EA4335]/40', title: 'Ecosystem Resilience', desc: 'Ensuring your digital infrastructure remains secure and future-proof.' }
+            ].map((feature, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}

@@ -12,6 +12,7 @@ import PartnershipPage from "./pages/Partnership";
 import WorkspaceAccess from "./pages/WorkspaceAccess";
 import WorkspaceRoutes from "./pages/workspace/WorkspaceRoutes";
 import ProductsPage from "./pages/Products";
+import FreelancerApplication from "./pages/FreelancerApplication";
 
 import { AuthProvider } from "./context/AuthContext";
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/workspace-access" element={<WorkspaceAccess />} />
             <Route path="/workspace/*" element={<WorkspaceRoutes />} />
             <Route path="/products" element={<ProductsPage />} />
+            <Route path="/freelance" element={<FreelancerApplication />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

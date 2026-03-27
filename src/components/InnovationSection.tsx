@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import { Search, PenTool, GitPullRequest, FastForward } from "lucide-react";
+import { Suspense } from "react";
+import InnovationThreeDBackground from "@/components/InnovationThreeDBackground";
 
 const steps = [
   {
@@ -39,6 +41,9 @@ const steps = [
 const InnovationSection = () => {
   return (
     <section id="innovation" className="py-24 bg-[#050505] relative overflow-hidden stitch-grid">
+      <Suspense fallback={null}>
+        <InnovationThreeDBackground />
+      </Suspense>
       <div className="absolute inset-0 bg-[#050505]/95 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
