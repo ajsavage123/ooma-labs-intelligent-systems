@@ -64,13 +64,8 @@ const InnovationThreeDBackground = () => {
     return (
         <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
             <Canvas 
-                dpr={isMobile ? 1 : [1, 2] as any}
                 camera={{ position: [0, 0, 10], fov: 50 }}
-                gl={{ 
-                    alpha: true, 
-                    antialias: !isMobile,
-                    powerPreference: 'high-performance'
-                }}
+                gl={{ alpha: true, antialias: true }}
             >
                 <ambientLight intensity={0.5} />
                 <pointLight position={[10, 10, 10]} intensity={1} color="#4285F4" />
