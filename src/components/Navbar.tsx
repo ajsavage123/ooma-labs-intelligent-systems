@@ -80,17 +80,7 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
           {/* Right Side Buttons */}
           <div className="flex items-center gap-6 sm:gap-10 relative z-[70]">
             {/* Desktop Quick Links */}
-            <div className="hidden md:flex items-center gap-10">
-              {['Services', 'Portfolio'].map((item) => (
-                <a
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
-                  className="text-xs font-black tracking-[0.2em] uppercase text-white/40 hover:text-white transition-colors"
-                >
-                  {item}
-                </a>
-              ))}
-            </div>
+
 
             <button
               onClick={() => setMenuOpen(!menuOpen)}
@@ -204,11 +194,17 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
 
                   {/* Socials */}
                   <div className="flex gap-6 mt-4">
-                    {[Twitter, Linkedin, Instagram].map((Icon, i) => (
+                    {[
+                      { icon: Twitter, href: "#" },
+                      { icon: Linkedin, href: "https://www.linkedin.com/company/oomalabs/" },
+                      { icon: Instagram, href: "https://www.instagram.com/ooma.labs?igsh=YTNrOXcxd3puZWxj" }
+                    ].map(({ icon: Icon, href }, i) => (
                       <motion.a 
                         key={i}
                         whileHover={{ y: -5, color: '#4285F4' }}
-                        href="#" 
+                        href={href}
+                        target={href !== "#" ? "_blank" : undefined}
+                        rel={href !== "#" ? "noopener noreferrer" : undefined}
                         className="text-white/40 transition-all"
                       >
                         <Icon className="w-6 h-6" />

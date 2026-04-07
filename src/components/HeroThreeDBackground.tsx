@@ -1,155 +1,225 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Float, MeshDistortMaterial, OrbitControls, Stars, Points, PointMaterial, MeshWobbleMaterial } from "@react-three/drei";
-import { useRef, useMemo, Suspense } from "react";
+import { Points, PointMaterial, Line, useCursor, Float } from "@react-three/drei";
+import { useRef, useMemo, useState, useEffect } from "react";
 import * as THREE from "three";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const InnovationHub = ({ isMobile }: { isMobile: boolean }) => {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const groupRef = useRef<THREE.Group>(null);
-  const scale = isMobile ? 0.5 : 0.8;
-  const yOffset = isMobile ? 2.5 : 0.8;
+const NeuralGrid = () => {
+  const { mouse, viewport } = useThree();
+  const meshRef = useRef<THREE.Points>(null);
+  const lineRef = useRef<THREE.LineSegments>(null);
   
-  // Mouse tracking state
-  const mouse = new THREE.Vector2();
-  
-  useFrame((state) => {
-    // Smooth mouse tilt
-    const x = (state.mouse.x * 0.5);
-    const y = (state.mouse.y * 0.5);
-    
-    if (groupRef.current) {
-        groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, x, 0.05);
-        groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -y, 0.05);
+  const gridSize = 40;
+  const spacing = 0.6;
+  const count = gridSize * gridSize;
+
+  // Initial grid positions
+  const [positions, initialPositions] = useMemo(() => {
+    const pos = new Float32Array(count * 3);
+    const initial = new Float32Array(count * 3);
+    for (let i = 0; i < gridSize; i++) {
+      for (let j = 0; j < gridSize; j++) {
+        const idx = (i * gridSize + j) * 3;
+        pos[idx] = (i - gridSize / 2) * spacing;
+        pos[idx + 1] = (j - gridSize / 2) * spacing;
+        pos[idx + 2] = 0;
+        
+        initial[idx] = pos[idx];
+        initial[idx + 1] = pos[idx + 1];
+        initial[idx + 2] = pos[idx + 2];
+      }
     }
-    
+    return [pos, initial];
+  }, []);
+
+  // Line segments for the grid
+  const linePositions = useMemo(() => {
+    const lines = new Float32Array(count * 2 * 3 * 2); // Horizontal and vertical lines
+    return lines;
+  }, [count]);
+
+  useFrame((state) => {
+    const t = state.clock.getElapsedTime();
+    const mouseX = (mouse.x * viewport.width) / 2;
+    const mouseY = (mouse.y * viewport.height) / 2;
+    const mouseVec = new THREE.Vector3(mouseX, mouseY, 0);
+
+    // Update point positions based on mouse proximity (Ripple effect)
+    for (let i = 0; i < count; i++) {
+        const idx = i * 3;
+        const ix = initialPositions[idx];
+        const iy = initialPositions[idx + 1];
+        
+        const dist = Math.sqrt((ix - mouseX) ** 2 + (iy - mouseY) ** 2);
+        
+        // Dynamic Z displacement (The "Ripple")
+        const ripple = Math.sin(dist * 0.8 - t * 3) * 0.5 * Math.max(0, 1 - dist / 8);
+        const attraction = Math.max(0, 1 - dist / 5) * 1.5;
+        
+        positions[idx + 2] = ripple + attraction;
+        
+        // Hover tilt
+        positions[idx] = ix + (mouseX - ix) * 0.02 * attraction;
+        positions[idx + 1] = iy + (mouseY - iy) * 0.02 * attraction;
+    }
+
     if (meshRef.current) {
-      meshRef.current.rotation.z += 0.005;
+        meshRef.current.geometry.attributes.position.needsUpdate = true;
+    }
+
+    // Update lines to match points
+    if (lineRef.current) {
+        let lineIdx = 0;
+        for (let i = 0; i < gridSize; i++) {
+            for (let j = 0; j < gridSize; j++) {
+                const currIdx = (i * gridSize + j) * 3;
+                
+                // Horizontal connection
+                if (j < gridSize - 1) {
+                    const nextIdx = (i * gridSize + (j + 1)) * 3;
+                    linePositions[lineIdx++] = positions[currIdx];
+                    linePositions[lineIdx++] = positions[currIdx + 1];
+                    linePositions[lineIdx++] = positions[currIdx + 2];
+                    linePositions[lineIdx++] = positions[nextIdx];
+                    linePositions[lineIdx++] = positions[nextIdx + 1];
+                    linePositions[lineIdx++] = positions[nextIdx + 2];
+                }
+                
+                // Vertical connection
+                if (i < gridSize - 1) {
+                    const nextIdx = ((i + 1) * gridSize + j) * 3;
+                    linePositions[lineIdx++] = positions[currIdx];
+                    linePositions[lineIdx++] = positions[currIdx + 1];
+                    linePositions[lineIdx++] = positions[currIdx + 2];
+                    linePositions[lineIdx++] = positions[nextIdx];
+                    linePositions[lineIdx++] = positions[nextIdx + 1];
+                    linePositions[lineIdx++] = positions[nextIdx + 2];
+                }
+            }
+        }
+        lineRef.current.geometry.attributes.position.needsUpdate = true;
     }
   });
 
   return (
-    <group ref={groupRef} scale={[scale, scale, scale]} position={[0, yOffset, 0]}>
-      {/* Central Core with "Liquid" motion */}
-      <Float speed={3} rotationIntensity={2} floatIntensity={1.5}>
-        <mesh ref={meshRef}>
-          <icosahedronGeometry args={[1, 1]} />
-          <meshStandardMaterial
-            color="#4285F4"
-            wireframe
-            emissive="#4285F4"
-            emissiveIntensity={2}
-            transparent
-            opacity={0.15}
-          />
-        </mesh>
-        <mesh>
-          <icosahedronGeometry args={[0.7, 15]} />
-          <MeshDistortMaterial
-            color="#4285F4"
-            speed={5}
-            distort={0.4}
-            radius={1}
-            emissive="#1a3b7a"
-            emissiveIntensity={1}
-            transparent
-            opacity={0.6}
-          />
-        </mesh>
-      </Float>
+    <group rotation={[-Math.PI / 8, 0, 0]}>
+      <Points ref={meshRef} positions={positions} stride={3} frustumCulled={false}>
+        <PointMaterial
+          transparent
+          color="#4285F4"
+          size={0.05}
+          sizeAttenuation={true}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          opacity={0.8}
+        />
+      </Points>
       
-      {/* "Data Stream" Rings representing Efficiency Bridges */}
-      {[1.5, 2.2, 3.0].map((radius, i) => (
-        <Float key={i} speed={2 + i} rotationIntensity={5} floatIntensity={0.5}>
-          <group rotation={[Math.random() * Math.PI, Math.random() * Math.PI, 0]}>
-            <mesh>
-                <torusGeometry args={[radius, 0.005, 16, 100]} />
-                <meshStandardMaterial 
-                    color={i === 0 ? "#4285F4" : i === 1 ? "#EA4335" : "#FBBC05"} 
-                    emissive={i === 0 ? "#4285F4" : i === 1 ? "#EA4335" : "#FBBC05"}
-                    emissiveIntensity={3}
-                />
-            </mesh>
-            {/* Pulsing particles on the rings */}
-            {[0, 1, 2, 3].map((p) => (
-                <mesh key={p} position={[radius * Math.cos(p * Math.PI/2), radius * Math.sin(p * Math.PI/2), 0]}>
-                    <sphereGeometry args={[0.03, 8, 8]} />
-                    <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={5} />
-                </mesh>
-            ))}
-          </group>
-        </Float>
-      ))}
+      <lineSegments ref={lineRef}>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            count={linePositions.length / 3}
+            array={linePositions}
+            itemSize={3}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial 
+          color="#4285F4" 
+          transparent 
+          opacity={0.15} 
+          blending={THREE.AdditiveBlending} 
+          linewidth={1}
+        />
+      </lineSegments>
       
-      {/* Soft Glow Ambient Field */}
-      <mesh scale={[10, 10, 10]}>
-          <sphereGeometry args={[1, 32, 32]} />
-          <meshBasicMaterial color="#4285F4" transparent opacity={0.02} side={THREE.BackSide} />
+      {/* Decorative center glow */}
+      <mesh position={[0, 0, -2]}>
+          <planeGeometry args={[20, 20]} />
+          <meshBasicMaterial 
+            color="#4285F4" 
+            transparent 
+            opacity={0.03} 
+            side={THREE.DoubleSide}
+          />
       </mesh>
     </group>
   );
 };
 
-const TechnologyParticleGlow = ({ count = 3000 }) => {
-  const points = useMemo(() => {
-    const p = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-        p[i * 3] = (Math.random() - 0.5) * 25;
-        p[i * 3 + 1] = (Math.random() - 0.5) * 25;
-        p[i * 3 + 2] = (Math.random() - 0.5) * 25;
-    }
-    return p;
-  }, [count]);
+// Data pulses that travel along the grid
+const DataPulses = ({ count = 12 }) => {
+    const { viewport } = useThree();
+    const groupRef = useRef<THREE.Group>(null);
+    
+    const pulses = useMemo(() => {
+        return Array.from({ length: count }, () => ({
+            speed: 0.02 + Math.random() * 0.05,
+            direction: Math.random() > 0.5 ? 'x' : 'y',
+            pos: (Math.random() - 0.5) * 15,
+            offset: Math.random() * 20,
+            color: Math.random() > 0.7 ? '#EA4335' : '#4285F4'
+        }));
+    }, [count]);
 
-  const pointsRef = useRef<THREE.Points>(null);
-  useFrame((state) => {
-      if (pointsRef.current) {
-          pointsRef.current.rotation.y = state.clock.getElapsedTime() * 0.02;
-          pointsRef.current.rotation.x = state.clock.getElapsedTime() * 0.01;
-      }
-  });
+    useFrame((state) => {
+        const t = state.clock.getElapsedTime();
+        if (groupRef.current) {
+            groupRef.current.children.forEach((child, i) => {
+                const p = pulses[i];
+                const cycle = (t * p.speed * 50 + p.offset) % 20 - 10;
+                if (p.direction === 'x') {
+                    child.position.set(cycle, p.pos, 0.1);
+                } else {
+                    child.position.set(p.pos, cycle, 0.1);
+                }
+                // Fade in/out at edges
+                const opacity = Math.sin((cycle + 10) / 20 * Math.PI);
+                (child as THREE.Mesh).scale.setScalar(opacity * 0.5);
+            });
+        }
+    });
 
-  return (
-    <Points ref={pointsRef} positions={points}>
-      <PointMaterial
-        transparent
-        color="#ffffff"
-        size={0.03}
-        sizeAttenuation={true}
-        depthWrite={false}
-        opacity={0.5}
-      />
-    </Points>
-  );
+    return (
+        <group ref={groupRef}>
+            {pulses.map((p, i) => (
+                <mesh key={i}>
+                    <sphereGeometry args={[0.1, 8, 8]} />
+                    <meshBasicMaterial color={p.color} transparent opacity={0.6} />
+                </mesh>
+            ))}
+        </group>
+    );
 };
 
 const HeroThreeDBackground = () => {
   const isMobile = useIsMobile();
   
+  if (isMobile) return null;
+  
   return (
-    <div className="absolute inset-0 z-0 pointer-events-none opacity-50 overflow-hidden">
+    <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-[#050505]">
+      {/* Visual layering: Soft background glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#4285F4]/5 blur-[120px] rounded-full" />
+      
       <Canvas 
-        shadows 
-        dpr={[1, 2]} 
-        camera={{ position: [0, 0, isMobile ? 12 : 8], fov: 50 }}
-        gl={{ alpha: true, antialias: true }}
+        dpr={[1, 1.5]}
+        camera={{ position: [0, -2, 12], fov: 40 }}
+        gl={{ alpha: true, antialias: true, stencil: false, depth: true }}
       >
         <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={2} color="#4285F4" />
-        <pointLight position={[-10, -10, -10]} intensity={1.5} color="#EA4335" />
-        <spotLight position={[0, 5, 0]} angle={0.3} penumbra={1} intensity={1} color="#FBBC05" />
         
-        <Stars radius={100} depth={50} count={5000} factor={4} saturation={1} fade speed={1} />
-        <TechnologyParticleGlow />
+        <NeuralGrid />
+        <DataPulses count={15} />
         
-        <Suspense fallback={null}>
-          <InnovationHub isMobile={isMobile} />
-        </Suspense>
-        
-        <OrbitControls enableZoom={false} enablePan={false} autoRotate={false} />
+        {/* Subtle background dust */}
+        <Points positions={new Float32Array(Array.from({length: 300}, () => (Math.random() - 0.5) * 40))}>
+            <PointMaterial transparent color="#ffffff" size={0.02} sizeAttenuation opacity={0.1} />
+        </Points>
       </Canvas>
     </div>
   );
 };
 
 export default HeroThreeDBackground;
+
