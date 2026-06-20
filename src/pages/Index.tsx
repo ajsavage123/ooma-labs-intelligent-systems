@@ -11,8 +11,7 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 import FAQSection from "@/components/FAQSection";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
-import BackToTop from "@/components/BackToTop";
-import WhatsAppWidget from "@/components/WhatsAppWidget";
+
 
 const Index = () => {
   const navigate = useNavigate();
@@ -35,8 +34,7 @@ const Index = () => {
       <FAQSection />
       <CTASection />
       <Footer />
-      <BackToTop />
-      <WhatsAppWidget />
+
     </div>
   );
 };

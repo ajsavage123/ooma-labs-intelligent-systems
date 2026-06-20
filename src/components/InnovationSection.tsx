@@ -81,7 +81,7 @@ const InnovationSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.4 + i * 0.1 }}
-              className={`bg-[#0a0a0a] p-8 md:p-10 rounded-[3rem] border border-white/5 hover:border-white/20 transition-all duration-500 group relative overflow-hidden shadow-2xl`}
+              className={`bg-[#0a0a0a] p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-white/5 hover:border-white/20 transition-all duration-500 group relative overflow-hidden shadow-2xl`}
             >
               <div className="relative z-10">
                 <span className="text-[10px] font-black tracking-[0.3em] uppercase text-white/20 block mb-8">
@@ -89,11 +89,11 @@ const InnovationSection = () => {
                 </span>
                 
                 <div className={`w-14 h-14 ${step.color} rounded-2xl flex items-center justify-center mb-10 transition-transform group-hover:scale-110 group-hover:rotate-3`}>
-                  <step.icon className="w-7 h-7" />
+                   <step.icon className="w-7 h-7" />
                 </div>
                 
-                <h3 className="text-xl font-bold text-white mb-6 font-display tracking-tight">{step.title}</h3>
-                <p className="text-white/50 text-base leading-relaxed font-medium">{step.desc}</p>
+                <h3 className="text-lg md:text-xl font-bold text-white mb-6 font-display tracking-tight">{step.title}</h3>
+                <p className="text-white/50 text-sm md:text-base leading-relaxed font-medium">{step.desc}</p>
               </div>
               
               {/* Decorative accent */}

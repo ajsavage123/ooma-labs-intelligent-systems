@@ -159,9 +159,17 @@ const ServiceCard = ({ category, index }: { category: any; index: number }) => {
               </ul>
               
               <div className="mt-8">
-                <span className={`text-[10px] font-bold tracking-widest uppercase ${category.color} animate-pulse`}>
-                  Start Your Project
-                </span>
+                <a
+                  href={`https://wa.me/919492827058?text=${encodeURIComponent(
+                    `Hi Ooma Labs! I'm interested in your ${category.title} services and would like to start a project. Please share more details.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className={`inline-flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase ${category.color} animate-pulse hover:opacity-80 transition-opacity`}
+                >
+                  Start Your Project →
+                </a>
               </div>
             </motion.div>
           )}

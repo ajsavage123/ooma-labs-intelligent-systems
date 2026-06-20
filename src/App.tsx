@@ -21,7 +21,7 @@ import About from "./pages/About";
 import Blog from "./pages/Blog";
 
 import CookieConsent from "./components/CookieConsent";
-import ExitIntentModal from "./components/ExitIntentModal";
+import QuoteChatWidget from "./components/QuoteChatWidget";
 
 import { AuthProvider } from "./context/AuthContext";
 
@@ -51,7 +51,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <CookieConsent />
-          <ExitIntentModal />
+          <QuoteChatWidget />
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>

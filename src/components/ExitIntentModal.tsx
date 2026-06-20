@@ -2,261 +2,282 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { User, Phone, MapPin, FileText, Send, Clock, Building, AlertCircle } from "lucide-react";
+import { X, Send, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 const formSchema = z.object({
-  fullName: z.string().min(2, "Full name is required"),
+  fullName: z.string().min(2, "Name is required"),
   phone: z.string().min(10, "Valid phone number is required"),
-  address: z.string().min(5, "Full address is required"),
-  businessDetails: z.string().min(3, "Please describe your business details"),
-  requirement: z.string().min(10, "Please describe your website requirements in detail (min 10 characters)"),
+  businessDetails: z.string().min(3, "Describe your business briefly"),
+  requirement: z
+    .string()
+    .min(10, "Please describe your project (min 10 characters)"),
 });
 
 const ExitIntentModal = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
 
   useEffect(() => {
-    // Check if user has visited before (returning/older user)
-    const isReturningUser = localStorage.getItem("hasVisitedBefore");
-    if (isReturningUser) {
-      return; // Do not show the popup to returning users
-    }
+    const hasSeenPopup = localStorage.getItem("quotationPopupSeen");
+    if (hasSeenPopup) return;
 
-    const triggerModal = () => {
-      setIsOpen(true);
-      // Mark as returning user so they do not see the popup again on subsequent visits
-      localStorage.setItem("hasVisitedBefore", "true");
-    };
-
-    // Trigger popup exactly 1 minute (60000 ms) after the user lands on the website
     const timer = setTimeout(() => {
-      triggerModal();
-    }, 60000);
+      setIsOpen(true);
+      localStorage.setItem("quotationPopupSeen", "true");
+    }, 10000); // 10 seconds
 
-    return () => {
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    if (!isOpen || timeLeft <= 0) return;
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isOpen, timeLeft]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       fullName: "",
       phone: "",
-      address: "",
       businessDetails: "",
       requirement: "",
     },
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    // Generate pre-filled message format requested:
-    // "hey i heard about your offer and here are my details {client details}"
-    const formattedDetails = `\nName: ${values.fullName}\nPhone: ${values.phone}\nAddress: ${values.address}\nBusiness Details: ${values.businessDetails}\nRequirement: ${values.requirement}`;
-    const text = `hey i heard about your offer and here are my details:${formattedDetails}`;
-    
-    // Redirect URL using the number from the WhatsApp Widget: 919492827058
-    const whatsappUrl = `https://wa.me/919492827058?text=${encodeURIComponent(text)}`;
-    
+    const msg =
+      `Hi Ooma Labs, I'd like an instant quotation.\n\n` +
+      `Name: ${values.fullName}\n` +
+      `Phone: ${values.phone}\n` +
+      `Business: ${values.businessDetails}\n` +
+      `Project: ${values.requirement}`;
+
+    const whatsappUrl = `https://wa.me/919492827058?text=${encodeURIComponent(msg)}`;
     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
     setIsOpen(false);
-    toast.success("Redirecting to WhatsApp to submit your request!");
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    toast.success("Opening WhatsApp to send your quotation request!");
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-xl glass-dark border-white/10 p-0 overflow-y-auto max-h-[90vh] sm:rounded-[2.5rem] scrollbar-hide z-[100]">
-        <div className="relative">
-          {/* Subtle Google-colored top accent border */}
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#4285F4] via-[#EA4335] via-[#FBBC05] to-[#34A853]" />
-          
-          <div className="p-6 md:p-10">
-            <DialogHeader className="mb-6 text-center">
-              <div className="flex justify-center mb-3">
-                <span className="badge-google !bg-[#4285F4]/10 !text-[#4285F4] !border-[#4285F4]/20 flex items-center gap-1.5 py-1 px-3 text-[10px] tracking-wider uppercase font-bold">
-                  Special Promotion
-                </span>
-              </div>
-              <DialogTitle className="font-serif text-3xl md:text-4xl text-gradient-google tracking-tight leading-tight">
-                First-time Website Offer <br />
-                <span className="text-white font-bold">Absolutely FREE!</span>
-              </DialogTitle>
-              <DialogDescription className="text-white/60 text-sm md:text-base mt-2">
-                As a new client of Ooma Labs, we will build your first professional website for zero design and development cost. Claim this offer before the timer expires.
-              </DialogDescription>
-            </DialogHeader>
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            key="backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm"
+            onClick={() => setIsOpen(false)}
+          />
 
-            {/* Subtle Countdown Timer */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between mb-8 shadow-inner">
-              <div className="flex items-center gap-2.5">
-                <Clock className="w-5 h-5 text-[#FBBC05]" />
-                <span className="text-xs font-bold uppercase tracking-wider text-white/60">Time Remaining to Claim:</span>
-              </div>
-              <span className={`text-2xl font-mono font-bold tracking-widest ${timeLeft < 60 ? 'text-red-500' : 'text-[#FBBC05]'}`}>
-                {formatTime(timeLeft)}
-              </span>
-            </div>
+          {/* Modal */}
+          <motion.div
+            key="modal"
+            initial={{ opacity: 0, scale: 0.94, y: 24 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: 24 }}
+            transition={{ type: "spring", stiffness: 340, damping: 30 }}
+            className="fixed inset-0 z-[201] flex items-center justify-center p-4 pointer-events-none"
+          >
+            <div
+              className="pointer-events-auto w-full max-w-md relative"
+              style={{
+                background: "linear-gradient(145deg, #0f0f14 0%, #12121a 100%)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: "1.75rem",
+                boxShadow:
+                  "0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(66,133,244,0.1)",
+                overflow: "hidden",
+              }}
+            >
+              {/* Top accent line */}
+              <div
+                style={{
+                  height: "2px",
+                  background:
+                    "linear-gradient(90deg, #4285F4 0%, #7c3aed 50%, #34A853 100%)",
+                }}
+              />
 
-            {timeLeft <= 0 ? (
-              <div className="flex flex-col items-center justify-center text-center py-6">
-                <AlertCircle className="w-12 h-12 text-red-500 mb-3" />
-                <h4 className="text-lg font-bold text-white mb-1">Time's Up!</h4>
-                <p className="text-white/60 text-sm max-w-xs">This specific promotion has expired. Stay tuned for future offers!</p>
-                <Button 
+              <div className="p-7">
+                {/* Close */}
+                <button
                   onClick={() => setIsOpen(false)}
-                  className="mt-5 rounded-full border-white/10 hover:border-[#FBBC05]/50 transition-all font-body text-xs tracking-widest uppercase"
-                  variant="outline"
+                  className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full transition-all"
+                  style={{
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}
+                  aria-label="Close"
                 >
-                  Close Window
-                </Button>
-              </div>
-            ) : (
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                  <div className="grid grid-cols-1 gap-5">
-                    {/* Full Name */}
-                    <FormField
-                      control={form.control}
-                      name="fullName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold text-white/70">
-                            <User className="w-3.5 h-3.5 text-[#4285F4]" /> Full Name
-                          </FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your full name" {...field} className="glass border-white/5 focus:border-[#4285F4]/50 transition-all rounded-xl py-5" />
-                          </FormControl>
-                          <FormMessage className="text-red-400 text-xs" />
-                        </FormItem>
-                      )}
-                    />
+                  <X className="w-3.5 h-3.5 text-white/50" />
+                </button>
 
-                    {/* Phone Number */}
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold text-white/70">
-                            <Phone className="w-3.5 h-3.5 text-[#34A853]" /> Phone Number
-                          </FormLabel>
-                          <FormControl>
-                            <Input type="tel" placeholder="Enter your phone/WhatsApp number" {...field} className="glass border-white/5 focus:border-[#34A853]/50 transition-all rounded-xl py-5" />
-                          </FormControl>
-                          <FormMessage className="text-red-400 text-xs" />
-                        </FormItem>
-                      )}
-                    />
+                {/* Header */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div
+                      className="w-8 h-8 rounded-xl flex items-center justify-center"
+                      style={{ background: "rgba(66,133,244,0.12)" }}
+                    >
+                      <Zap className="w-4 h-4 text-[#4285F4]" />
+                    </div>
+                    <span
+                      className="text-[10px] font-bold tracking-[0.18em] uppercase"
+                      style={{ color: "#4285F4" }}
+                    >
+                      Quick Quote
+                    </span>
+                  </div>
+                  <h2
+                    className="text-2xl font-bold text-white leading-tight mb-1"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                  >
+                    Get an Instant Quotation
+                  </h2>
+                  <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
+                    Tell us about your project and we'll get back within 24 hrs.
+                  </p>
+                </div>
 
-                    {/* Address */}
-                    <FormField
-                      control={form.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold text-white/70">
-                            <MapPin className="w-3.5 h-3.5 text-[#EA4335]" /> Address
-                          </FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your city/address" {...field} className="glass border-white/5 focus:border-[#EA4335]/50 transition-all rounded-xl py-5" />
-                          </FormControl>
-                          <FormMessage className="text-red-400 text-xs" />
-                        </FormItem>
-                      )}
-                    />
+                {/* Form */}
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-3.5"
+                  >
+                    {/* Name + Phone row */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="fullName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                placeholder="Your name"
+                                {...field}
+                                className="rounded-xl text-sm py-5 px-4"
+                                style={{
+                                  background: "rgba(255,255,255,0.04)",
+                                  border: "1px solid rgba(255,255,255,0.08)",
+                                  color: "white",
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red-400 text-xs" />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="tel"
+                                placeholder="Phone / WhatsApp"
+                                {...field}
+                                className="rounded-xl text-sm py-5 px-4"
+                                style={{
+                                  background: "rgba(255,255,255,0.04)",
+                                  border: "1px solid rgba(255,255,255,0.08)",
+                                  color: "white",
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red-400 text-xs" />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
-                    {/* Business Details */}
                     <FormField
                       control={form.control}
                       name="businessDetails"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold text-white/70">
-                            <Building className="w-3.5 h-3.5 text-[#4285F4]" /> Business Details
-                          </FormLabel>
                           <FormControl>
-                            <Input placeholder="Describe your business (e.g. Retail store, SaaS company, Agency...)" {...field} className="glass border-white/5 focus:border-[#4285F4]/50 transition-all rounded-xl py-5" />
-                          </FormControl>
-                          <FormMessage className="text-red-400 text-xs" />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Website Requirement details */}
-                    <FormField
-                      control={form.control}
-                      name="requirement"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold text-white/70">
-                            <FileText className="w-3.5 h-3.5 text-[#FBBC05]" /> Website Requirement Details
-                          </FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Describe the website you need (e.g. e-commerce, portfolio, landing page, features needed...)" 
-                              {...field} 
-                              className="glass border-white/5 focus:border-[#FBBC05]/50 transition-all rounded-xl min-h-[100px] resize-none"
+                            <Input
+                              placeholder="Your business (e.g. SaaS startup, retail brand…)"
+                              {...field}
+                              className="rounded-xl text-sm py-5 px-4"
+                              style={{
+                                background: "rgba(255,255,255,0.04)",
+                                border: "1px solid rgba(255,255,255,0.08)",
+                                color: "white",
+                              }}
                             />
                           </FormControl>
                           <FormMessage className="text-red-400 text-xs" />
                         </FormItem>
                       )}
                     />
-                  </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full btn-solid py-7 rounded-2xl group relative overflow-hidden bg-gradient-to-r from-[#34A853] to-[#25D366] text-white font-bold text-sm tracking-widest uppercase hover:brightness-110 shadow-lg shadow-green-500/20"
-                  >
-                    <span className="relative z-10 flex items-center justify-center gap-3">
-                      Claim via WhatsApp
-                      <Send className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                    </span>
-                  </Button>
-                </form>
-              </Form>
-            )}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+                    <FormField
+                      control={form.control}
+                      name="requirement"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Describe your project — what do you want to build?"
+                              {...field}
+                              className="rounded-xl text-sm px-4 resize-none min-h-[90px]"
+                              style={{
+                                background: "rgba(255,255,255,0.04)",
+                                border: "1px solid rgba(255,255,255,0.08)",
+                                color: "white",
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-400 text-xs" />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Submit */}
+                    <button
+                      type="submit"
+                      className="w-full flex items-center justify-center gap-2.5 rounded-2xl py-4 text-sm font-semibold tracking-wide text-white transition-all duration-200 group"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #4285F4 0%, #7c3aed 100%)",
+                        boxShadow: "0 8px 24px rgba(66,133,244,0.25)",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.filter =
+                          "brightness(1.1)";
+                        (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                          "0 12px 32px rgba(66,133,244,0.35)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.filter =
+                          "brightness(1)";
+                        (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                          "0 8px 24px rgba(66,133,244,0.25)";
+                      }}
+                    >
+                      Send via WhatsApp
+                      <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </button>
+                  </form>
+                </Form>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 };
 
