@@ -51,7 +51,8 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
     { label: 'Services', href: '#services' },
     { label: 'Portfolio', href: '#portfolio' },
     { label: 'Vision', href: '#vision' },
-    { label: 'About', href: '#founder-section' },
+    { label: 'About', href: '/about' },
+    { label: 'Blog', href: '/blog' },
     { label: 'Contact Us', href: '#connect' },
   ];
 
@@ -220,8 +221,8 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                    © {new Date().getFullYear()} OOMA LABS. ALL RIGHTS RESERVED.
                  </p>
                  <div className="flex gap-8">
-                   <a href="#" className="text-[10px] tracking-widest uppercase text-white/20 hover:text-white transition-colors font-bold">Privacy Policy</a>
-                   <a href="#" className="text-[10px] tracking-widest uppercase text-white/20 hover:text-white transition-colors font-bold">Terms of Service</a>
+                   <a href="/privacy-policy" className="text-[10px] tracking-widest uppercase text-white/20 hover:text-white transition-colors font-bold">Privacy Policy</a>
+                   <a href="/terms-of-service" className="text-[10px] tracking-widest uppercase text-white/20 hover:text-white transition-colors font-bold">Terms of Service</a>
                  </div>
               </div>
             </motion.div>

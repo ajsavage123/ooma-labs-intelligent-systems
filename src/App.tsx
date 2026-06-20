@@ -14,6 +14,15 @@ import WorkspaceRoutes from "./pages/workspace/WorkspaceRoutes";
 import ProductsPage from "./pages/Products";
 import FreelancerApplication from "./pages/FreelancerApplication";
 
+// new pages
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import About from "./pages/About";
+import Blog from "./pages/Blog";
+
+import CookieConsent from "./components/CookieConsent";
+import ExitIntentModal from "./components/ExitIntentModal";
+
 import { AuthProvider } from "./context/AuthContext";
 
 const queryClient = new QueryClient();
@@ -34,9 +43,15 @@ const App = () => (
             <Route path="/workspace/*" element={<WorkspaceRoutes />} />
             <Route path="/products" element={<ProductsPage />} />
             <Route path="/freelance" element={<FreelancerApplication />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/blog" element={<Blog />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <CookieConsent />
+          <ExitIntentModal />
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>
