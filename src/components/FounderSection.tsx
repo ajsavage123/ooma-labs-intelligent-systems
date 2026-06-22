@@ -68,32 +68,109 @@ const FounderSection = () => {
           {/* Right — info */}
           <div className="lg:col-span-7">
             <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              animate={isInView ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 1, delay: 0.4 }}
+              initial={{ opacity: 0 }}
+              animate={isInView ? { opacity: 1 } : {}}
+              transition={{ duration: 0.6, delay: 0.3 }}
               className="bg-[#0a0a0a] border border-white/10 p-10 sm:p-12 md:p-16 rounded-[4rem] relative overflow-hidden text-center lg:text-left shadow-2xl"
             >
               <div className="absolute top-0 right-0 w-64 h-64 bg-[#4285F4]/5 blur-[100px] rounded-full pointer-events-none" />
 
-              <h3 className="text-4xl sm:text-6xl md:text-8xl font-black text-white mb-6 font-display tracking-tightest">
-                Ajay Narava
+              {/* Name — letter stagger */}
+              <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-6 font-display tracking-tightest overflow-hidden whitespace-nowrap">
+                {"Ajay Narava".split("").map((char, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0, y: 60 }}
+                    animate={isInView ? { opacity: 1, y: 0 } : {}}
+                    transition={{
+                      duration: 0.5,
+                      delay: 0.4 + i * 0.04,
+                      ease: [0.215, 0.61, 0.355, 1],
+                    }}
+                    className="inline-block"
+                    style={{ display: char === " " ? "inline" : "inline-block" }}
+                  >
+                    {char === " " ? "\u00A0" : char}
+                  </motion.span>
+                ))}
               </h3>
               
-              <div className="flex items-center justify-center lg:justify-start gap-4 mb-10 sm:mb-12">
-                <div className="h-[2px] w-12 bg-[#EA4335]" />
-                <span className="text-xs sm:text-sm tracking-widest uppercase text-[#EA4335] font-black">Founder & Lead Architect</span>
+              {/* Title — line draws then text slides in */}
+              <div className="flex items-center justify-center lg:justify-start gap-4 mb-10 sm:mb-12 overflow-hidden">
+                <motion.div
+                  initial={{ scaleX: 0 }}
+                  animate={isInView ? { scaleX: 1 } : {}}
+                  transition={{ duration: 0.8, delay: 0.9, ease: "easeOut" }}
+                  className="h-[2px] w-12 bg-[#EA4335] origin-left"
+                />
+                <motion.span
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={isInView ? { opacity: 1, x: 0 } : {}}
+                  transition={{ duration: 0.6, delay: 1.1 }}
+                  className="text-xs sm:text-sm tracking-widest uppercase text-[#EA4335] font-black"
+                >
+                  Founder & Lead Architect
+                </motion.span>
               </div>
 
+              {/* Quote — word-by-word cascade */}
               <p className="text-2xl sm:text-4xl lg:text-5xl text-white leading-[1.1] font-display font-black tracking-tight mb-8">
-                "At Ooma, we engineer the invisible digital threads that empower <span className="text-gradient-google">modern operations</span>, building innovative technology that shapes the perfect solution."
+                {`"At Ooma, we engineer the invisible digital threads that empower`.split(" ").map((word, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
+                    animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
+                    transition={{
+                      duration: 0.4,
+                      delay: 1.3 + i * 0.06,
+                      ease: "easeOut",
+                    }}
+                    className="inline-block mr-[0.28em]"
+                  >
+                    {word}
+                  </motion.span>
+                ))}
+                <motion.span
+                  initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
+                  animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
+                  transition={{ duration: 0.4, delay: 1.3 + 10 * 0.06 }}
+                  className="text-gradient-google inline-block mr-[0.28em]"
+                >
+                  modern
+                </motion.span>
+                <motion.span
+                  initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
+                  animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
+                  transition={{ duration: 0.4, delay: 1.3 + 11 * 0.06 }}
+                  className="text-gradient-google inline-block mr-[0.28em]"
+                >
+                  operations,
+                </motion.span>
+                {`building innovative technology that shapes the perfect solution."`.split(" ").map((word, i) => (
+                  <motion.span
+                    key={`b-${i}`}
+                    initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
+                    animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
+                    transition={{
+                      duration: 0.4,
+                      delay: 1.3 + (12 + i) * 0.06,
+                      ease: "easeOut",
+                    }}
+                    className="inline-block mr-[0.28em]"
+                  >
+                    {word}
+                  </motion.span>
+                ))}
               </p>
               
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mt-12">
-                <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-full flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-[#34A853] animate-pulse" />
-                  <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/60">Currently Scaling Ooma</span>
-                </div>
-              </div>
+              <motion.div
+                initial={{ scaleX: 0, opacity: 0 }}
+                animate={isInView ? { scaleX: 1, opacity: 0.4 } : {}}
+                transition={{ duration: 1.2, delay: 2.5, ease: "easeOut" }}
+                className="mt-12 w-full max-w-xs mx-auto lg:mx-0 origin-left"
+              >
+                <div className="h-[2px] w-full rounded-full bg-gradient-to-r from-[#4285F4] via-[#34A853] via-[#FBBC05] to-[#EA4335]" />
+              </motion.div>
             </motion.div>
           </div>
         </div>
