@@ -188,8 +188,8 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                       <a href="mailto:oomalabs@gmail.com?body=hi%20i%20am%20looking%20for%20colabration%20in%20your%20company%20and%20my%20name%20is%20....." className="text-base lg:text-lg text-white hover:text-[#4285F4] transition-colors block mb-2">oomalabs@gmail.com</a>
                     </div>
                     <div>
-                      <span className="text-[10px] tracking-widest uppercase text-white/30 font-bold block mb-4 lg:mb-6">HQ</span>
-                      <p className="text-base lg:text-lg text-white">Innovation District</p>
+                      <span className="text-[10px] tracking-widest uppercase text-white/30 font-bold block mb-4 lg:mb-6">Located At</span>
+                      <p className="text-base lg:text-lg text-white">Gachibowli, Hyderabad</p>
                     </div>
                   </div>
 

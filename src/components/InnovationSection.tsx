@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Search, PenTool, GitPullRequest, FastForward } from "lucide-react";
-import { Suspense } from "react";
-import InnovationThreeDBackground from "@/components/InnovationThreeDBackground";
+import { Suspense, lazy } from "react";
+const InnovationThreeDBackground = lazy(() => import("@/components/InnovationThreeDBackground"));
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const steps = [

@@ -203,7 +203,7 @@ const Footer = () => {
                     <div className="w-9 h-9 bg-[#FBBC05]/10 rounded-lg flex items-center justify-center shrink-0">
                       <MapPin className="w-4 h-4 text-[#FBBC05]" />
                     </div>
-                    Innovation District, India
+                    Gachibowli, Hyderabad, Telangana 500032
                   </div>
                 </li>
               </ul>

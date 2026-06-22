@@ -37,7 +37,18 @@ const staticProjects = [
   },
 ];
 
-const ProjectCard = ({ project, index }: { project: any; index: number }) => {
+interface Project {
+  name: string;
+  tagline: string;
+  description: string;
+  color: string;
+  border: string;
+  bgHover: string;
+  image?: string;
+  link: string;
+}
+
+const ProjectCard = ({ project, index }: { project: Project; index: number }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
 

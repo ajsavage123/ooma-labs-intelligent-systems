@@ -56,6 +56,12 @@ const HeroSection = () => {
 
       <div className="hero-content max-w-7xl mx-auto px-6 md:px-12 relative z-10 w-full">
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
+          <h1 
+            className="sr-only"
+            aria-hidden="false"
+          >
+            Web Development, App Development & AI Automation for Businesses in Hyderabad — Ooma Labs
+          </h1>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

@@ -91,7 +91,15 @@ const serviceCategories = [
   }
 ];
 
-const ServiceCard = ({ category, index }: { category: any; index: number }) => {
+interface ServiceCategory {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  color: string;
+  bg: string;
+  items: string[];
+}
+
+const ServiceCard = ({ category, index }: { category: ServiceCategory; index: number }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -174,6 +182,11 @@ const ServiceCard = ({ category, index }: { category: any; index: number }) => {
             </motion.div>
           )}
         </AnimatePresence>
+        <ul className="sr-only" aria-label={`${category.title} services`}>
+          {category.items.map((item: string, idx: number) => (
+            <li key={idx}>{item}</li>
+          ))}
+        </ul>
       </div>
       
       {/* Decorative background accent */}
