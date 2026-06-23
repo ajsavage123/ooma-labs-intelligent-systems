@@ -4,5 +4,18 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://www.oomalabs.com/$1",
+      "permanent": true,
+      "has": [
+        {
+          "type": "host",
+          "value": "oomalabs.vercel.app"
+        }
+      ]
+    }
   ]
 }
