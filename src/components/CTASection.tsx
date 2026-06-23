@@ -2,6 +2,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
 import { MessageCircle, Phone, Mail, Send, User, AtSign, FileText, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { submitToGoogleSheets } from "@/lib/googleSheets";
 
 const CTASection = () => {
   const ref = useRef(null);
@@ -40,14 +41,18 @@ const CTASection = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    // Submit to Google Sheets
+    const success = await submitToGoogleSheets("Contacts", formData);
 
-    toast.success("Message sent successfully!", {
-      description: "We'll get back to you within 24 hours.",
-    });
-
-    setFormData({ name: "", email: "", phone: "", message: "" });
+    if (success) {
+      toast.success("Message sent successfully!", {
+        description: "We'll get back to you within 24 hours.",
+      });
+      setFormData({ name: "", email: "", phone: "", message: "" });
+    } else {
+      toast.error("Failed to send message. Please try again.");
+    }
+    
     setIsSubmitting(false);
   };
 

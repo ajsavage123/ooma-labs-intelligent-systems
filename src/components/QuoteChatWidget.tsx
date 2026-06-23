@@ -7,6 +7,7 @@ import React, {
 import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
 import { X, Send, Phone, User, Mail, Briefcase, Laptop, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+import { submitToGoogleSheets } from "@/lib/googleSheets";
 
 /* ─── Constants ─────────────────────────────────────────── */
 const WA_NUMBER = "919492827058";
@@ -463,6 +464,15 @@ const QuoteChatWidget: React.FC = () => {
     if (!service) e.service = "Select a service";
     setErrs(e);
     if (Object.keys(e).length > 0) return;
+
+    // Send to Google Sheets first in background
+    submitToGoogleSheets("Chatbot Quotes", {
+      name,
+      email,
+      phone,
+      businessType: bizType,
+      service,
+    });
 
     const msg =
       `Hi Ooma Labs! I'd like a free quotation.\n\n` +

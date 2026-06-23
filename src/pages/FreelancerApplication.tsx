@@ -51,26 +51,63 @@ const FreelancerApplication: React.FC = () => {
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      // Here you would typically handle the file upload to your server/storage
-      // const file = values.resume[0];
-      // const formData = new FormData();
-      // formData.append("resume", file);
-      // ... append other fields ...
+      const scriptUrl = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
+      if (!scriptUrl) {
+        toast.error("Google Script URL is not configured. Please add it to your .env file.");
+        setIsSubmitting(false);
+        return;
+      }
 
-      console.log("Form values:", {
-        name: values.name,
-        linkedin: values.linkedin,
-        contactNumber: values.contactNumber,
-        address: values.address,
-        resumeName: values.resume[0]?.name,
+      const file = values.resume[0];
+      
+      // Helper to read file as Base64
+      const readAsBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => {
+            const base64String = reader.result as string;
+            // Strip data:prefix
+            const base64Data = base64String.split(",")[1];
+            resolve(base64Data);
+          };
+          reader.onerror = (error) => reject(error);
+        });
+      };
+
+      const base64Data = await readAsBase64(file);
+
+      const response = await fetch(scriptUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8",
+        },
+        body: JSON.stringify({
+          name: values.name,
+          linkedin: values.linkedin,
+          contactNumber: values.contactNumber,
+          address: values.address,
+          resumeBase64: base64Data,
+          resumeName: file.name,
+          resumeType: file.type,
+        }),
       });
 
-      toast.success("Application submitted successfully! We will contact you soon.");
-      form.reset();
-      navigate("/");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.status === "success") {
+        toast.success("Application submitted successfully! We will contact you soon.");
+        form.reset();
+        navigate("/");
+      } else {
+        throw new Error(result.message || "Unknown error occurred");
+      }
     } catch (error) {
-      toast.error("Failed to submit application");
-      console.error(error);
+      toast.error("Failed to submit application. Please try again.");
+      console.error("Submission error:", error);
     } finally {
       setIsSubmitting(false);
     }

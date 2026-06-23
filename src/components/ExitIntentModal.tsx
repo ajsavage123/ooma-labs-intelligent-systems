@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { X, Send, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { submitToGoogleSheets } from "@/lib/googleSheets";
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Name is required"),
@@ -49,7 +50,15 @@ const ExitIntentModal = () => {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    // Send to Google Sheets first in background
+    submitToGoogleSheets("Quick Quotes", {
+      fullName: values.fullName,
+      phone: values.phone,
+      businessDetails: values.businessDetails,
+      requirement: values.requirement,
+    });
+
     const msg =
       `Hi Ooma Labs, I'd like an instant quotation.\n\n` +
       `Name: ${values.fullName}\n` +
