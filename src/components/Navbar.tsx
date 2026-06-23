@@ -54,6 +54,7 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
     { label: 'About', href: '/about' },
     { label: 'Blog', href: '/blog' },
     { label: 'Contact Us', href: '#connect' },
+    { label: 'Terms & Conditions', href: '/terms-of-service' },
   ];
 
   return (
@@ -165,10 +166,10 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                       onClick={() => setMenuOpen(false)}
                       className="group flex items-center gap-6"
                     >
-                      <span className="text-4xl sm:text-5xl lg:text-8xl font-display font-bold text-white/20 group-hover:text-white transition-all duration-500 group-hover:pl-4">
+                      <span className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white/20 group-hover:text-white transition-all duration-500 group-hover:pl-4">
                         {item.label}
                       </span>
-                      <ArrowRight className="w-6 h-6 lg:w-12 lg:h-12 text-[#4285F4] opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500" />
+                      <ArrowRight className="w-5 h-5 lg:w-8 lg:h-8 text-[#4285F4] opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500" />
                     </motion.a>
                   ))}
                 </div>

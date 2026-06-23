@@ -17,11 +17,13 @@ const CookieConsent = () => {
   const handleAccept = () => {
     localStorage.setItem("ooma_cookie_consent", "accepted");
     setVisible(false);
+    window.dispatchEvent(new Event("cookie-consent-changed"));
   };
 
   const handleDecline = () => {
     localStorage.setItem("ooma_cookie_consent", "declined");
     setVisible(false);
+    window.dispatchEvent(new Event("cookie-consent-changed"));
   };
 
   return (
@@ -42,10 +44,11 @@ const CookieConsent = () => {
               <div>
                 <p className="text-white text-sm font-bold mb-1">We value your privacy</p>
                 <p className="text-white/40 text-xs md:text-sm leading-relaxed">
-                  We use cookies to enhance your browsing experience and analyze site traffic. By clicking "Accept," you consent to our use of cookies.{" "}
+                  We use cookies to enhance your browsing experience and analyze site traffic. By clicking "Accept," you consent to our use of cookies in accordance with our{" "}
                   <a href="/privacy-policy" className="text-[#4285F4] hover:underline">
-                    Learn more
+                    Privacy Policy
                   </a>
+                  .
                 </p>
               </div>
             </div>

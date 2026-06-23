@@ -5,7 +5,7 @@ import React, {
   useRef,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, X, Send, Phone } from "lucide-react";
+import { X, Send, Phone, User, Mail, Briefcase, Laptop, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 /* ─── Constants ─────────────────────────────────────────── */
@@ -32,50 +32,109 @@ const BUSINESS_TYPES = [
   "Others",
 ];
 
-/* shared dropdown chevron bg */
-const CHEVRON_BG =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")";
-
 type WidgetState = "idle" | "popup" | "bubble" | "chat";
 
-/* ─── Arch label ─────────────────────────────────────────── */
-const ArchLabel = React.memo(() => (
-  <svg
-    width="110"
-    height="48"
-    viewBox="0 0 110 48"
-    className="absolute -top-8 left-1/2 -translate-x-1/2 pointer-events-none select-none overflow-visible"
-    aria-hidden="true"
-  >
-    <defs>
-      <path id="archCurve2" d="M 8,38 A 50,50 0 0,1 102,38" />
-    </defs>
-    <text
-      fontSize="9.5"
-      fill="rgba(255,255,255,0.9)"
-      letterSpacing="1.2"
-      fontFamily="'Space Grotesk','DM Sans',sans-serif"
-      fontWeight="700"
-    >
-      <textPath href="#archCurve2" startOffset="50%" textAnchor="middle">
-        ✦ We are here ✦
-      </textPath>
-    </text>
-  </svg>
-));
-ArchLabel.displayName = "ArchLabel";
+/* ─── Custom Inputs & Dropdowns ──────────────────────────── */
+interface InputFieldProps {
+  refVar: React.RefObject<HTMLInputElement>;
+  type?: string;
+  placeholder: string;
+  icon: any;
+  error?: boolean;
+}
 
-/* ─── Shared input style helper ──────────────────────────── */
-const inputCls = (hasErr: boolean) =>
-  `w-full rounded-xl text-sm py-2 px-3 bg-white/5 border text-white outline-none ` +
-  `placeholder:text-white/30 transition-colors focus:border-[#4285F4]/60 focus:bg-white/10 ` +
-  (hasErr ? "border-red-500" : "border-white/10");
+const InputField = React.memo(({ refVar, type = "text", placeholder, icon: Icon, error }: InputFieldProps) => {
+  return (
+    <div className="relative">
+      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none">
+        <Icon className="w-4 h-4" />
+      </div>
+      <input
+        ref={refVar}
+        type={type}
+        defaultValue=""
+        placeholder={placeholder}
+        className={`w-full pl-10 pr-3.5 py-2.5 bg-white/5 border rounded-xl text-xs sm:text-sm text-white outline-none placeholder:text-white/25 transition-all duration-300 focus:border-[#4285F4]/60 focus:bg-white/10 ${
+          error ? "border-red-500" : "border-white/10 hover:border-white/20"
+        }`}
+      />
+    </div>
+  );
+});
+InputField.displayName = "InputField";
 
-const selectCls = (hasErr: boolean, empty: boolean) =>
-  `w-full rounded-xl text-sm py-2.5 px-3 bg-[#0d0d16] border outline-none ` +
-  `focus:border-[#4285F4]/60 appearance-none cursor-pointer transition-colors ` +
-  (hasErr ? "border-red-500 " : "border-white/10 ") +
-  (empty ? "text-white/35" : "text-white");
+interface CustomSelectProps {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  placeholder: string;
+  icon: any;
+  error?: boolean;
+}
+
+const CustomSelect = React.memo(({ value, onChange, options, placeholder, icon: Icon, error }: CustomSelectProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const clickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", clickOutside);
+    return () => document.removeEventListener("mousedown", clickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full flex items-center justify-between rounded-xl text-xs sm:text-sm py-2.5 px-3.5 bg-white/5 border text-left text-white transition-all duration-300 focus:border-[#4285F4]/60 ${
+          error ? "border-red-500" : "border-white/10 hover:border-white/20"
+        }`}
+      >
+        <div className="flex items-center gap-2.5 text-white/80">
+          <Icon className="w-4 h-4 text-white/30 shrink-0" />
+          <span className={value ? "text-white" : "text-white/25"}>
+            {value || placeholder}
+          </span>
+        </div>
+        <ChevronDown className={`w-3.5 h-3.5 text-white/30 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 5 }}
+            transition={{ duration: 0.15 }}
+            className="absolute z-50 w-full mt-1.5 py-1.5 bg-[#0e0e17] border border-white/10 rounded-xl shadow-2xl max-h-48 overflow-y-auto scrollbar-hide backdrop-blur-xl"
+          >
+            {options.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => {
+                  onChange(opt);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-4 py-2.5 text-xs hover:bg-[#4285F4]/10 hover:text-[#4285F4] transition-colors ${
+                  value === opt ? "text-[#4285F4] bg-[#4285F4]/5 font-bold" : "text-white/70"
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+});
+CustomSelect.displayName = "CustomSelect";
 
 /* ─── QuoteForm ──────────────────────────────────────────── */
 interface QuoteFormProps {
@@ -104,112 +163,83 @@ const QuoteForm = React.memo(
     errs,
     onSend,
   }: QuoteFormProps) => {
-    const gap = compact ? "space-y-2" : "space-y-3";
-    const optStyle = { background: "#0d0d16", color: "white" };
+    const gap = compact ? "space-y-2.5" : "space-y-3.5";
 
     return (
       <div className={gap}>
-        {/* Row 1 — Name (full width) */}
+        {/* Name Input */}
         <div>
-          <input
-            ref={nameRef}
+          <InputField
+            refVar={nameRef}
             placeholder="Your Name"
-            defaultValue=""
-            className={inputCls(!!errs.name)}
+            icon={User}
+            error={!!errs.name}
           />
-          {errs.name && <p className="text-red-400 text-[10px] mt-1">{errs.name}</p>}
+          {errs.name && <p className="text-red-400 text-[10px] mt-1 pl-1">{errs.name}</p>}
         </div>
 
-        {/* Row 2 — Email + Phone side by side */}
+        {/* Email + Phone side by side */}
         <div className="grid grid-cols-2 gap-2.5">
           <div>
-            <input
-              ref={emailRef}
+            <InputField
+              refVar={emailRef}
               type="email"
-              placeholder="Email"
-              defaultValue=""
-              className={inputCls(!!errs.email)}
+              placeholder="Email Address"
+              icon={Mail}
+              error={!!errs.email}
             />
-            {errs.email && <p className="text-red-400 text-[10px] mt-1">{errs.email}</p>}
+            {errs.email && <p className="text-red-400 text-[10px] mt-1 pl-1">{errs.email}</p>}
           </div>
           <div>
-            <div className="relative">
-              <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30 pointer-events-none" />
-              <input
-                ref={phoneRef}
-                type="tel"
-                placeholder="Phone"
-                defaultValue=""
-                className={`${inputCls(!!errs.phone)} pl-8`}
-              />
-            </div>
-            {errs.phone && <p className="text-red-400 text-[10px] mt-1">{errs.phone}</p>}
+            <InputField
+              refVar={phoneRef}
+              type="tel"
+              placeholder="Phone Number"
+              icon={Phone}
+              error={!!errs.phone}
+            />
+            {errs.phone && <p className="text-red-400 text-[10px] mt-1 pl-1">{errs.phone}</p>}
           </div>
         </div>
 
-        {/* Row 3 — Business type */}
+        {/* Business Type dropdown */}
         <div>
-          <select
+          <CustomSelect
             value={bizType}
-            onChange={(e) => setBizType(e.target.value)}
-            className={selectCls(!!errs.bizType, !bizType)}
-            style={{
-              backgroundImage: CHEVRON_BG,
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "right 12px center",
-            }}
-          >
-            <option value="" disabled style={{ color: "rgba(255,255,255,0.35)" }}>
-              Type of Business
-            </option>
-            {BUSINESS_TYPES.map((b) => (
-              <option key={b} value={b} style={optStyle}>
-                {b}
-              </option>
-            ))}
-          </select>
-          {errs.bizType && <p className="text-red-400 text-[10px] mt-1">{errs.bizType}</p>}
+            onChange={setBizType}
+            options={BUSINESS_TYPES}
+            placeholder="Type of Business"
+            icon={Briefcase}
+            error={!!errs.bizType}
+          />
+          {errs.bizType && <p className="text-red-400 text-[10px] mt-1 pl-1">{errs.bizType}</p>}
         </div>
 
-        {/* Row 4 — Service */}
+        {/* Service selection dropdown */}
         <div>
-          <select
+          <CustomSelect
             value={service}
-            onChange={(e) => setService(e.target.value)}
-            className={selectCls(!!errs.service, !service)}
-            style={{
-              backgroundImage: CHEVRON_BG,
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "right 12px center",
-            }}
-          >
-            <option value="" disabled style={{ color: "rgba(255,255,255,0.35)" }}>
-              Service Looking For
-            </option>
-            {SERVICES.map((s) => (
-              <option key={s} value={s} style={optStyle}>
-                {s}
-              </option>
-            ))}
-          </select>
-          {errs.service && <p className="text-red-400 text-[10px] mt-1">{errs.service}</p>}
+            onChange={setService}
+            options={SERVICES}
+            placeholder="Service Looking For"
+            icon={Laptop}
+            error={!!errs.service}
+          />
+          {errs.service && <p className="text-red-400 text-[10px] mt-1 pl-1">{errs.service}</p>}
         </div>
 
-        {/* Send CTA */}
+        {/* Submit Quote Button */}
         <motion.button
-          whileHover={{ filter: "brightness(1.12)" }}
-          whileTap={{ scale: 0.97 }}
+          whileHover={{ filter: "brightness(1.15)" }}
+          whileTap={{ scale: 0.98 }}
           onClick={onSend}
-          className="w-full flex items-center justify-center gap-2.5 rounded-xl text-sm font-semibold text-white group"
+          className="w-full flex items-center justify-center gap-2.5 rounded-xl text-xs sm:text-sm font-bold text-white group shadow-[0_8px_30px_rgb(66,133,244,0.3)] hover:shadow-[0_8px_30px_rgb(66,133,244,0.45)] transition-all cursor-pointer border-none"
           style={{
-            padding: compact ? "0.65rem 1rem" : "0.85rem 1rem",
-            background: "linear-gradient(135deg,#4285F4 0%,#7c3aed 100%)",
-            boxShadow: "0 6px 20px rgba(66,133,244,0.3)",
-            border: "none",
-            cursor: "pointer",
+            padding: compact ? "0.75rem 1rem" : "0.9rem 1rem",
+            background: "linear-gradient(135deg, #4285F4 0%, #7c3aed 100%)",
           }}
         >
-          Send &amp; Get Free Quotation
+          Get Free Quotation
           <Send className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </motion.button>
       </div>
@@ -225,27 +255,32 @@ const MESSAGES = [
 ];
 
 const ChatMessages = React.memo(() => (
-  <div className="px-4 py-3.5 space-y-2.5">
+  <div className="px-4 py-4 space-y-3.5">
     {MESSAGES.map((msg, i) => (
-      <div key={i} className="flex items-end gap-2">
+      <motion.div
+        key={i}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: i * 0.15, duration: 0.4 }}
+        className="flex items-end gap-2.5"
+      >
         <div
-          className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white"
+          className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-display font-black text-white relative shadow-md"
           style={{ background: "linear-gradient(135deg,#4285F4,#7c3aed)" }}
         >
           O
         </div>
         <div
-          className="rounded-2xl rounded-bl-sm px-3.5 py-2.5 max-w-[85%]"
-          style={{ background: "rgba(66,133,244,0.1)", border: "1px solid rgba(66,133,244,0.15)" }}
+          className="rounded-2xl rounded-bl-sm px-4 py-3 max-w-[85%] bg-white/5 border border-white/10"
         >
           <p
-            className="text-sm text-white/90 leading-relaxed"
+            className="text-xs sm:text-sm text-white/90 leading-relaxed font-body"
             dangerouslySetInnerHTML={{
-              __html: msg.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>"),
+              __html: msg.replace(/\*\*(.*?)\*\*/g, "<strong class='text-white font-bold'>$1</strong>"),
             }}
           />
         </div>
-      </div>
+      </motion.div>
     ))}
   </div>
 ));
@@ -255,6 +290,20 @@ ChatMessages.displayName = "ChatMessages";
 const QuoteChatWidget: React.FC = () => {
   const [widgetState, setWidgetState] = useState<WidgetState>("idle");
   const [hasUnread, setHasUnread] = useState(false);
+  const [shouldJump, setShouldJump] = useState(false);
+  const [windowSize, setWindowSize] = useState({
+    width: typeof window !== "undefined" ? window.innerWidth : 1200,
+    height: typeof window !== "undefined" ? window.innerHeight : 800
+  });
+
+  /* Track window size dynamically for perfect centered exit animations */
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   /* Uncontrolled text refs — ZERO re-renders while typing */
   const nameRef  = useRef<HTMLInputElement>(null);
@@ -266,29 +315,54 @@ const QuoteChatWidget: React.FC = () => {
   const [service, setService] = useState("");
   const [errs, setErrs]       = useState<Record<string, string>>({});
 
+  /* Listen for cookie consent changes to avoid overlay collisions */
+  const [cookieConsentActive, setCookieConsentActive] = useState(false);
+
+  useEffect(() => {
+    const checkConsent = () => {
+      const consent = localStorage.getItem("ooma_cookie_consent");
+      setCookieConsentActive(!consent);
+    };
+    checkConsent();
+    window.addEventListener("cookie-consent-changed", checkConsent);
+    return () => window.removeEventListener("cookie-consent-changed", checkConsent);
+  }, []);
+
   /* Always show bubble+badge immediately. Show popup after 10 s on first visit. */
   useEffect(() => {
-    // Show bubble + badge right away so the "1" indicator is always visible
     setWidgetState("bubble");
     setHasUnread(true);
 
     const seen = localStorage.getItem("ql_popupSeen");
-    if (seen) return; // already seen popup — don't show again
+    if (seen || cookieConsentActive) return;
 
     const t = setTimeout(() => {
       setWidgetState("popup");
     }, 10_000);
     return () => clearTimeout(t);
-  }, []);
+  }, [cookieConsentActive]);
+
+  const triggerJump = () => {
+    setShouldJump(true);
+    setTimeout(() => setShouldJump(false), 1100);
+  };
 
   const closePopup = useCallback(() => {
     localStorage.setItem("ql_popupSeen", "true");
     setWidgetState("bubble");
     setHasUnread(true);
+
+    // Bounces exactly when the shrinking centered card overlaps the bubble
+    setTimeout(() => {
+      triggerJump();
+    }, 400);
   }, []);
 
   const openChat  = useCallback(() => { setWidgetState("chat"); setHasUnread(false); }, []);
-  const closeChat = useCallback(() => setWidgetState("bubble"), []);
+  const closeChat = useCallback(() => {
+    setWidgetState("bubble");
+    triggerJump();
+  }, []);
 
   const handleSend = useCallback(() => {
     const name  = nameRef.current?.value.trim()  ?? "";
@@ -316,15 +390,29 @@ const QuoteChatWidget: React.FC = () => {
     );
     toast.success("Opening WhatsApp with your quotation details!");
     setWidgetState("bubble");
+    setTimeout(() => {
+      triggerJump();
+    }, 400);
   }, [bizType, service]);
 
-  /* Popup slide-to-bubble exit animation */
+  const isDesktop = windowSize.width >= 1024;
+  const bubbleRadius = isDesktop ? 32 : 28; // 64px on desktop, 56px on mobile
+  
+  const rightMargin = isDesktop ? 48 : 24;
+  const bottomMargin = isDesktop 
+    ? (cookieConsentActive ? 136 : 40) 
+    : (cookieConsentActive ? 230 : 24);
+
+  const bottomOffset = `${bottomMargin}px`;
+  const rightOffset = `${rightMargin}px`;
+
+  /* Mathematically mapped coordinates to shrink the centered modal popup precisely to the bubble's location */
   const popupExit = {
     opacity: 0,
-    scale: 0.05,
-    x: "calc(50vw - 60px)",
-    y: "calc(50vh - 60px)",
-    transition: { duration: 0.48, ease: [0.4, 0, 0.2, 1] as [number,number,number,number] },
+    scale: 0.01,
+    x: windowSize.width / 2 - (rightMargin + bubbleRadius),
+    y: windowSize.height / 2 - (bottomMargin + bubbleRadius),
+    transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
   };
 
   const sharedFormProps: Omit<QuoteFormProps, "compact"> = {
@@ -334,9 +422,12 @@ const QuoteChatWidget: React.FC = () => {
     errs, onSend: handleSend,
   };
 
+  /* Check if the quotation form is currently open (either center modal popup or bottom-right chat panel) */
+  const isFormOpen = widgetState === "chat" || widgetState === "popup";
+
   return (
     <>
-      {/* ══════════ 1. POPUP (centred) ══════════ */}
+      {/* ══════════ 1. POPUP (centered) ══════════ */}
       <AnimatePresence>
         {widgetState === "popup" && (
           <>
@@ -345,7 +436,7 @@ const QuoteChatWidget: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, transition: { duration: 0.22 } }}
-              className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-[3px]"
+              className="fixed inset-0 z-[200] bg-black/75 backdrop-blur-[4px]"
               onClick={closePopup}
             />
             <motion.div
@@ -357,39 +448,38 @@ const QuoteChatWidget: React.FC = () => {
               className="fixed inset-0 z-[201] flex items-center justify-center p-4 pointer-events-none"
             >
               <div
-                className="pointer-events-auto w-full max-w-[440px] relative"
+                className="pointer-events-auto w-full max-w-[420px] relative"
                 style={{
-                  background: "linear-gradient(160deg,#0e0e17 0%,#12121e 100%)",
+                  background: "linear-gradient(160deg, #0a0a0f 0%, #111119 100%)",
                   border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: "1.75rem",
-                  boxShadow: "0 40px 80px rgba(0,0,0,0.65),0 0 0 1px rgba(66,133,244,0.1)",
+                  borderRadius: "2rem",
+                  boxShadow: "0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(66,133,244,0.15)",
                   overflow: "hidden",
                 }}
               >
-                {/* Gradient accent bar */}
-                <div style={{ height: "2px", background: "linear-gradient(90deg,#4285F4 0%,#7c3aed 50%,#34A853 100%)" }} />
+                {/* Top glow accent bar */}
+                <div style={{ height: "3px", background: "linear-gradient(90deg, #4285F4 0%, #7c3aed 50%, #34A853 100%)" }} />
 
-                <div className="p-6 sm:p-7">
+                <div className="p-7 sm:p-8">
                   {/* Close */}
                   <button
                     onClick={closePopup}
                     aria-label="Close"
-                    className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full transition-colors hover:bg-white/10"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+                    className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full transition-colors hover:bg-white/10 bg-white/5 border border-white/10 cursor-pointer"
                   >
-                    <X className="w-3.5 h-3.5 text-white/50" />
+                    <X className="w-3.5 h-3.5 text-white/65" />
                   </button>
 
                   {/* Online badge */}
-                  <span className="flex items-center gap-1.5 text-[10px] font-bold tracking-[0.18em] uppercase mb-3" style={{ color: "#34A853" }}>
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#34A853] animate-pulse" />
+                  <span className="flex items-center gap-1.5 text-[9px] font-bold tracking-[0.25em] uppercase mb-4 text-[#34A853]">
+                    <span className="inline-block w-2 h-2 rounded-full bg-[#34A853] animate-pulse" />
                     Online Now
                   </span>
 
-                  <h2 className="text-[1.5rem] sm:text-[1.65rem] font-bold text-white leading-tight mb-1" style={{ fontFamily: "'Space Grotesk',sans-serif" }}>
+                  <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight mb-2 font-display">
                     Get an Instant Quotation
                   </h2>
-                  <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.42)" }}>
+                  <p className="text-xs sm:text-sm mb-6 text-white/40 leading-relaxed">
                     Free. No commitments. Delivered straight on WhatsApp.
                   </p>
 
@@ -406,53 +496,54 @@ const QuoteChatWidget: React.FC = () => {
         {widgetState === "chat" && (
           <motion.div
             key="qw-chat"
-            initial={{ opacity: 0, scale: 0.88, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.88, y: 12 }}
-            transition={{ type: "spring", stiffness: 340, damping: 28 }}
-            /* Position: right-4 on mobile, right-6 on desktop. Bottom = bubble height (56px) + gap (16px) + bottom offset (24px) = 96px */
-            className="fixed z-[150]"
+            initial={{ opacity: 0, scale: 0.3, y: 100, x: 100 }}
+            animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+            exit={{ opacity: 0, scale: 0.3, y: 100, x: 100 }}
+            transition={{ type: "spring", stiffness: 280, damping: 25 }}
+            className="fixed z-[150] shadow-2xl"
             style={{
-              bottom: "96px",
-              right: "clamp(16px, 4vw, 24px)",
+              bottom: `calc(${bottomOffset} + 80px)`,
+              right: rightOffset,
               width: "min(360px, calc(100vw - 32px))",
-              background: "linear-gradient(160deg,#0d0d16 0%,#111119 100%)",
+              background: "linear-gradient(160deg, #09090f 0%, #101018 100%)",
               border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: "1.4rem",
-              boxShadow: "0 28px 60px rgba(0,0,0,0.55),0 0 0 1px rgba(66,133,244,0.07)",
+              borderRadius: "1.8rem",
               overflow: "hidden",
               maxHeight: "calc(100vh - 120px)",
               display: "flex",
               flexDirection: "column",
+              transformOrigin: "bottom right",
             }}
           >
             {/* Header */}
             <div
-              className="flex items-center justify-between px-5 py-3 flex-shrink-0"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(66,133,244,0.05)" }}
+              className="flex items-center justify-between px-5 py-4 flex-shrink-0"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(66,133,244,0.04)" }}
             >
               <div className="flex items-center gap-3">
                 <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                  style={{ background: "linear-gradient(135deg,#4285F4,#7c3aed)" }}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-display font-black text-sm flex-shrink-0 relative shadow-md"
+                  style={{
+                    background: "linear-gradient(135deg, #4285F4 0%, #7c3aed 100%)",
+                    boxShadow: "0 0 12px rgba(66, 133, 244, 0.35)",
+                  }}
                 >
                   O
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#34A853] border-2 border-[#09090f] animate-pulse" />
                 </div>
                 <div>
-                  <p className="text-white text-sm font-semibold leading-tight">Ooma Labs</p>
-                  <span className="flex items-center gap-1.5">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#34A853] animate-pulse" />
-                    <span className="text-[10px] text-white/45">Online · Replies instantly</span>
+                  <p className="text-white text-sm font-bold leading-tight font-display">Ooma Assistant</p>
+                  <span className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[10px] text-white/45 font-medium">Replies Instantly via WhatsApp</span>
                   </span>
                 </div>
               </div>
               <button
                 onClick={closeChat}
                 aria-label="Close chat"
-                className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
-                style={{ background: "rgba(255,255,255,0.05)" }}
+                className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 bg-white/5 border border-white/5 transition-colors cursor-pointer"
               >
-                <X className="w-3.5 h-3.5 text-white/45" />
+                <X className="w-3.5 h-3.5 text-white/50" />
               </button>
             </div>
 
@@ -461,10 +552,10 @@ const QuoteChatWidget: React.FC = () => {
 
             {/* Form — scrollable if screen too small */}
             <div
-              className="px-4 pb-4 overflow-y-auto flex-1"
+              className="px-4 pb-4 overflow-y-auto flex-1 scrollbar-hide"
               style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
             >
-              <p className="text-[9px] font-bold uppercase tracking-[0.2em] pt-3 pb-2.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+              <p className="text-[9px] font-bold uppercase tracking-[0.25em] pt-4.5 pb-2.5 text-white/30 font-display">
                 Your Details
               </p>
               <QuoteForm {...sharedFormProps} compact />
@@ -482,71 +573,100 @@ const QuoteChatWidget: React.FC = () => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 380, damping: 24, delay: 0.08 }}
-            /* Always bottom-right: right-4 mobile, right-6 desktop */
             className="fixed z-[160]"
-            style={{ bottom: "24px", right: "clamp(16px, 4vw, 24px)" }}
+            style={{ bottom: bottomOffset, right: rightOffset }}
           >
             <button
               onClick={openChat}
               aria-label="Open quotation chat"
-              className="relative group outline-none"
+              className="relative group outline-none cursor-pointer"
             >
-              {/* Arch "We are here" — hidden when chat is open */}
-              {widgetState !== "chat" && <ArchLabel />}
-
-              {/* Unread badge */}
+              {/* Interactive Speech Tag above the bubble */}
               <AnimatePresence>
-                {hasUnread && widgetState !== "chat" && (
+                {widgetState === "bubble" && !shouldJump && (
                   <motion.div
-                    key="badge"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                    className="absolute -top-1.5 -right-1.5 z-10 w-5 h-5 rounded-full flex items-center justify-center"
-                    style={{ background: "#ef4444", boxShadow: "0 0 0 2.5px #050505" }}
+                    initial={{ opacity: 0, scale: 0.6, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.6, y: 10 }}
+                    transition={{ delay: 0.5, type: "spring", stiffness: 300, damping: 20 }}
+                    className="absolute -top-[52px] sm:-top-[58px] left-1/2 -translate-x-1/2 bg-white text-black font-display font-black text-[10px] sm:text-[12px] px-3.5 py-1.5 sm:px-4.5 sm:py-2 rounded-full shadow-lg pointer-events-auto flex items-center gap-1.5 sm:gap-2 shrink-0 select-none whitespace-nowrap"
+                    style={{
+                      boxShadow: "0 8px 25px rgba(0, 0, 0, 0.4)",
+                    }}
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <motion.span
-                      animate={{ opacity: [1, 0.25, 1] }}
-                      transition={{ repeat: Infinity, duration: 1.1, ease: "easeInOut" }}
-                      className="text-[9px] font-bold text-white leading-none"
+                    <span>Hii!</span>
+                    <span className="inline-block animate-chatbot-wiggle text-xs sm:text-sm">
+                      👋
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        triggerJump();
+                        toast.success("Waved back! Ooma is here to help.");
+                      }}
+                      className="ml-1 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[8.5px] sm:text-[9.5px] font-black uppercase tracking-wider bg-black/10 hover:bg-black/25 text-black hover:text-black rounded-md border-none cursor-pointer transition-colors shadow-sm font-display"
                     >
-                      1
-                    </motion.span>
+                      Wave Hi
+                    </button>
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white rotate-45" />
                   </motion.div>
                 )}
               </AnimatePresence>
 
               {/* Pulse ring */}
               {widgetState !== "chat" && (
-                <motion.div
-                  animate={{ scale: [1, 1.65], opacity: [0.38, 0] }}
-                  transition={{ repeat: Infinity, duration: 2, ease: "easeOut" }}
-                  className="absolute inset-0 w-16 h-16 rounded-full pointer-events-none"
-                  style={{ background: "rgba(66,133,244,0.38)" }}
+                <div
+                  className="absolute inset-0 w-14 h-14 sm:w-16 sm:h-16 rounded-full pointer-events-none animate-chatbot-pulse"
+                  style={{ background: "rgba(66,133,244,0.3)" }}
                 />
               )}
 
-              {/* Bubble icon — enlarged to w-16 h-16 */}
+              {/* Bubble icon — w-14 h-14 (mobile) or w-16 h-16 (desktop) styled with Absolute Claymorphic 3D styling */}
               <motion.div
-                animate={
-                  widgetState !== "chat"
-                    ? { scale: [1, 1.08, 1], rotate: [0, -6, 6, -6, 6, 0] }
-                    : {}
-                }
-                transition={{
-                  scale: { repeat: Infinity, duration: 3, ease: "easeInOut" },
-                  rotate: { repeat: Infinity, duration: 6, ease: "easeInOut", repeatDelay: 2 },
-                }}
-                whileHover={{ scale: 1.12, rotate: 0 }}
+                animate={shouldJump ? { y: [0, -32, 0, -16, 0, -6, 0] } : {}}
+                transition={shouldJump ? { duration: 1.0, ease: "easeInOut" } : {}}
+                whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="relative w-16 h-16 rounded-full flex items-center justify-center"
+                className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shadow-2xl ${
+                  !shouldJump && widgetState !== "chat" ? "animate-chatbot-float" : ""
+                }`}
                 style={{
-                  background: "linear-gradient(135deg,#4285F4 0%,#7c3aed 100%)",
-                  boxShadow: "0 10px 32px rgba(66,133,244,0.5),0 0 0 2.5px rgba(66,133,244,0.25)",
+                  background: "linear-gradient(135deg, #4285F4 0%, #7c3aed 100%)",
+                  boxShadow: "inset 4px 4px 8px rgba(255, 255, 255, 0.45), inset -4px -4px 8px rgba(0, 0, 0, 0.35), 0 12px 28px rgba(66, 133, 244, 0.45)",
+                  border: "none",
                 }}
               >
-                <MessageCircle className="w-7 h-7 text-white" />
+                {/* Custom Animated 3D Smiley Face */}
+                <svg viewBox="0 0 32 32" className="w-7 h-7 sm:w-8 sm:h-8 text-white stroke-white fill-none stroke-[2.5]" style={{ strokeLinecap: "round" }}>
+                  {/* Left eye */}
+                  <motion.circle
+                    cx="11"
+                    r="2.5"
+                    className={`fill-white stroke-none ${!isFormOpen ? "animate-chatbot-eye-blink" : ""}`}
+                    animate={{
+                      cy: isFormOpen ? 9 : 13,
+                    }}
+                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                  />
+                  {/* Right eye */}
+                  <motion.circle
+                    cx="21"
+                    r="2.5"
+                    className={`fill-white stroke-none ${!isFormOpen ? "animate-chatbot-eye-blink" : ""}`}
+                    animate={{
+                      cy: isFormOpen ? 9 : 13,
+                    }}
+                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                  />
+                  {/* Smiling mouth (self-drawing stroke animation) */}
+                  <motion.path
+                    d="M 10,18 C 12,22 20,22 22,18"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
+                  />
+                </svg>
               </motion.div>
             </button>
           </motion.div>

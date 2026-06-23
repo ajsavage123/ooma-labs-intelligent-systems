@@ -91,7 +91,7 @@ const HeroSection = () => {
           >
             <button
               onClick={() => document.getElementById("services")?.scrollIntoView({ behavior: "smooth" })}
-              className="btn-google-blue flex items-center justify-center gap-2 group shadow-md w-full sm:w-auto"
+              className="btn-google-blue btn-highlight-glow flex items-center justify-center gap-2 group shadow-md w-full sm:w-auto"
             >
               Explore Our Solutions
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />

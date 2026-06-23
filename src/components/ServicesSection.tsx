@@ -99,8 +99,45 @@ interface ServiceCategory {
   items: string[];
 }
 
+const getClayStyle = (colorClass: string) => {
+  if (colorClass.includes("4285F4")) {
+    return {
+      bg: "bg-[#4285F4]",
+      iconColor: "text-white",
+      shadow: "inset 4px 4px 8px rgba(255, 255, 255, 0.45), inset -4px -4px 8px rgba(0, 0, 0, 0.35), 0 12px 24px rgba(66, 133, 244, 0.35)",
+    };
+  }
+  if (colorClass.includes("34A853")) {
+    return {
+      bg: "bg-[#34A853]",
+      iconColor: "text-white",
+      shadow: "inset 4px 4px 8px rgba(255, 255, 255, 0.45), inset -4px -4px 8px rgba(0, 0, 0, 0.35), 0 12px 24px rgba(52, 168, 83, 0.35)",
+    };
+  }
+  if (colorClass.includes("FBBC05")) {
+    return {
+      bg: "bg-[#FBBC05]",
+      iconColor: "text-amber-950",
+      shadow: "inset 4px 4px 8px rgba(255, 255, 255, 0.6), inset -4px -4px 8px rgba(0, 0, 0, 0.25), 0 12px 24px rgba(251, 188, 5, 0.35)",
+    };
+  }
+  if (colorClass.includes("EA4335")) {
+    return {
+      bg: "bg-[#EA4335]",
+      iconColor: "text-white",
+      shadow: "inset 4px 4px 8px rgba(255, 255, 255, 0.45), inset -4px -4px 8px rgba(0, 0, 0, 0.35), 0 12px 24px rgba(234, 67, 53, 0.35)",
+    };
+  }
+  return {
+    bg: "bg-white/10",
+    iconColor: "text-white",
+    shadow: "none",
+  };
+};
+
 const ServiceCard = ({ category, index }: { category: ServiceCategory; index: number }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const clay = getClayStyle(category.color);
 
   return (
     <motion.div
@@ -119,12 +156,15 @@ const ServiceCard = ({ category, index }: { category: ServiceCategory; index: nu
         <div className="flex flex-col items-center text-center gap-6">
           <motion.div 
             animate={{ 
-              scale: isExpanded ? 1.1 : 1,
+              scale: isExpanded ? 1.15 : 1,
               rotate: isExpanded ? 5 : 0
             }}
-            className={`w-20 h-20 ${category.bg} ${category.color} rounded-[2rem] flex items-center justify-center transition-transform duration-500`}
+            className={`w-20 h-20 ${clay.bg} ${clay.iconColor} rounded-[2.2rem] flex items-center justify-center transition-transform duration-500`}
+            style={{
+              boxShadow: clay.shadow,
+            }}
           >
-            <category.icon className="w-10 h-10" />
+            <category.icon className="w-9 h-9" />
           </motion.div>
           
           <div className="flex flex-col items-center gap-2">
@@ -208,7 +248,6 @@ const ServicesSection = () => {
           transition={{ duration: 0.6 }}
           className="mb-20 text-center"
         >
-          <span className="badge-google mb-6 inline-block">The Portfolio</span>
           <h2 className="font-display font-bold text-responsive-h2 text-white mt-4 tracking-tighter">
             Elevate Your <span className="text-gradient-google">Business</span> with Ooma.
           </h2>
