@@ -9,8 +9,8 @@ const NeuralGrid = () => {
   const meshRef = useRef<THREE.Points>(null);
   const lineRef = useRef<THREE.LineSegments>(null);
   
-  const gridSize = 40;
-  const spacing = 0.6;
+  const gridSize = 25;
+  const spacing = 0.96;
   const count = gridSize * gridSize;
 
   // Initial grid positions

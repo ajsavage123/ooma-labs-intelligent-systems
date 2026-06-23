@@ -4,7 +4,7 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
 import { X, Send, Phone, User, Mail, Briefcase, Laptop, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
@@ -289,6 +289,7 @@ ChatMessages.displayName = "ChatMessages";
 /* ─── Main Widget ────────────────────────────────────────── */
 const QuoteChatWidget: React.FC = () => {
   const [widgetState, setWidgetState] = useState<WidgetState>("idle");
+  const [mood, setMood] = useState<"happy" | "sad">("happy");
   const [hasUnread, setHasUnread] = useState(false);
   const [shouldJump, setShouldJump] = useState(false);
   const [windowSize, setWindowSize] = useState({
@@ -310,10 +311,72 @@ const QuoteChatWidget: React.FC = () => {
   const emailRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
 
-  /* Controlled only for dropdowns */
   const [bizType, setBizType] = useState("");
   const [service, setService] = useState("");
   const [errs, setErrs]       = useState<Record<string, string>>({});
+  const [showBubble, setShowBubble] = useState(true);
+  const sadTimeoutRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      if (sadTimeoutRef.current) clearTimeout(sadTimeoutRef.current);
+    };
+  }, []);
+
+  /* Track mouse position for robot head look-around effect using Framer Motion values to bypass React render cycles */
+  const headX = useMotionValue(0);
+  const headY = useMotionValue(0);
+  const headSpringX = useSpring(headX, { stiffness: 120, damping: 14 });
+  const headSpringY = useSpring(headY, { stiffness: 120, damping: 14 });
+
+  const widgetCenterRef = useRef({ x: 0, y: 0 });
+
+  const updateWidgetCenter = useCallback(() => {
+    const widgetEl = document.getElementById("ooma-chatbot-bubble");
+    if (widgetEl) {
+      const rect = widgetEl.getBoundingClientRect();
+      widgetCenterRef.current = {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      };
+    }
+  }, []);
+
+  // Update center position on mount, state changes, and resize
+  useEffect(() => {
+    const t = setTimeout(updateWidgetCenter, 100);
+    window.addEventListener("resize", updateWidgetCenter);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("resize", updateWidgetCenter);
+    };
+  }, [widgetState, updateWidgetCenter]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (widgetCenterRef.current.x === 0) {
+        updateWidgetCenter();
+        if (widgetCenterRef.current.x === 0) return;
+      }
+
+      const dx = e.clientX - widgetCenterRef.current.x;
+      const dy = e.clientY - widgetCenterRef.current.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance === 0) return;
+
+      const maxOffset = 2.5; // Subtle offset for head tracking
+      const scale = Math.min(distance / 300, 1) * maxOffset;
+      const offsetX = (dx / distance) * scale;
+      const offsetY = (dy / distance) * scale;
+
+      headX.set(offsetX);
+      headY.set(offsetY);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [updateWidgetCenter, headX, headY]);
 
   /* Listen for cookie consent changes to avoid overlay collisions */
   const [cookieConsentActive, setCookieConsentActive] = useState(false);
@@ -351,6 +414,13 @@ const QuoteChatWidget: React.FC = () => {
     localStorage.setItem("ql_popupSeen", "true");
     setWidgetState("bubble");
     setHasUnread(true);
+    setMood("sad");
+    setShowBubble(true);
+    if (sadTimeoutRef.current) clearTimeout(sadTimeoutRef.current);
+    sadTimeoutRef.current = setTimeout(() => {
+      setShowBubble(false);
+      setMood("happy");
+    }, 5000);
 
     // Bounces exactly when the shrinking centered card overlaps the bubble
     setTimeout(() => {
@@ -358,9 +428,25 @@ const QuoteChatWidget: React.FC = () => {
     }, 400);
   }, []);
 
-  const openChat  = useCallback(() => { setWidgetState("chat"); setHasUnread(false); }, []);
+  const openChat  = useCallback(() => {
+    setWidgetState("chat");
+    setHasUnread(false);
+    setMood("happy");
+    if (sadTimeoutRef.current) {
+      clearTimeout(sadTimeoutRef.current);
+      sadTimeoutRef.current = null;
+    }
+  }, []);
+
   const closeChat = useCallback(() => {
     setWidgetState("bubble");
+    setMood("sad");
+    setShowBubble(true);
+    if (sadTimeoutRef.current) clearTimeout(sadTimeoutRef.current);
+    sadTimeoutRef.current = setTimeout(() => {
+      setShowBubble(false);
+      setMood("happy");
+    }, 5000);
     triggerJump();
   }, []);
 
@@ -390,13 +476,19 @@ const QuoteChatWidget: React.FC = () => {
     );
     toast.success("Opening WhatsApp with your quotation details!");
     setWidgetState("bubble");
+    setMood("happy");
+    setShowBubble(false);
+    if (sadTimeoutRef.current) {
+      clearTimeout(sadTimeoutRef.current);
+      sadTimeoutRef.current = null;
+    }
     setTimeout(() => {
       triggerJump();
     }, 400);
   }, [bizType, service]);
 
   const isDesktop = windowSize.width >= 1024;
-  const bubbleRadius = isDesktop ? 32 : 28; // 64px on desktop, 56px on mobile
+  const bubbleRadius = isDesktop ? 32 : 24; // 64px on desktop, 48px on mobile
   
   const rightMargin = isDesktop ? 48 : 24;
   const bottomMargin = isDesktop 
@@ -577,39 +669,36 @@ const QuoteChatWidget: React.FC = () => {
             style={{ bottom: bottomOffset, right: rightOffset }}
           >
             <button
+              id="ooma-chatbot-bubble"
               onClick={openChat}
               aria-label="Open quotation chat"
               className="relative group outline-none cursor-pointer"
             >
               {/* Interactive Speech Tag above the bubble */}
               <AnimatePresence>
-                {widgetState === "bubble" && !shouldJump && (
+                {widgetState === "bubble" && !shouldJump && showBubble && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.6, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.6, y: 10 }}
                     transition={{ delay: 0.5, type: "spring", stiffness: 300, damping: 20 }}
-                    className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-white text-black font-display font-black text-[10px] sm:text-[12px] px-3.5 py-1.5 sm:px-4.5 sm:py-2 rounded-full shadow-lg pointer-events-auto flex items-center gap-1.5 sm:gap-2 shrink-0 select-none whitespace-nowrap"
+                    className="absolute bottom-full mb-3 right-0 bg-white text-black font-display font-black text-[10px] sm:text-[12px] px-3.5 py-1.5 sm:px-4.5 sm:py-2 rounded-full shadow-lg pointer-events-auto flex items-center gap-1.5 sm:gap-2 shrink-0 select-none whitespace-nowrap"
                     style={{
                       boxShadow: "0 8px 25px rgba(0, 0, 0, 0.4)",
                     }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <span>Hii!</span>
-                    <span className="inline-block animate-chatbot-wiggle text-xs sm:text-sm">
-                      👋
+                    <span>
+                      {mood === "happy" 
+                        ? "Hi! I'm Ooma AI." 
+                        : "I told you it's free... don't leave me! 🥺"}
                     </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        triggerJump();
-                        toast.success("Waved back! Ooma is here to help.");
-                      }}
-                      className="ml-1 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[8.5px] sm:text-[9.5px] font-black uppercase tracking-wider bg-black/10 hover:bg-black/25 text-black hover:text-black rounded-md border-none cursor-pointer transition-colors shadow-sm font-display"
-                    >
-                      Wave Hi
-                    </button>
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white rotate-45" />
+                    {mood === "happy" && (
+                      <span className="inline-block animate-chatbot-wiggle text-xs sm:text-sm">
+                        👋
+                      </span>
+                    )}
+                    <div className="absolute -bottom-1 right-7 sm:right-8 w-2 h-2 bg-white rotate-45" />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -617,55 +706,145 @@ const QuoteChatWidget: React.FC = () => {
               {/* Pulse ring */}
               {widgetState !== "chat" && (
                 <div
-                  className="absolute inset-0 w-14 h-14 sm:w-16 sm:h-16 rounded-full pointer-events-none animate-chatbot-pulse"
-                  style={{ background: "rgba(66,133,244,0.3)" }}
+                  className="absolute inset-0 w-12 h-12 sm:w-16 sm:h-16 rounded-full pointer-events-none animate-chatbot-pulse"
+                  style={{ background: "rgba(229,57,53,0.25)" }}
                 />
               )}
 
-              {/* Bubble icon — w-14 h-14 (mobile) or w-16 h-16 (desktop) styled with Absolute Claymorphic 3D styling */}
+              {/* Bubble icon — Transparent background so only the robot floats */}
               <motion.div
                 animate={shouldJump ? { y: [0, -32, 0, -16, 0, -6, 0] } : {}}
                 transition={shouldJump ? { duration: 1.0, ease: "easeInOut" } : {}}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shadow-2xl ${
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
+                className={`relative w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center ${
                   !shouldJump && widgetState !== "chat" ? "animate-chatbot-float" : ""
                 }`}
                 style={{
-                  background: "linear-gradient(135deg, #4285F4 0%, #7c3aed 100%)",
-                  boxShadow: "inset 4px 4px 8px rgba(255, 255, 255, 0.45), inset -4px -4px 8px rgba(0, 0, 0, 0.35), 0 12px 28px rgba(66, 133, 244, 0.45)",
+                  background: "transparent",
                   border: "none",
                 }}
               >
-                {/* Custom Animated 3D Smiley Face */}
-                <svg viewBox="0 0 32 32" className="w-7 h-7 sm:w-8 sm:h-8 text-white stroke-white fill-none stroke-[2.5]" style={{ strokeLinecap: "round" }}>
-                  {/* Left eye */}
-                  <motion.circle
-                    cx="11"
-                    r="2.5"
-                    className={`fill-white stroke-none ${!isFormOpen ? "animate-chatbot-eye-blink" : ""}`}
-                    animate={{
-                      cy: isFormOpen ? 9 : 13,
-                    }}
-                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                {/* Custom Animated Red Robot (Matches attached spec image) */}
+                <svg viewBox="0 0 32 32" className="w-full h-full text-white fill-none" style={{ strokeLinecap: "round" }}>
+                  {/* Left resting arm */}
+                  <path
+                    d="M 10,22 Q 6.5,25 7.5,28"
+                    stroke="#D32F2F"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    fill="none"
                   />
-                  {/* Right eye */}
-                  <motion.circle
-                    cx="21"
-                    r="2.5"
-                    className={`fill-white stroke-none ${!isFormOpen ? "animate-chatbot-eye-blink" : ""}`}
-                    animate={{
-                      cy: isFormOpen ? 9 : 13,
-                    }}
-                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                  <circle cx="7.5" cy="28" r="1.3" fill="#212121" />
+
+                  {/* Right waving arm (waves exactly once on page load) */}
+                  <motion.g
+                    style={{ transformOrigin: "22px 22px" }}
+                    animate={{ rotate: [0, -15, 10, -15, 10, 0] }}
+                    transition={{ delay: 1.2, duration: 1.8, ease: "easeInOut" }}
+                  >
+                    <path
+                      d="M 22,22 Q 25,19.5 27,15"
+                      stroke="#D32F2F"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <circle cx="27" cy="15" r="1.5" fill="#212121" />
+                    {/* Waving fingers */}
+                    <path d="M 27,15 L 26,12" stroke="#212121" strokeWidth="0.8" strokeLinecap="round" />
+                    <path d="M 27,15 L 28.5,12.5" stroke="#212121" strokeWidth="0.8" strokeLinecap="round" />
+                    <path d="M 27,15 L 29.5,14.5" stroke="#212121" strokeWidth="0.8" strokeLinecap="round" />
+                  </motion.g>
+
+                  {/* Body Torso */}
+                  <path
+                    d="M 10.5,21.5 C 10.5,20.5 21.5,20.5 21.5,21.5 L 19.5,28.5 C 19.5,29.5 12.5,29.5 12.5,28.5 Z"
+                    fill="#E53935"
+                    stroke="#b71c1c"
+                    strokeWidth="0.5"
                   />
-                  {/* Smiling mouth (self-drawing stroke animation) */}
-                  <motion.path
-                    d="M 10,18 C 12,22 20,22 22,18"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
+                  {/* Hexagon Chest Badge */}
+                  <path
+                    d="M 16,23 L 18,24 L 18,26 L 16,27 L 14,26 L 14,24 Z"
+                    stroke="white"
+                    strokeWidth="0.8"
+                    fill="none"
                   />
+
+                  {/* Head group (follows mouse) */}
+                  <motion.g
+                    style={{ x: headSpringX, y: headSpringY }}
+                  >
+                    {/* Neck connector */}
+                    <rect x="14" y="19" width="4" height="2.5" fill="#212121" rx="0.5" />
+
+                    {/* Left ear bracket */}
+                    <rect x="1" y="6.5" width="3.5" height="9" rx="1.5" fill="#D32F2F" />
+                    {/* Right ear bracket */}
+                    <rect x="27.5" y="6.5" width="3.5" height="9" rx="1.5" fill="#D32F2F" />
+
+                    {/* Head base */}
+                    <rect x="4" y="2.5" width="24" height="17" rx="3.5" fill="#E53935" stroke="#b71c1c" strokeWidth="0.75" />
+
+                    {/* Visor Screen */}
+                    <rect x="6.5" y="5" width="19" height="12" rx="2" fill="#121212" stroke="#424242" strokeWidth="0.5" />
+
+                    {/* Left eye */}
+                    <motion.circle
+                      cx="11.5"
+                      fill="white"
+                      style={{ transformOrigin: "11.5px 10.5px" }}
+                      animate={{
+                        cy: isFormOpen ? 8.5 : 10.5,
+                        r: 1.8,
+                        scaleY: [1, 1, 1, 0.1, 1, 1],
+                      }}
+                      transition={{
+                        cy: { type: "spring", stiffness: 200, damping: 15 },
+                        scaleY: {
+                          repeat: Infinity,
+                          duration: 4.5,
+                          times: [0, 0.9, 0.92, 0.94, 0.96, 1],
+                          ease: "easeInOut"
+                        }
+                      }}
+                    />
+
+                    {/* Right eye */}
+                    <motion.circle
+                      cx="20.5"
+                      fill="white"
+                      style={{ transformOrigin: "20.5px 10.5px" }}
+                      animate={{
+                        cy: isFormOpen ? 8.5 : 10.5,
+                        r: 1.8,
+                        scaleY: [1, 1, 1, 0.1, 1, 1],
+                      }}
+                      transition={{
+                        cy: { type: "spring", stiffness: 200, damping: 15 },
+                        scaleY: {
+                          repeat: Infinity,
+                          duration: 4.5,
+                          times: [0, 0.9, 0.92, 0.94, 0.96, 1],
+                          ease: "easeInOut"
+                        }
+                      }}
+                    />
+
+                    {/* Smiling/Sad mouth */}
+                    <motion.path
+                      animate={{
+                        d: mood === "happy" 
+                          ? "M 14,13.5 Q 16,15.0 18,13.5" 
+                          : "M 14,15.5 Q 16,13.8 18,15.5"
+                      }}
+                      transition={{ type: "spring", stiffness: 150, damping: 12 }}
+                      stroke="white"
+                      strokeWidth="1.2"
+                      fill="none"
+                    />
+                  </motion.g>
                 </svg>
               </motion.div>
             </button>

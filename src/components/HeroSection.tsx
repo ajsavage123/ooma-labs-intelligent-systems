@@ -76,11 +76,9 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
-            className="text-responsive-body text-white/60 mb-10 max-w-2xl mx-auto reveal-subtext"
+            className="text-responsive-body text-white/60 mb-10 max-w-3xl mx-auto reveal-subtext"
           >
-            Ooma Labs is a strategic tech engineering firm. We architect and build
-            high-performance applications or new innovative technology that solve structural
-            inefficiencies for startups and enterprises.
+            Building the intelligence that moves businesses forward. Ooma Labs designs and engineers high-performance web platforms, custom software, and AI automations.
           </motion.p>
 
           <motion.div
