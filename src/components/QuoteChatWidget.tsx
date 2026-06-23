@@ -589,7 +589,7 @@ const QuoteChatWidget: React.FC = () => {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.6, y: 10 }}
                     transition={{ delay: 0.5, type: "spring", stiffness: 300, damping: 20 }}
-                    className="absolute -top-[52px] sm:-top-[58px] left-1/2 -translate-x-1/2 bg-white text-black font-display font-black text-[10px] sm:text-[12px] px-3.5 py-1.5 sm:px-4.5 sm:py-2 rounded-full shadow-lg pointer-events-auto flex items-center gap-1.5 sm:gap-2 shrink-0 select-none whitespace-nowrap"
+                    className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-white text-black font-display font-black text-[10px] sm:text-[12px] px-3.5 py-1.5 sm:px-4.5 sm:py-2 rounded-full shadow-lg pointer-events-auto flex items-center gap-1.5 sm:gap-2 shrink-0 select-none whitespace-nowrap"
                     style={{
                       boxShadow: "0 8px 25px rgba(0, 0, 0, 0.4)",
                     }}
