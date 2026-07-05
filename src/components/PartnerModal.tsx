@@ -82,7 +82,7 @@ const PartnerModal = ({ isOpen, onOpenChange }: PartnerModalProps) => {
           templateId,
           {
             ...values,
-            to_email: "oomalabs@gmail.com",
+            to_email: "hello@oomalabs.com",
           }
         );
       }

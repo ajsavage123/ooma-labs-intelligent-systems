@@ -29,9 +29,9 @@ const CTASection = () => {
     },
     {
       icon: Mail,
-      label: "Official Gmail",
-      value: "oomalabs@gmail.com",
-      href: "mailto:oomalabs@gmail.com?body=hi%20i%20am%20looking%20for%20colabration%20in%20your%20company%20and%20my%20name%20is%20.....",
+      label: "Official Email",
+      value: "hello@oomalabs.com",
+      href: "mailto:hello@oomalabs.com?body=Hi,%20I%20would%20like%20to%20know%20more%20about%20your%20services.%20I%20am%20looking%20for%20____________%20for%20my%20business.",
       color: "text-[#EA4335]",
       bg: "bg-[#EA4335]/10"
     }

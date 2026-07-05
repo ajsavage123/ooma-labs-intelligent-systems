@@ -65,7 +65,7 @@ const PartnershipPage: React.FC = () => {
         if (serviceId && templateId && publicKey) {
           emailjs.init(publicKey);
           await emailjs.send(serviceId, templateId, {
-            to_email: "oomalabs@gmail.com",
+            to_email: "hello@oomalabs.com",
             partner_name: values.name,
             partner_email: values.email,
             partner_phone: values.phoneNumber,

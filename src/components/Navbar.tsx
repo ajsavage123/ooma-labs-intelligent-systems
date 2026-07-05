@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Rocket, BookOpen, Menu, X, ArrowRight, Instagram, Twitter, Linkedin } from "lucide-react";
+import { ChevronDown, Rocket, BookOpen, Menu, X, ArrowRight, Instagram, Twitter, Linkedin, Mail } from "lucide-react";
 
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -186,7 +186,7 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 lg:gap-12">
                     <div>
                       <span className="text-[10px] tracking-widest uppercase text-white/30 font-bold block mb-4 lg:mb-6">Collaborate</span>
-                      <a href="mailto:oomalabs@gmail.com?body=hi%20i%20am%20looking%20for%20colabration%20in%20your%20company%20and%20my%20name%20is%20....." className="text-base lg:text-lg text-white hover:text-[#4285F4] transition-colors block mb-2">oomalabs@gmail.com</a>
+                      <a href="mailto:hello@oomalabs.com?body=Hi,%20I%20would%20like%20to%20know%20more%20about%20your%20services.%20I%20am%20looking%20for%20____________%20for%20my%20business." className="text-base lg:text-lg text-white hover:text-[#4285F4] transition-colors block mb-2">hello@oomalabs.com</a>
                     </div>
                     <div>
                       <span className="text-[10px] tracking-widest uppercase text-white/30 font-bold block mb-4 lg:mb-6">Located At</span>
@@ -197,9 +197,9 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                   {/* Socials */}
                   <div className="flex gap-6 mt-4">
                     {[
-                      { icon: Twitter, href: "#" },
                       { icon: Linkedin, href: "https://www.linkedin.com/company/oomalabs/" },
-                      { icon: Instagram, href: "https://www.instagram.com/ooma.labs?igsh=YTNrOXcxd3puZWxj" }
+                      { icon: Instagram, href: "https://www.instagram.com/ooma.labs?igsh=YTNrOXcxd3puZWxj" },
+                      { icon: Mail, href: "mailto:hello@oomalabs.com" }
                     ].map(({ icon: Icon, href }, i) => (
                       <motion.a 
                         key={i}

@@ -42,7 +42,7 @@ const Footer = () => {
   const socialLinks = [
     { icon: Linkedin, href: "https://www.linkedin.com/company/oomalabs/", label: "LinkedIn" },
     { icon: Instagram, href: "https://www.instagram.com/ooma.labs?igsh=YTNrOXcxd3puZWxj", label: "Instagram" },
-    { icon: Twitter, href: "#", label: "Twitter" },
+    { icon: Mail, href: "mailto:hello@oomalabs.com", label: "Email" },
   ];
 
   return (
@@ -175,11 +175,11 @@ const Footer = () => {
             <div className={`mt-4 sm:mt-6 space-y-4 transition-all duration-300 overflow-hidden sm:block ${openSection === "contact" ? "max-h-96 opacity-100" : "max-h-0 opacity-0 sm:max-h-none sm:opacity-100"}`}>
               <ul className="space-y-4">
                 <li>
-                  <a href="mailto:oomalabs@gmail.com" className="flex items-center gap-3 text-white/50 hover:text-white text-sm transition-colors group">
+                  <a href="mailto:hello@oomalabs.com" className="flex items-center gap-3 text-white/50 hover:text-white text-sm transition-colors group">
                     <div className="w-9 h-9 bg-[#EA4335]/10 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-[#EA4335]/20 transition-colors">
                       <Mail className="w-4 h-4 text-[#EA4335]" />
                     </div>
-                    oomalabs@gmail.com
+                    hello@oomalabs.com
                   </a>
                 </li>
                 <li>

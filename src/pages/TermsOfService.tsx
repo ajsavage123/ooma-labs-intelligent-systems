@@ -81,7 +81,7 @@ All project deliverables, timelines, and scope will be defined in individual pro
     title: "Contact & Disputes",
     content: `For any questions, concerns, or disputes regarding these Terms of Service:
 
-• **Email:** oomalabs@gmail.com
+• **Email:** hello@oomalabs.com
 • **Phone:** +91 93811 67058
 • **WhatsApp:** +91 94928 27058
 

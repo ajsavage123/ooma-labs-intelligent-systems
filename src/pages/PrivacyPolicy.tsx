@@ -54,7 +54,7 @@ While we strive to protect your information, no method of transmission over the 
 • **Portability:** Request your data in a structured, commonly used format
 • **Withdraw Consent:** Withdraw previously given consent at any time
 
-To exercise any of these rights, please contact us at oomalabs@gmail.com.`,
+To exercise any of these rights, please contact us at hello@oomalabs.com.`,
   },
   {
     icon: Globe,
@@ -72,7 +72,7 @@ You can control cookie preferences through your browser settings. Disabling cert
     title: "6. Contact Us",
     content: `If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us:
 
-• **Email:** oomalabs@gmail.com
+• **Email:** hello@oomalabs.com
 • **Phone:** +91 93811 67058
 • **WhatsApp:** +91 94928 27058
 
