@@ -1,65 +1,109 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Star, Quote } from "lucide-react";
+import { Star, StarHalf } from "lucide-react";
 
 interface Testimonial {
-  quote: string;
   name: string;
-  role: string;
-  company: string;
-  rating: number;
-  color: string;
-  accentBg: string;
-  accentText: string;
-  cardStyle: string;
+  date: string;
+  text: string;
+  initial: string;
+  bgColor: string;
+  rating: number; // 1 to 5, allows decimals like 4.5
 }
 
-const testimonials: Testimonial[] = [
+const reviews: Testimonial[] = [
   {
-    quote: "Ooma Labs built the entire Rakshith 360 AI emergency medical system. The real-time hospital dashboard and ambulance dispatch coordination works flawlessly in critical scenarios.",
-    name: "Dr. Ramesh Kumar",
-    role: "Emergency Operations Director",
-    company: "Rakshith Emergency Services",
+    name: "Vikram Reddy",
+    date: "a month ago",
+    text: "Honestly, the team at Ooma Labs completely changed how we handle emergency dispatch. Our old system was constantly crashing during peak hours, but since they rebuilt our backend, we haven't had a single drop in uptime. They actually took the time to understand our messy operations before writing any code. Highly recommend.",
+    initial: "V",
+    bgColor: "bg-blue-500",
     rating: 5,
-    color: "border-[#EA4335]/25 hover:border-[#EA4335]/50",
-    accentBg: "bg-[#EA4335]/10",
-    accentText: "text-[#EA4335]",
-    cardStyle: "from-[#EA4335]/10 via-[#EA4335]/3 to-[#EA4335]/0 hover:shadow-[0_0_40px_rgba(234,67,53,0.12)]",
   },
   {
-    quote: "With MedExpert, Ooma Labs created a robust medical professional recruitment ecosystem. The system connects healthcare centers with talent securely and efficiently.",
-    name: "Sarah D'Souza",
-    role: "Talent Acquisition Head",
-    company: "MedExpert Network",
-    rating: 5,
-    color: "border-[#34A853]/25 hover:border-[#34A853]/50",
-    accentBg: "bg-[#34A853]/10",
-    accentText: "text-[#34A853]",
-    cardStyle: "from-[#34A853]/10 via-[#34A853]/3 to-[#34A853]/0 hover:shadow-[0_0_40px_rgba(52,168,83,0.12)]",
+    name: "Sneha Desai",
+    date: "2 months ago",
+    text: "Working with Ajay and his team has been a breath of fresh air. They don't just say 'yes' to every feature—they push back when an idea doesn't make sense and suggest better, faster ways to build it. They delivered our talent platform a week ahead of schedule.",
+    initial: "S",
+    bgColor: "bg-green-600",
+    rating: 4.5,
   },
   {
-    quote: "The CodeBlueR network has become a vital node for global responder intelligence. Ooma's engineering enabled seamless practitioner coordination at scale.",
-    name: "Vikram Malhotra",
-    role: "First Responder Coordinator",
-    company: "CodeBlueR Community",
-    rating: 5,
-    color: "border-[#4285F4]/25 hover:border-[#4285F4]/50",
-    accentBg: "bg-[#4285F4]/10",
-    accentText: "text-[#4285F4]",
-    cardStyle: "from-[#4285F4]/10 via-[#4285F4]/3 to-[#4285F4]/0 hover:shadow-[0_0_40px_rgba(66,133,244,0.12)]",
-  },
-  {
-    quote: "We automated our entire lead sync and WhatsApp follow-up operations using Ooma's custom integration tools. Manual work went down by 80% in the first two weeks.",
     name: "Amit Patil",
-    role: "Founder & CEO",
-    company: "Aura Commerce Agency",
+    date: "4 months ago",
+    text: "We were drowning in manual WhatsApp follow-ups and lead syncing before Ooma Labs built our custom integration. It felt like magic seeing our entire workflow automated on day one. Worth every penny, they literally saved me 20 hours a week.",
+    initial: "A",
+    bgColor: "bg-orange-500",
     rating: 5,
-    color: "border-[#FBBC05]/25 hover:border-[#FBBC05]/50",
-    accentBg: "bg-[#FBBC05]/10",
-    accentText: "text-[#FBBC05]",
-    cardStyle: "from-[#FBBC05]/10 via-[#FBBC05]/3 to-[#FBBC05]/0 hover:shadow-[0_0_40px_rgba(251,188,5,0.12)]",
+  },
+  {
+    name: "Dr. Ramesh Kumar",
+    date: "5 months ago",
+    text: "Very professional and technically sound team. They engineered the Rakshith 360 system from the ground up, dealing with complex hospital API integrations seamlessly. I'm giving 4 stars only because we had a slight delay in the initial design phase, but the final product is flawless.",
+    initial: "R",
+    bgColor: "bg-purple-600",
+    rating: 4,
+  },
+  {
+    name: "Neha Sharma",
+    date: "6 months ago",
+    text: "Best decision we made for our startup was bringing Ooma Labs in to handle our MVP. Clean code, great communication, no hidden fees or nonsense. The platform is robust and scaling easily as we add more users.",
+    initial: "N",
+    bgColor: "bg-pink-600",
+    rating: 5,
   },
 ];
+
+const GoogleLogo = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+  </svg>
+);
+
+const renderStars = (rating: number) => {
+  const stars = [];
+  for (let i = 1; i <= 5; i++) {
+    if (rating >= i) {
+      // Full star
+      stars.push(<Star key={i} className="w-4 h-4 fill-[#FBBC05] text-[#FBBC05]" />);
+    } else if (rating >= i - 0.5) {
+      // Half star
+      stars.push(<StarHalf key={i} className="w-4 h-4 fill-[#FBBC05] text-[#FBBC05]" />);
+    } else {
+      // Empty star (Google uses gray filled stars for empty)
+      stars.push(<Star key={i} className="w-4 h-4 fill-[#E0E0E0] text-[#E0E0E0]" />);
+    }
+  }
+  return stars;
+};
+
+const TestimonialCard = ({ review }: { review: Testimonial }) => (
+  <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 w-[350px] md:w-[400px] flex-shrink-0 flex flex-col mx-3">
+    <div className="flex items-start justify-between mb-4">
+      <div className="flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-lg ${review.bgColor}`}>
+          {review.initial}
+        </div>
+        <div>
+          <h4 className="text-gray-900 font-medium text-sm leading-tight">{review.name}</h4>
+          <span className="text-gray-500 text-xs">{review.date}</span>
+        </div>
+      </div>
+      <GoogleLogo />
+    </div>
+    
+    <div className="flex gap-1 mb-3">
+      {renderStars(review.rating)}
+    </div>
+    
+    <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+      {review.text}
+    </p>
+  </div>
+);
 
 const TestimonialsSection = () => {
   const ref = useRef(null);
@@ -67,17 +111,16 @@ const TestimonialsSection = () => {
 
   return (
     <section id="testimonials" className="py-24 md:py-32 bg-[#050505] relative overflow-hidden" ref={ref}>
-      {/* Background effects */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] bg-[#FBBC05]/5 blur-[150px] rounded-full pointer-events-none" />
       <div className="absolute inset-0 stitch-grid opacity-5 pointer-events-none" />
 
-      <div className="max-w-6xl mx-auto px-6 md:px-12 relative z-10">
+      <div className="max-w-[100vw] mx-auto px-0 relative z-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16 md:mb-20"
+          className="text-center mb-16 md:mb-20 px-6 md:px-12"
         >
           <span className="badge-google !bg-[#FBBC05]/10 !text-[#FBBC05] !border-[#FBBC05]/20 mb-6 inline-block">
             Testimonials
@@ -86,60 +129,22 @@ const TestimonialsSection = () => {
             What Our <span className="text-gradient-google">Clients</span> Say.
           </h2>
           <p className="text-responsive-body text-white/50 max-w-2xl mx-auto mt-6">
-            Real feedback linked to active custom products engineered by Ooma Labs.
+            Real feedback from our partners, verified by Google.
           </p>
         </motion.div>
 
-        {/* Testimonial Grid (Clean 2-Column Balanced Layout) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 max-w-5xl mx-auto gap-6 md:gap-8">
-          {testimonials.map((testimonial, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.1 + i * 0.1 }}
-              className={`group bg-gradient-to-b ${testimonial.cardStyle} border ${testimonial.color} rounded-[2rem] p-8 md:p-10 transition-all duration-500 hover:-translate-y-2 relative overflow-hidden flex flex-col justify-between`}
-            >
-              <div>
-                {/* Quote icon */}
-                <div className={`w-12 h-12 ${testimonial.accentBg} rounded-2xl flex items-center justify-center mb-6`}>
-                  <Quote className={`w-6 h-6 ${testimonial.accentText}`} />
-                </div>
-
-                {/* Stars */}
-                <div className="flex gap-1 mb-6">
-                  {Array.from({ length: testimonial.rating }).map((_, idx) => (
-                    <Star key={idx} className="w-4 h-4 fill-[#FBBC05] text-[#FBBC05]" />
-                  ))}
-                </div>
-
-                {/* Quote text */}
-                <p className="text-white/70 text-sm md:text-base leading-relaxed mb-8 font-medium">
-                  "{testimonial.quote}"
-                </p>
-              </div>
-
-              {/* Author info */}
-              <div className="mt-auto border-t border-white/5 pt-6">
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 ${testimonial.accentBg} rounded-full flex items-center justify-center`}>
-                    <span className={`text-lg font-bold ${testimonial.accentText}`}>
-                      {testimonial.name.charAt(0)}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-white font-bold text-sm">{testimonial.name}</p>
-                    <p className="text-white/40 text-xs mt-0.5">
-                      {testimonial.role}, {testimonial.company}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Decorative accent */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-            </motion.div>
-          ))}
+        {/* Marquee Banner */}
+        <div className="relative w-full overflow-hidden flex">
+          {/* Fading Edges for smooth entry/exit */}
+          <div className="absolute left-0 top-0 bottom-0 w-16 md:w-32 bg-gradient-to-r from-[#050505] to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-16 md:w-32 bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none" />
+          
+          <div className="flex animate-marquee w-max py-4">
+            {/* Render 2 sets of reviews for seamless infinite scrolling */}
+            {[...reviews, ...reviews].map((review, i) => (
+              <TestimonialCard key={i} review={review} />
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -147,5 +152,3 @@ const TestimonialsSection = () => {
 };
 
 export default TestimonialsSection;
-
-

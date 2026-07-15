@@ -1,7 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Linkedin, Instagram, Mail, Plus } from "lucide-react";
-import founderImg from "@/assets/founder.jpg";
+import founderImg from "@/assets/WhatsApp Image 2026-07-15 at 2.42.06 PM.jpeg";
 
 const FounderSection = () => {
   const ref = useRef(null);
@@ -32,7 +32,7 @@ const FounderSection = () => {
                 <img 
                   src={founderImg} 
                   alt="Ajay Narava" 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 grayscale-[0.2] hover:grayscale-0"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
                 />
                 
                 <div className="absolute bottom-10 left-8 right-8 text-left z-20">
