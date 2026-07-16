@@ -39,7 +39,7 @@ const NeuralGrid = () => {
   }, [count]);
 
   useFrame((state) => {
-    const t = state.clock.getElapsedTime();
+    const t = state.clock.elapsedTime || performance.now() * 0.001;
     const mouseX = (mouse.x * viewport.width) / 2;
     const mouseY = (mouse.y * viewport.height) / 2;
     const mouseVec = new THREE.Vector3(mouseX, mouseY, 0);
@@ -163,7 +163,7 @@ const DataPulses = ({ count = 12 }) => {
     }, [count]);
 
     useFrame((state) => {
-        const t = state.clock.getElapsedTime();
+        const t = state.clock.elapsedTime || performance.now() * 0.001;
         if (groupRef.current) {
             groupRef.current.children.forEach((child, i) => {
                 const p = pulses[i];

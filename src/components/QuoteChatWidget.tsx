@@ -803,6 +803,8 @@ const QuoteChatWidget: React.FC = () => {
                     {/* Left eye */}
                     <motion.circle
                       cx="11.5"
+                      cy={10.5}
+                      r={1.8}
                       fill="white"
                       style={{ transformOrigin: "11.5px 10.5px" }}
                       animate={{
@@ -824,6 +826,8 @@ const QuoteChatWidget: React.FC = () => {
                     {/* Right eye */}
                     <motion.circle
                       cx="20.5"
+                      cy={10.5}
+                      r={1.8}
                       fill="white"
                       style={{ transformOrigin: "20.5px 10.5px" }}
                       animate={{
@@ -844,6 +848,7 @@ const QuoteChatWidget: React.FC = () => {
 
                     {/* Smiling/Sad mouth */}
                     <motion.path
+                      d="M 14,13.5 Q 16,15.0 18,13.5"
                       animate={{
                         d: mood === "happy" 
                           ? "M 14,13.5 Q 16,15.0 18,13.5" 

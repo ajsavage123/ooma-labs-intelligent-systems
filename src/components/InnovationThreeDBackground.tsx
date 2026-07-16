@@ -26,7 +26,7 @@ const KineticGaps = ({ isMobile }: { isMobile: boolean }) => {
 
   useFrame((state) => {
     if (groupRef.current) {
-        groupRef.current.rotation.y = state.clock.getElapsedTime() * 0.1;
+        groupRef.current.rotation.y = (state.clock.elapsedTime || performance.now() * 0.001) * 0.1;
     }
   });
 
@@ -74,8 +74,6 @@ const InnovationThreeDBackground = () => {
                 <Suspense fallback={null}>
                     <KineticGaps isMobile={isMobile} />
                 </Suspense>
-                
-                <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
             </Canvas>
         </div>
     );
