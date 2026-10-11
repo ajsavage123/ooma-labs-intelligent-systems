@@ -50,14 +50,14 @@ interface Project {
 
 const ProjectCard = ({ project, index }: { project: Project; index: number }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const isInView = useInView(ref, { once: true, margin: "0px" });
 
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
+      transition={{ duration: 0.45, delay: index * 0.08 }}
       className={`group w-full flex flex-col md:flex-row gap-6 md:gap-8 items-center rounded-[2rem] sm:rounded-[2.5rem] bg-[#0a0a0a] border border-white/10 p-5 sm:p-6 md:p-8 transition-all duration-500 hover:shadow-2xl ${project.border} ${project.bgHover}`}
     >
       <div className="w-full md:w-2/5 relative overflow-hidden aspect-[16/9] md:aspect-[4/3] rounded-xl sm:rounded-2xl shadow-2xl bg-[#111] border border-white/5 shrink-0 group/img">

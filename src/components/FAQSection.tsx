@@ -50,9 +50,9 @@ const FAQItem = ({ faq, index, isOpen, onToggle }: { faq: typeof faqs[0]; index:
     >
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-6 md:p-8 text-left group"
+        className="w-full flex items-center justify-between p-4 md:p-8 text-left group"
       >
-        <span className={`text-base md:text-lg font-bold font-display tracking-tight transition-colors pr-4 ${
+        <span className={`text-sm md:text-lg font-bold font-display tracking-tight transition-colors pr-3 md:pr-4 ${
           isOpen ? "text-white" : "text-white/70 group-hover:text-white"
         }`}>
           {faq.question}
@@ -60,11 +60,11 @@ const FAQItem = ({ faq, index, isOpen, onToggle }: { faq: typeof faqs[0]; index:
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.3 }}
-          className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+          className={`shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center transition-colors ${
             isOpen ? "bg-[#4285F4]/20 text-[#4285F4]" : "bg-white/5 text-white/40"
           }`}
         >
-          <ChevronDown className="w-5 h-5" />
+          <ChevronDown className="w-4 h-4 md:w-5 md:h-5" />
         </motion.div>
       </button>
 
@@ -77,9 +77,9 @@ const FAQItem = ({ faq, index, isOpen, onToggle }: { faq: typeof faqs[0]; index:
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
         className="overflow-hidden"
       >
-        <div className="px-6 md:px-8 pb-6 md:pb-8">
-          <div className="h-px bg-white/5 mb-6" />
-          <p className="text-white/50 text-sm md:text-base leading-relaxed">
+        <div className="px-4 md:px-8 pb-4 md:pb-8">
+          <div className="h-px bg-white/5 mb-4 md:mb-6" />
+          <p className="text-white/50 text-xs md:text-base leading-relaxed">
             {faq.answer}
           </p>
         </div>
@@ -90,28 +90,28 @@ const FAQItem = ({ faq, index, isOpen, onToggle }: { faq: typeof faqs[0]; index:
 
 const FAQSection = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(ref, { once: true, margin: "0px" });
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="py-24 md:py-32 bg-[#050505] relative overflow-hidden" ref={ref}>
+    <section id="faq" className="py-12 md:py-32 bg-[#050505] relative overflow-hidden" ref={ref}>
       <div className="absolute bottom-0 left-1/4 w-[600px] h-[600px] bg-[#4285F4]/5 blur-[150px] rounded-full pointer-events-none" />
 
-      <div className="max-w-4xl mx-auto px-6 md:px-12 relative z-10">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-12 relative z-10">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16 md:mb-20"
+          transition={{ duration: 0.45 }}
+          className="text-center mb-8 md:mb-20"
         >
-          <div className="w-16 h-16 bg-[#4285F4]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <HelpCircle className="w-8 h-8 text-[#4285F4]" />
+          <div className="w-12 h-12 md:w-16 md:h-16 bg-[#4285F4]/10 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6">
+            <HelpCircle className="w-6 h-6 md:w-8 md:h-8 text-[#4285F4]" />
           </div>
           <h2 className="font-display font-bold text-responsive-h2 text-white tracking-tighter">
             Frequently Asked <span className="text-gradient-google">Questions</span>
           </h2>
-          <p className="text-responsive-body text-white/50 max-w-xl mx-auto mt-6">
+          <p className="text-responsive-body text-white/50 max-w-xl mx-auto mt-3 md:mt-6">
             Everything you need to know about working with Ooma Labs.
           </p>
         </motion.div>

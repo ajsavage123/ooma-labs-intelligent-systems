@@ -57,7 +57,8 @@ const InnovationSection = () => {
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "0px" }}
+              transition={{ duration: 0.45 }}
               className="text-responsive-h2 font-black text-white mb-8 font-display tracking-tight"
             >
               A systematic process <br className="hidden lg:block" />
@@ -66,8 +67,8 @@ const InnovationSection = () => {
             <motion.p
               initial={{ opacity: 0, scale: 0.98 }}
               whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
+              viewport={{ once: true, margin: "0px" }}
+              transition={{ duration: 0.45, delay: 0.1 }}
               className="text-xl md:text-2xl text-white/70 font-medium leading-relaxed"
             >
               Ooma Labs doesn't just build apps; we architect targeted interventions for critical operations.
@@ -79,10 +80,10 @@ const InnovationSection = () => {
           {steps.map((step, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.4 + i * 0.1 }}
+              viewport={{ once: true, margin: "0px" }}
+              transition={{ duration: 0.45, delay: 0.15 + i * 0.08 }}
               className={`bg-[#0a0a0a] p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-white/5 hover:border-white/20 transition-all duration-500 group relative overflow-hidden shadow-2xl`}
             >
               <div className="relative z-10">

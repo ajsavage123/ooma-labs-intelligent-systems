@@ -11,7 +11,7 @@ const sectors = [
 
 const VisionSection = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(ref, { once: true, margin: "0px" });
 
   return (
     <section id="vision" className="py-12 md:py-32 bg-[#050505] relative overflow-hidden" ref={ref}>

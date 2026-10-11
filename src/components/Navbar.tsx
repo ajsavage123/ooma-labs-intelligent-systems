@@ -48,6 +48,7 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
 
   const navItems = [
     { label: 'Home', href: '/' },
+    { label: 'Client Portal', href: '/portal', isSpecial: true },
     { label: 'Services', href: '#services' },
     { label: 'Portfolio', href: '#portfolio' },
     { label: 'Vision', href: '#vision' },
@@ -80,9 +81,14 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
           </a>
 
           {/* Right Side Buttons */}
-          <div className="flex items-center gap-6 sm:gap-10 relative z-[70]">
-            {/* Desktop Quick Links */}
-
+          <div className="flex items-center gap-3 sm:gap-6 relative z-[70]">
+            {/* Desktop Client Portal Button */}
+            <Link
+              to="/portal"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-full transition-colors text-xs font-semibold tracking-wide"
+            >
+              <span>Client Portal</span>
+            </Link>
 
             <button
               onClick={() => setMenuOpen(!menuOpen)}
@@ -166,10 +172,19 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                       onClick={() => setMenuOpen(false)}
                       className="group flex items-center gap-6"
                     >
-                      <span className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white/20 group-hover:text-white transition-all duration-500 group-hover:pl-4">
+                      <span className={`text-3xl sm:text-4xl lg:text-5xl font-display font-bold transition-all duration-500 group-hover:pl-4 ${
+                        item.isSpecial ? "text-[#FFD700] group-hover:text-white flex items-center gap-3" : "text-white/20 group-hover:text-white"
+                      }`}>
                         {item.label}
+                        {item.isSpecial && (
+                          <span className="text-[10px] tracking-wider uppercase bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/40 px-2 py-0.5 rounded-full font-sans">
+                            Live Portal
+                          </span>
+                        )}
                       </span>
-                      <ArrowRight className="w-5 h-5 lg:w-8 lg:h-8 text-[#4285F4] opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500" />
+                      <ArrowRight className={`w-5 h-5 lg:w-8 lg:h-8 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500 ${
+                        item.isSpecial ? "text-[#FFD700]" : "text-[#4285F4]"
+                      }`} />
                     </motion.a>
                   ))}
                 </div>

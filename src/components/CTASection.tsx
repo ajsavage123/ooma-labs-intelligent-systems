@@ -6,7 +6,7 @@ import { submitToGoogleSheets } from "@/lib/googleSheets";
 
 const CTASection = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(ref, { once: true, margin: "0px" });
   const [formData, setFormData] = useState({ name: "", email: "", phone: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -61,7 +61,7 @@ const CTASection = () => {
   };
 
   return (
-    <section id="connect" className="py-24 md:py-40 bg-[#050505] relative overflow-hidden" ref={ref}>
+    <section id="connect" className="py-12 md:py-40 bg-[#050505] relative overflow-hidden" ref={ref}>
       {/* Background radial glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] bg-[#34A853]/5 blur-[150px] rounded-full pointer-events-none" />
       
@@ -71,25 +71,25 @@ const CTASection = () => {
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
         
         <motion.h2
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="text-4xl md:text-7xl font-bold tracking-tighter text-white font-display mb-8 text-center"
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="text-3xl md:text-7xl font-bold tracking-tighter text-white font-display mb-4 md:mb-8 text-center"
         >
           Build Your <span className="text-gradient-google">Product</span> with us.
         </motion.h2>
 
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-white/40 text-center max-w-xl mx-auto mb-16 md:mb-20"
+          transition={{ duration: 0.45, delay: 0.1 }}
+          className="text-white/40 text-center max-w-xl mx-auto mb-8 md:mb-20 text-xs sm:text-base"
         >
           Reach out through any channel or fill the form below — we'll get back to you within 24 hours.
         </motion.p>
 
         {/* Contact Icons */}
-        <div className="flex flex-col md:flex-row flex-wrap justify-center gap-12 md:gap-20 mb-20 md:mb-24">
+        <div className="flex flex-row flex-wrap justify-center gap-6 md:gap-20 mb-10 md:mb-24">
           {contactOptions.map((option, i) => (
             <motion.a
               key={i}
@@ -98,16 +98,16 @@ const CTASection = () => {
               rel="noopener noreferrer"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
-              className="group flex flex-col items-center gap-6 transition-all duration-300 transform"
+              transition={{ duration: 0.4, delay: 0.15 + i * 0.08 }}
+              className="group flex flex-col items-center gap-2 sm:gap-6 transition-all duration-300 transform"
             >
               {/* Icon Container with Floating Effect */}
-              <div className={`relative w-20 h-20 md:w-24 md:h-24 ${option.bg} ${option.color} rounded-[2rem] flex items-center justify-center group-hover:shadow-[0_0_40px_rgba(255,255,255,0.05)] group-hover:-translate-y-4 transition-all duration-500`}>
-                <option.icon className="w-8 h-8 md:w-10 md:h-10" />
+              <div className={`relative w-14 h-14 md:w-24 md:h-24 ${option.bg} ${option.color} rounded-2xl md:rounded-[2rem] flex items-center justify-center group-hover:shadow-[0_0_40px_rgba(255,255,255,0.05)] group-hover:-translate-y-4 transition-all duration-500`}>
+                <option.icon className="w-6 h-6 md:w-10 md:h-10" />
               </div>
 
               {/* Text Layout */}
-              <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-center gap-0.5 sm:gap-1">
                 <span className="text-xl md:text-2xl font-display font-bold text-white transition-colors duration-300 tracking-tight">
                   {option.label}
                 </span>

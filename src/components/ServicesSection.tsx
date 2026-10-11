@@ -237,26 +237,26 @@ const ServiceCard = ({ category, index }: { category: ServiceCategory; index: nu
 
 const ServicesSection = () => {
   return (
-    <section id="services" className="py-24 bg-[#050505] relative overflow-hidden stitch-grid">
+    <section id="services" className="py-12 md:py-24 bg-[#050505] relative overflow-hidden stitch-grid">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-[#4285F4]/5 blur-[150px] rounded-full pointer-events-none" />
       
-      <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="mb-20 text-center"
+          className="mb-8 md:mb-20 text-center"
         >
-          <h2 className="font-display font-bold text-responsive-h2 text-white mt-4 tracking-tighter">
+          <h2 className="font-display font-bold text-responsive-h2 text-white mt-2 md:mt-4 tracking-tighter">
             Elevate Your <span className="text-gradient-google">Business</span> with Ooma.
           </h2>
-          <p className="text-responsive-body text-white/50 max-w-2xl mx-auto mt-6">
+          <p className="text-responsive-body text-white/50 max-w-2xl mx-auto mt-3 md:mt-6">
             Hover or click to explore our specialized engineering services.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
           {serviceCategories.map((category, i) => (
             <ServiceCard key={i} category={category} index={i} />
           ))}

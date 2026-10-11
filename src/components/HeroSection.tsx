@@ -38,6 +38,8 @@ const HeroSection = () => {
           loop
           muted
           playsInline
+          poster="/hero-video-poster.jpg"
+          preload="auto"
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-auto h-auto opacity-80 saturate-150 contrast-105 object-cover"
         >
           <source src="/Video%20Project.mp4" type="video/mp4" />
@@ -54,7 +56,7 @@ const HeroSection = () => {
 
       <div className="hero-content max-w-7xl mx-auto px-6 md:px-12 relative z-10 w-full">
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
-          <h1 
+          <h1
             className="sr-only"
             aria-hidden="false"
           >
@@ -63,7 +65,7 @@ const HeroSection = () => {
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="text-responsive-h1 font-bold text-white mb-8 font-display reveal-text"
           >
             Engineering <span className="text-[#4285F4]">solutions</span> that bridge{" "}
@@ -73,7 +75,7 @@ const HeroSection = () => {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="text-responsive-body text-white/60 mb-10 max-w-3xl mx-auto reveal-subtext"
           >
             Building the intelligence that moves businesses forward. Ooma Labs designs and engineers high-performance web platforms, custom software, and AI automations.
@@ -82,7 +84,7 @@ const HeroSection = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
             className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto px-6 sm:px-0 reveal-buttons"
           >
             <button
@@ -102,21 +104,21 @@ const HeroSection = () => {
         </div>
 
         {/* Feature Cards — Desktop Grid / Mobile Horizontal Scroll */}
-        <div className="mt-20 sm:mt-24">
-          <div className="carousel-container pb-8 md:grid md:grid-cols-3 md:gap-8 md:pb-0">
+        <div className="mt-10 sm:mt-24">
+          <div className="carousel-container pb-6 md:grid md:grid-cols-3 md:gap-8 md:pb-0">
             {features.map((feature, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1.0, delay: 0.6 + i * 0.15, ease: [0.16, 1, 0.3, 1] }}
-                className={`carousel-item bg-[#0a0a0a] p-8 md:p-10 rounded-[2rem] border border-white/10 shadow-2xl transition-all duration-500 ${feature.border} flex flex-col items-center text-center group`}
+                transition={{ duration: 0.5, delay: 0.35 + i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                className={`carousel-item bg-[#0a0a0a] p-5 sm:p-8 md:p-10 rounded-2xl md:rounded-[2rem] border border-white/10 shadow-2xl transition-all duration-500 ${feature.border} flex flex-col items-center text-center group`}
               >
-                <div className={`w-14 h-14 ${feature.bg} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                  <feature.icon className={`w-7 h-7 ${feature.color}`} />
+                <div className={`w-11 h-11 sm:w-14 sm:h-14 ${feature.bg} rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-6 group-hover:scale-110 transition-transform`}>
+                  <feature.icon className={`w-5 h-5 sm:w-7 sm:h-7 ${feature.color}`} />
                 </div>
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 font-display">{feature.title}</h3>
-                <p className="text-white/60 text-sm sm:text-base leading-relaxed">{feature.desc}</p>
+                <h3 className="text-lg sm:text-2xl font-bold text-white mb-1.5 sm:mb-3 font-display">{feature.title}</h3>
+                <p className="text-white/60 text-xs sm:text-base leading-relaxed">{feature.desc}</p>
               </motion.div>
             ))}
           </div>

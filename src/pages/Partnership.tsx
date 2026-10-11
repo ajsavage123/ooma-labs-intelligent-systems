@@ -117,17 +117,17 @@ const PartnershipPage: React.FC = () => {
       </div>
 
       {/* Form Container */}
-      <div className="flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-2xl glass-dark rounded-2xl p-6 sm:p-8 md:p-10">
-          <div className="mb-8">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Apply for Partnership</h2>
-            <p className="text-sm sm:text-base text-gray-400">Fill out the form below to become a partner</p>
+      <div className="flex items-center justify-center py-4 sm:py-8 px-3 sm:px-6 lg:px-8">
+        <div className="w-full max-w-2xl glass-dark rounded-2xl p-4 sm:p-8 md:p-10">
+          <div className="mb-4 sm:mb-8">
+            <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-1.5 sm:mb-2">Apply for Partnership</h2>
+            <p className="text-xs sm:text-base text-gray-400">Fill out the form below to become a partner</p>
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 sm:space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3.5 sm:space-y-6">
               {/* Grid Layout for Better Mobile UX */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
                 {/* Full Name */}
                 <div className="sm:col-span-2">
                   <FormField

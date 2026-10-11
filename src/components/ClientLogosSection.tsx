@@ -80,7 +80,7 @@ const platforms = [
 
 const ClientLogosSection = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const isInView = useInView(ref, { once: true, margin: "0px" });
 
   return (
     <section className="py-14 md:py-16 bg-[#050505] relative overflow-hidden" ref={ref}>
@@ -88,7 +88,7 @@ const ClientLogosSection = () => {
         <motion.p
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.4 }}
           className="text-center text-[10px] sm:text-xs tracking-[0.4em] uppercase text-white/30 font-bold mb-10"
         >
           Technology Partnerships

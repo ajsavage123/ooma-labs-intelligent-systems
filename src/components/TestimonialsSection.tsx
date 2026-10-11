@@ -1,6 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Star, StarHalf } from "lucide-react";
+import { Star, StarHalf, ShieldCheck } from "lucide-react";
+import { useClientPortal } from "../context/ClientPortalContext";
 
 interface Testimonial {
   name: string;
@@ -9,9 +10,10 @@ interface Testimonial {
   initial: string;
   bgColor: string;
   rating: number; // 1 to 5, allows decimals like 4.5
+  isPortalVerified?: boolean;
 }
 
-const reviews: Testimonial[] = [
+const BASE_REVIEWS: Testimonial[] = [
   {
     name: "Vikram Reddy",
     date: "a month ago",
@@ -94,6 +96,15 @@ const TestimonialCard = ({ review }: { review: Testimonial }) => (
       </div>
       <GoogleLogo />
     </div>
+
+    {review.isPortalVerified && (
+      <div className="mb-2">
+        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+          <ShieldCheck className="w-3 h-3 text-emerald-600" />
+          Verified Enterprise Client Review
+        </span>
+      </div>
+    )}
     
     <div className="flex gap-1 mb-3">
       {renderStars(review.rating)}
@@ -107,29 +118,51 @@ const TestimonialCard = ({ review }: { review: Testimonial }) => (
 
 const TestimonialsSection = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(ref, { once: true, margin: "0px" });
+
+  let portalReviews: Testimonial[] = [];
+  try {
+    const portal = useClientPortal();
+    if (portal?.projects) {
+      portalReviews = portal.projects.flatMap((p, pIdx) =>
+        (p.ratings || []).map((r, rIdx) => ({
+          name: `${r.authorName} (${p.company})`,
+          date: r.submittedAt || "Verified Client",
+          text: r.feedbackText,
+          initial: r.authorName.charAt(0) || "C",
+          bgColor: (pIdx + rIdx) % 2 === 0 ? "bg-blue-600" : "bg-emerald-600",
+          rating: r.overallScore,
+          isPortalVerified: true,
+        }))
+      );
+    }
+  } catch (e) {
+    console.error("TestimonialsSection portal context fallback", e);
+  }
+
+  const combinedReviews = [...portalReviews, ...BASE_REVIEWS];
 
   return (
-    <section id="testimonials" className="py-24 md:py-32 bg-[#050505] relative overflow-hidden" ref={ref}>
+    <section id="testimonials" className="py-12 md:py-32 bg-[#050505] relative overflow-hidden" ref={ref}>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] bg-[#FBBC05]/5 blur-[150px] rounded-full pointer-events-none" />
       <div className="absolute inset-0 stitch-grid opacity-5 pointer-events-none" />
 
       <div className="max-w-[100vw] mx-auto px-0 relative z-10">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16 md:mb-20 px-6 md:px-12"
+          transition={{ duration: 0.45 }}
+          className="text-center mb-8 md:mb-20 px-6 md:px-12"
         >
-          <span className="badge-google !bg-[#FBBC05]/10 !text-[#FBBC05] !border-[#FBBC05]/20 mb-6 inline-block">
+          <span className="badge-google !bg-[#FBBC05]/10 !text-[#FBBC05] !border-[#FBBC05]/20 mb-3 md:mb-6 inline-block">
             Testimonials
           </span>
-          <h2 className="font-display font-bold text-responsive-h2 text-white mt-4 tracking-tighter">
+          <h2 className="font-display font-bold text-responsive-h2 text-white mt-2 md:mt-4 tracking-tighter">
             What Our <span className="text-gradient-google">Clients</span> Say.
           </h2>
-          <p className="text-responsive-body text-white/50 max-w-2xl mx-auto mt-6">
-            Real feedback from our partners, verified by Google.
+          <p className="text-responsive-body text-white/50 max-w-2xl mx-auto mt-3 md:mt-6">
+            Real feedback from our partners, verified by Google & Client Portal.
           </p>
         </motion.div>
 
@@ -141,7 +174,7 @@ const TestimonialsSection = () => {
           
           <div className="flex animate-marquee w-max py-4">
             {/* Render 2 sets of reviews for seamless infinite scrolling */}
-            {[...reviews, ...reviews].map((review, i) => (
+            {[...combinedReviews, ...combinedReviews].map((review, i) => (
               <TestimonialCard key={i} review={review} />
             ))}
           </div>

@@ -69,7 +69,7 @@ const AnimatedCounter = ({ target, suffix, isInView }: { target: number; suffix:
 
 const StatsSection = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const isInView = useInView(ref, { once: true, margin: "0px" });
 
   return (
     <section className="py-16 md:py-20 bg-[#050505] relative overflow-hidden" ref={ref}>
@@ -82,9 +82,9 @@ const StatsSection = () => {
           {stats.map((stat, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
+              transition={{ duration: 0.4, delay: i * 0.06 }}
               className="bg-[#0a0a0a] border border-white/10 rounded-[2rem] p-8 md:p-10 text-center group hover:border-white/20 hover:-translate-y-1 transition-all duration-500"
             >
               <div className={`w-14 h-14 ${stat.bg} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform`}>

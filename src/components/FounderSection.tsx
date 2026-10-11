@@ -5,7 +5,7 @@ import founderImg from "@/assets/WhatsApp Image 2026-07-15 at 2.42.06 PM.jpeg";
 
 const FounderSection = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(ref, { once: true, margin: "0px" });
 
   const socialLinks = [
     { icon: Linkedin, href: "https://www.linkedin.com/in/ajay-kumar-28ab50234?utm_source=share_via&utm_content=profile&utm_medium=member_android", color: "hover:text-[#0077B5]" },
@@ -14,17 +14,17 @@ const FounderSection = () => {
   ];
 
   return (
-    <section id="founder-section" className="py-24 md:py-40 bg-[#050505] relative overflow-hidden" ref={ref}>
+    <section id="founder-section" className="py-12 md:py-36 bg-[#050505] relative overflow-hidden" ref={ref}>
       <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-[#EA4335]/10 blur-[150px] rounded-full -mt-40 pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-16 lg:gap-24 items-center">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 md:px-12 relative z-10">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-10 lg:gap-24 items-center">
           {/* Left — Visual */}
           <div className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left relative z-10 w-full">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 1.2, delay: 0.2 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
               className="relative group w-full max-w-md mx-auto lg:mx-0"
             >
               {/* Professional Box with Image */}
@@ -53,9 +53,9 @@ const FounderSection = () => {
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 15 }}
                     animate={isInView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ delay: 0.8 + i * 0.1, duration: 0.8 }}
+                    transition={{ delay: 0.2 + i * 0.05, duration: 0.4 }}
                     className={`w-14 h-14 bg-[#0a0a0a] border border-white/10 rounded-2xl flex items-center justify-center text-white/40 hover:text-white ${social.color} hover:border-white/30 transition-all cursor-pointer shadow-xl`}
                   >
                     <social.icon className="w-6 h-6" />
@@ -70,7 +70,7 @@ const FounderSection = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
-              transition={{ duration: 0.6, delay: 0.3 }}
+              transition={{ duration: 0.5, delay: 0.15 }}
               className="bg-[#0a0a0a] border border-white/10 p-10 sm:p-12 md:p-16 rounded-[4rem] relative overflow-hidden text-center lg:text-left shadow-2xl"
             >
               <div className="absolute top-0 right-0 w-64 h-64 bg-[#4285F4]/5 blur-[100px] rounded-full pointer-events-none" />
@@ -80,11 +80,11 @@ const FounderSection = () => {
                 {"Ajay Narava".split("").map((char, i) => (
                   <motion.span
                     key={i}
-                    initial={{ opacity: 0, y: 60 }}
+                    initial={{ opacity: 0, y: 30 }}
                     animate={isInView ? { opacity: 1, y: 0 } : {}}
                     transition={{
-                      duration: 0.5,
-                      delay: 0.4 + i * 0.04,
+                      duration: 0.4,
+                      delay: 0.15 + i * 0.02,
                       ease: [0.215, 0.61, 0.355, 1],
                     }}
                     className="inline-block"
@@ -100,13 +100,13 @@ const FounderSection = () => {
                 <motion.div
                   initial={{ scaleX: 0 }}
                   animate={isInView ? { scaleX: 1 } : {}}
-                  transition={{ duration: 0.8, delay: 0.9, ease: "easeOut" }}
+                  transition={{ duration: 0.5, delay: 0.25, ease: "easeOut" }}
                   className="h-[2px] w-12 bg-[#EA4335] origin-left"
                 />
                 <motion.span
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: -15 }}
                   animate={isInView ? { opacity: 1, x: 0 } : {}}
-                  transition={{ duration: 0.6, delay: 1.1 }}
+                  transition={{ duration: 0.4, delay: 0.35 }}
                   className="text-xs sm:text-sm tracking-widest uppercase text-[#EA4335] font-black"
                 >
                   Founder & Lead Architect
@@ -118,11 +118,11 @@ const FounderSection = () => {
                 {`"At Ooma, we engineer the invisible digital threads that empower`.split(" ").map((word, i) => (
                   <motion.span
                     key={i}
-                    initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
+                    initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
                     animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
                     transition={{
-                      duration: 0.4,
-                      delay: 1.3 + i * 0.06,
+                      duration: 0.3,
+                      delay: 0.35 + i * 0.02,
                       ease: "easeOut",
                     }}
                     className="inline-block mr-[0.28em]"
@@ -131,17 +131,17 @@ const FounderSection = () => {
                   </motion.span>
                 ))}
                 <motion.span
-                  initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
+                  initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
                   animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
-                  transition={{ duration: 0.4, delay: 1.3 + 10 * 0.06 }}
+                  transition={{ duration: 0.3, delay: 0.35 + 10 * 0.02 }}
                   className="text-gradient-google inline-block mr-[0.28em]"
                 >
                   modern
                 </motion.span>
                 <motion.span
-                  initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
+                  initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
                   animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
-                  transition={{ duration: 0.4, delay: 1.3 + 11 * 0.06 }}
+                  transition={{ duration: 0.3, delay: 0.35 + 11 * 0.02 }}
                   className="text-gradient-google inline-block mr-[0.28em]"
                 >
                   operations,
@@ -149,11 +149,11 @@ const FounderSection = () => {
                 {`building innovative technology that shapes the perfect solution."`.split(" ").map((word, i) => (
                   <motion.span
                     key={`b-${i}`}
-                    initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
+                    initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
                     animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
                     transition={{
-                      duration: 0.4,
-                      delay: 1.3 + (12 + i) * 0.06,
+                      duration: 0.3,
+                      delay: 0.35 + (12 + i) * 0.02,
                       ease: "easeOut",
                     }}
                     className="inline-block mr-[0.28em]"
@@ -166,7 +166,7 @@ const FounderSection = () => {
               <motion.div
                 initial={{ scaleX: 0, opacity: 0 }}
                 animate={isInView ? { scaleX: 1, opacity: 0.4 } : {}}
-                transition={{ duration: 1.2, delay: 2.5, ease: "easeOut" }}
+                transition={{ duration: 0.6, delay: 0.8, ease: "easeOut" }}
                 className="mt-12 w-full max-w-xs mx-auto lg:mx-0 origin-left"
               >
                 <div className="h-[2px] w-full rounded-full bg-gradient-to-r from-[#4285F4] via-[#34A853] via-[#FBBC05] to-[#EA4335]" />
