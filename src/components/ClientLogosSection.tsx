@@ -97,7 +97,7 @@ const ClientLogosSection = () => {
         <div className="relative overflow-hidden">
           <motion.div
             animate={{ x: ["0%", "-50%"] }}
-            transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
             className="flex gap-16 md:gap-24 items-center w-max"
           >
             {/* Double the array for infinite seamless scrolling */}

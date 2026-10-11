@@ -32,26 +32,24 @@ const HeroSection = () => {
   return (
     <section className="hero-container relative pt-16 pb-12 md:pt-40 md:pb-24 overflow-hidden stitch-grid bg-[#050505]">
       {/* Video Background Layer */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden z-0">
+      <div className="absolute inset-0 md:inset-auto md:top-[42%] md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[86%] md:max-w-5xl md:h-[72%] w-full h-full overflow-hidden z-0 md:rounded-3xl pointer-events-none transition-all duration-700 md:shadow-[0_0_40px_rgba(66,133,244,0.12)] md:border md:border-white/5">
         <video
           autoPlay
           loop
           muted
           playsInline
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-auto h-auto opacity-80 saturate-150 contrast-110"
-          style={{ objectFit: "cover", width: "100%", height: "100%" }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-auto h-auto opacity-80 saturate-150 contrast-105 object-cover"
         >
           <source src="/Video%20Project.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
-        {/* Dark overlay for optimal text contrast */}
-        <div className="absolute inset-0 bg-[#050505]/40" />
-        {/* Left edge fade */}
-        <div className="absolute inset-y-0 left-0 w-24 md:w-40 bg-gradient-to-r from-[#050505] to-transparent pointer-events-none" />
-        {/* Right edge fade */}
-        <div className="absolute inset-y-0 right-0 w-24 md:w-40 bg-gradient-to-l from-[#050505] to-transparent pointer-events-none" />
-        {/* Bottom edge fade */}
-        <div className="absolute bottom-0 left-0 w-full h-24 md:h-32 bg-gradient-to-t from-[#050505] to-transparent pointer-events-none" />
+        {/* Soft overlay for crisp text readability */}
+        <div className="absolute inset-0 bg-[#050505]/30" />
+        {/* Ambient edge fades */}
+        <div className="absolute inset-y-0 left-0 w-16 md:w-32 bg-gradient-to-r from-[#050505] to-transparent pointer-events-none" />
+        <div className="absolute inset-y-0 right-0 w-16 md:w-32 bg-gradient-to-l from-[#050505] to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-full h-20 md:h-28 bg-gradient-to-t from-[#050505] to-transparent pointer-events-none" />
+        <div className="absolute top-0 left-0 w-full h-20 md:h-28 bg-gradient-to-b from-[#050505] to-transparent pointer-events-none" />
       </div>
 
       <div className="hero-content max-w-7xl mx-auto px-6 md:px-12 relative z-10 w-full">
@@ -65,7 +63,7 @@ const HeroSection = () => {
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
+            transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="text-responsive-h1 font-bold text-white mb-8 font-display reveal-text"
           >
             Engineering <span className="text-[#4285F4]">solutions</span> that bridge{" "}
@@ -75,7 +73,7 @@ const HeroSection = () => {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.3 }}
+            transition={{ duration: 1.2, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
             className="text-responsive-body text-white/60 mb-10 max-w-3xl mx-auto reveal-subtext"
           >
             Building the intelligence that moves businesses forward. Ooma Labs designs and engineers high-performance web platforms, custom software, and AI automations.
@@ -84,7 +82,7 @@ const HeroSection = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
+            transition={{ duration: 1.2, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto px-6 sm:px-0 reveal-buttons"
           >
             <button
@@ -111,8 +109,8 @@ const HeroSection = () => {
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.5 + i * 0.1 }}
-                className={`carousel-item bg-[#0a0a0a] p-8 md:p-10 rounded-[2rem] border border-white/10 shadow-2xl transition-all duration-300 ${feature.border} flex flex-col items-center text-center group`}
+                transition={{ duration: 1.0, delay: 0.6 + i * 0.15, ease: [0.16, 1, 0.3, 1] }}
+                className={`carousel-item bg-[#0a0a0a] p-8 md:p-10 rounded-[2rem] border border-white/10 shadow-2xl transition-all duration-500 ${feature.border} flex flex-col items-center text-center group`}
               >
                 <div className={`w-14 h-14 ${feature.bg} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
                   <feature.icon className={`w-7 h-7 ${feature.color}`} />

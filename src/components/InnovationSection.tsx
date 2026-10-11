@@ -3,7 +3,6 @@ import { Search, PenTool, GitPullRequest, FastForward } from "lucide-react";
 import { Suspense, lazy } from "react";
 const InnovationThreeDBackground = lazy(() => import("@/components/InnovationThreeDBackground"));
 import { useIsMobile } from "@/hooks/use-mobile";
-import WindBlowingPetals from "./WindBlowingPetals";
 
 const steps = [
   {
@@ -54,7 +53,7 @@ const InnovationSection = () => {
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-2 lg:gap-12 mb-16 md:mb-24">
-          <div className="text-left max-w-2xl">
+          <div className="text-left max-w-3xl">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -73,9 +72,6 @@ const InnovationSection = () => {
             >
               Ooma Labs doesn't just build apps; we architect targeted interventions for critical operations.
             </motion.p>
-          </div>
-          <div className="relative w-full max-w-md lg:max-w-xl shrink-0 pointer-events-none flex justify-center items-center -mt-4 lg:mt-0">
-            <WindBlowingPetals className="relative z-10 w-full flex justify-center" />
           </div>
         </div>
 
@@ -113,3 +109,6 @@ const InnovationSection = () => {
 };
 
 export default InnovationSection;
+
+
+

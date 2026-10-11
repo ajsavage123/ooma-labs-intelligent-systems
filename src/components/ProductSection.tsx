@@ -130,6 +130,27 @@ const PortfolioSection = () => {
             <ProjectCard key={project.name + i} project={project} index={i} />
           ))}
         </div>
+
+        {/* More Projects WhatsApp Button - High Visibility Highlighted */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-12 md:mt-16 text-center flex justify-center"
+        >
+          <a
+            href="https://wa.me/919492827058?text=Hi%20Ooma%20Labs!%20I'd%20like%20to%20see%20more%20of%20your%20portfolio%20projects."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-[#4285F4] hover:bg-[#3367D6] text-white font-bold text-sm sm:text-base tracking-wider uppercase transition-all duration-300 shadow-[0_0_30px_rgba(66,133,244,0.45)] hover:shadow-[0_0_40px_rgba(66,133,244,0.7)] group hover:scale-105 border border-white/20"
+          >
+            <span>More Projects</span>
+            <span className="p-1 rounded-lg bg-white/20 text-white font-bold group-hover:translate-x-1 transition-transform">
+              →
+            </span>
+          </a>
+        </motion.div>
       </div>
     </section>
   );
