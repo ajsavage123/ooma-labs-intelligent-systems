@@ -8,7 +8,48 @@ import {
   ProjectComment,
   ClientRating,
   SupportTicket,
+  ClientReferralData,
 } from "../types";
+
+// Canonical 6 stages baseline
+const CANONICAL_6_STAGES = [
+  {
+    stage: 1,
+    title: "1. Client Discovery",
+    description: "Intake and audit of client assets, existing brand design tokens, AWS/GCP cloud environments, and external telematics vendor API credentials.",
+    deliverables: ["Client Asset & Brand Guideline Ingestion", "NIC E-Way Bill & NETC FASTag API Keys Verification", "Cloud Infrastructure Scoping & Access Setup"],
+  },
+  {
+    stage: 2,
+    title: "2. Objective Requirements Gathering",
+    description: "Formal Scope of Work (SOW), multi-depot operational workflows, functional specifications, and PostgreSQL database ER schemas.",
+    deliverables: ["Formal SOW & Functional Requirement Document", "PostgreSQL Schema & Depot Partitioning Model", "Dispatcher & Driver User Story Mapping"],
+  },
+  {
+    stage: 3,
+    title: "3. UI/UX Development",
+    description: "High-contrast driver screens optimized for direct sunlight, transport dispatcher operations console, and interactive Figma design sign-off.",
+    deliverables: ["Figma Design System & High-Contrast Mobile Tokens", "Dispatcher Fleet Map & Toll Ledger Wireframes", "Client Design Review & Final Sign-Off"],
+  },
+  {
+    stage: 4,
+    title: "4. Development",
+    description: "Fullstack engineering: Live GPS map telemetry, NPCI FASTag webhook integration, driver web application, and GST tax invoicing engine.",
+    deliverables: ["Live GPS Telematics & FASTag Toll Ledger APIs", "Driver Trip Manifest & E-Way Bill QR Scanner UI", "GST Compliant Invoicing Engine (HSN/SAC 9965)"],
+  },
+  {
+    stage: 5,
+    title: "5. Testing",
+    description: "End-to-end integration testing across 4 regional transport hubs, security vulnerability assessment, and client User Acceptance Testing (UAT).",
+    deliverables: ["Cross-Browser & Low-Connectivity Mobile QA", "OWASP Top 10 Security Penetration Audit", "Client User Acceptance Testing (UAT) Sign-Off"],
+  },
+  {
+    stage: 6,
+    title: "6. Hosting",
+    description: "Production cloud launch on AWS Mumbai, domain SSL/TLS certificate binding, 99.98% uptime monitoring, and final handover.",
+    deliverables: ["Production AWS Mumbai Multi-AZ Launch", "DNS & SSL Certificate Binding", "24/7 Sentry & CloudWatch Monitoring Handover"],
+  },
+];
 
 export const supabaseService = {
   /**
@@ -81,6 +122,15 @@ export const supabaseService = {
       const allRatings = ratingsRes.data || [];
       const allTickets = ticketsRes.data || [];
 
+      // Retrieve cached local referrals to preserve partner rewards & unlock states
+      let cachedLocalProjects: ClientProject[] = [];
+      try {
+        const raw = localStorage.getItem("ooma_client_projects_inr");
+        if (raw) cachedLocalProjects = JSON.parse(raw);
+      } catch (e) {
+        // ignore
+      }
+
       return projectsData.map((p): ClientProject => {
         let milestones: ProjectMilestone[] = allMilestones
           .filter((m) => m.project_id === p.id)
@@ -88,6 +138,7 @@ export const supabaseService = {
             id: m.id,
             title: m.title,
             description: m.description || "",
+            notes: m.description || "",
             status: m.status,
             progress: Number(m.progress) || 0,
             dueDate: m.due_date,
@@ -95,52 +146,22 @@ export const supabaseService = {
             deliverables: m.deliverables || [],
           }));
 
-        if (milestones.length !== 6 || milestones.some((m) => m.title?.toLowerCase().includes("sprint"))) {
+        // If no milestones found or legacy sprint titles linger, map to canonical 6 stages
+        if (milestones.length === 0 || milestones.some((m) => m.title?.toLowerCase().includes("sprint"))) {
           const overall = Number(p.overall_progress) || 0;
-          const PHASE_TEMPLATES = [
-            {
-              title: "Phase 1: Client Discovery",
-              description: "Collect and audit all details related to client assets, brand assets, credentials, domains, and cloud infrastructure.",
-              deliverables: ["Client Asset & Brand Ingestion", "API Credentials & Cloud Access Setup", "Architecture Discovery Scope"],
-            },
-            {
-              title: "Phase 2: Objective Requirements Gathering",
-              description: "Formal Scope of Work (SOW), functional specifications, user story journeys, and database ER schema architecture sign-off.",
-              deliverables: ["Formal SOW & Functional Specifications", "Database Entity-Relationship (ER) Schema", "User Journey & Acceptance Criteria Mapping"],
-            },
-            {
-              title: "Phase 3: UI/UX Development",
-              description: "High-fidelity Figma wireframes, interactive design tokens, and client design review sign-off.",
-              deliverables: ["High-Fidelity Figma Prototypes", "Component Design System Tokens", "Client UI/UX Review & Sign-Off"],
-            },
-            {
-              title: "Phase 4: Development",
-              description: "Fullstack engineering implementation, backend APIs, database migrations, third-party integrations, and frontend state architecture.",
-              deliverables: ["Fullstack Core Architecture & APIs", "Third-Party Integrations & Webhooks", "Production Responsive UI"],
-            },
-            {
-              title: "Phase 5: Testing",
-              description: "Rigorous quality assurance, cross-device testing, security vulnerability penetration audits, and client UAT sign-off.",
-              deliverables: ["Cross-Device & Cross-Browser QA", "Security Vulnerability & Penetration Audit", "Client User Acceptance Testing (UAT) Sign-Off"],
-            },
-            {
-              title: "Phase 6: Hosting",
-              description: "Production cloud launch (AWS/GCP), custom domain DNS and SSL certificate binding, 24/7 monitoring handover.",
-              deliverables: ["Production Multi-AZ Cloud Deployment", "Domain DNS & SSL Certificate Binding", "24/7 Monitoring & Operational Handover"],
-            },
-          ];
-
-          milestones = PHASE_TEMPLATES.map((tmpl, idx) => {
-            const isCompleted = overall >= (idx + 1) * 16.6;
-            const isInProgress = !isCompleted && (overall >= idx * 16.6 || idx === 0);
+          milestones = CANONICAL_6_STAGES.map((tmpl, idx) => {
+            const existing = milestones[idx];
+            const isCompleted = overall >= (idx + 1) * 16.6 || existing?.status === "completed";
+            const isInProgress = !isCompleted && (overall >= idx * 16.6 || existing?.status === "in_progress" || idx === 0);
             return {
-              id: `m-${p.id}-${idx + 1}`,
+              id: existing?.id?.startsWith("m-") ? existing.id : `m-${p.id}-${idx + 1}`,
               title: tmpl.title,
-              description: tmpl.description,
+              description: existing?.description || tmpl.description,
+              notes: existing?.notes || existing?.description || tmpl.description,
               status: isCompleted ? "completed" : isInProgress ? "in_progress" : "pending",
-              progress: isCompleted ? 100 : isInProgress ? 40 : 0,
-              dueDate: idx === 5 ? (p.target_launch_date || "Launch Handover") : `Target: Week ${(idx + 1) * 2}`,
-              completedDate: isCompleted ? (p.start_date || "Completed") : undefined,
+              progress: isCompleted ? 100 : isInProgress ? (existing?.progress || (idx === 0 ? 30 : 15)) : 0,
+              dueDate: existing?.dueDate || (idx === 5 ? (p.target_launch_date || "Launch Handover") : `Target: Week ${(idx + 1) * 2}`),
+              completedDate: isCompleted ? (existing?.completedDate || p.start_date || "Completed") : undefined,
               deliverables: tmpl.deliverables,
             };
           });
@@ -221,6 +242,25 @@ export const supabaseService = {
             updates: t.updates || [],
           }));
 
+        // Preserve partner reward state from cache or baseline
+        const cachedProj = cachedLocalProjects.find((lp) => lp.id === p.id);
+        const referrals: ClientReferralData = cachedProj?.referrals || {
+          referralCode: p.id === "proj-bharatlogistics-01" ? "OOMA-RAJESH-BLR" : "OOMA-" + p.company.slice(0, 4).toUpperCase(),
+          shareableUrl: `https://oomalabs.com/free-quotation?ref=${p.id === "proj-bharatlogistics-01" ? "OOMA-RAJESH-BLR" : "OOMA-" + p.company.slice(0, 4).toUpperCase()}`,
+          totalReferrals: p.id === "proj-bharatlogistics-01" ? 4 : 0,
+          verifiedClientsCount: p.id === "proj-bharatlogistics-01" ? 2 : 0,
+          requiredForUnlock: 4,
+          isCouponUnlocked: false,
+          isCardUnlocked: false,
+          creditCardAmountINR: 4000,
+          cardholderName: p.lead_name || "Client Partner",
+          unlockedCouponCode: "OOMA-VERIFIED-4X",
+          discountPercentage: 20,
+          totalEarnings: p.id === "proj-bharatlogistics-01" ? 150000 : 0,
+          pendingPayout: p.id === "proj-bharatlogistics-01" ? 50000 : 0,
+          history: [],
+        };
+
         return {
           id: p.id,
           title: p.title,
@@ -246,24 +286,58 @@ export const supabaseService = {
           comments,
           payments,
           supportTickets,
-          referrals: {
-            referralCode: "OOMA-" + p.company.slice(0, 4).toUpperCase(),
-            shareableUrl: `https://oomalabs.com/refer?client=${p.client_id}`,
-            totalReferrals: 0,
-            verifiedClientsCount: 0,
-            requiredForUnlock: 4,
-            isCouponUnlocked: false,
-            unlockedCouponCode: "OOMA-VERIFIED-4X",
-            discountPercentage: 20,
-            totalEarnings: 0,
-            pendingPayout: 0,
-            history: [],
-          },
+          referrals,
         };
       });
     } catch (err) {
       console.error("[Supabase] fetchProjects error:", err);
       return [];
+    }
+  },
+
+  /**
+   * Update Project in Supabase
+   */
+  async updateProject(projectId: string, updates: Partial<ClientProject>): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return false;
+
+    try {
+      const payload: any = {
+        updated_at: new Date().toISOString(),
+      };
+      if (updates.overallProgress !== undefined) payload.overall_progress = updates.overallProgress;
+      if (updates.status !== undefined) payload.status = updates.status;
+      if (updates.title !== undefined) payload.title = updates.title;
+      if (updates.summary !== undefined) payload.summary = updates.summary;
+      if (updates.targetLaunchDate !== undefined) payload.target_launch_date = updates.targetLaunchDate;
+      if (updates.techStack !== undefined) payload.tech_stack = updates.techStack;
+
+      const { error } = await supabase.from("projects").update(payload).eq("id", projectId);
+      if (error) {
+        console.warn("[Supabase] updateProject error:", error.message);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error("[Supabase] updateProject failed:", err);
+      return false;
+    }
+  },
+
+  /**
+   * Delete Project in Supabase
+   */
+  async deleteProject(projectId: string): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return false;
+
+    try {
+      const { error } = await supabase.from("projects").delete().eq("id", projectId);
+      return !error;
+    } catch (err) {
+      console.error("[Supabase] deleteProject error:", err);
+      return false;
     }
   },
 
@@ -309,12 +383,12 @@ export const supabaseService = {
             id: m.id,
             project_id: project.id,
             title: m.title,
-            description: m.description,
+            description: m.notes || m.description,
             status: m.status,
             progress: m.progress,
             due_date: m.dueDate,
-            completed_date: m.completedDate,
-            deliverables: m.deliverables,
+            completed_date: m.completedDate || null,
+            deliverables: m.deliverables || [],
             sort_order: idx + 1,
           }))
         );
@@ -332,7 +406,7 @@ export const supabaseService = {
             currency: "INR",
             issue_date: p.issueDate,
             due_date: p.dueDate,
-            paid_date: p.paidDate,
+            paid_date: p.paidDate || null,
             status: p.status,
           }))
         );
@@ -363,6 +437,37 @@ export const supabaseService = {
   },
 
   /**
+   * Create Milestone in Supabase
+   */
+  async createMilestone(projectId: string, milestone: ProjectMilestone | Omit<ProjectMilestone, "id">): Promise<string | null> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return null;
+
+    try {
+      const id = "id" in milestone && milestone.id ? milestone.id : `m-${Date.now()}`;
+      const { error } = await supabase.from("milestones").insert({
+        id,
+        project_id: projectId,
+        title: milestone.title,
+        description: milestone.notes || milestone.description || "",
+        status: milestone.status || "pending",
+        progress: milestone.progress || 0,
+        due_date: milestone.dueDate,
+        completed_date: milestone.completedDate || null,
+        deliverables: milestone.deliverables || [],
+      });
+      if (error) {
+        console.warn("[Supabase] createMilestone error:", error.message);
+        return null;
+      }
+      return id;
+    } catch (err) {
+      console.error("[Supabase] createMilestone failed:", err);
+      return null;
+    }
+  },
+
+  /**
    * Update Milestone in Supabase
    */
   async updateMilestone(milestoneId: string, updates: Partial<ProjectMilestone>): Promise<boolean> {
@@ -372,7 +477,9 @@ export const supabaseService = {
     try {
       const payload: any = {};
       if (updates.title !== undefined) payload.title = updates.title;
-      if (updates.description !== undefined) payload.description = updates.description;
+      if (updates.notes !== undefined || updates.description !== undefined) {
+        payload.description = updates.notes || updates.description;
+      }
       if (updates.status !== undefined) payload.status = updates.status;
       if (updates.progress !== undefined) payload.progress = updates.progress;
       if (updates.dueDate !== undefined) payload.due_date = updates.dueDate;
@@ -380,10 +487,64 @@ export const supabaseService = {
       if (updates.deliverables !== undefined) payload.deliverables = updates.deliverables;
 
       const { error } = await supabase.from("milestones").update(payload).eq("id", milestoneId);
-      return !error;
+      if (error) {
+        console.warn("[Supabase] updateMilestone error:", error.message);
+        return false;
+      }
+      return true;
     } catch (e) {
       console.error("[Supabase] updateMilestone error:", e);
       return false;
+    }
+  },
+
+  /**
+   * Delete Milestone in Supabase
+   */
+  async deleteMilestone(milestoneId: string): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return false;
+
+    try {
+      const { error } = await supabase.from("milestones").delete().eq("id", milestoneId);
+      return !error;
+    } catch (e) {
+      console.error("[Supabase] deleteMilestone error:", e);
+      return false;
+    }
+  },
+
+  /**
+   * Create Invoice in Supabase
+   */
+  async createInvoice(projectId: string, invoice: ClientPayment | Omit<ClientPayment, "id">): Promise<string | null> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return null;
+
+    try {
+      const id = "id" in invoice && invoice.id ? invoice.id : `inv-${Date.now()}`;
+      const { error } = await supabase.from("invoices").insert({
+        id,
+        project_id: projectId,
+        invoice_number: invoice.invoiceNumber,
+        milestone_title: invoice.milestoneTitle,
+        amount: invoice.amount,
+        currency: invoice.currency || "INR",
+        gst_sac: invoice.gstSacCode || "998314",
+        issue_date: invoice.issueDate,
+        due_date: invoice.dueDate,
+        paid_date: invoice.paidDate || null,
+        status: invoice.status || "pending",
+        payment_method: invoice.paymentMethod || null,
+      });
+      if (error) {
+        console.warn("[Supabase] createInvoice error:", error.message);
+        return null;
+      }
+      return id;
+    } catch (err) {
+      console.error("[Supabase] createInvoice failed:", err);
+      return null;
     }
   },
 
@@ -403,9 +564,219 @@ export const supabaseService = {
       if (updates.paymentMethod !== undefined) payload.payment_method = updates.paymentMethod;
 
       const { error } = await supabase.from("invoices").update(payload).eq("id", invoiceId);
-      return !error;
+      if (error) {
+        console.warn("[Supabase] updateInvoice error:", error.message);
+        return false;
+      }
+      return true;
     } catch (e) {
       console.error("[Supabase] updateInvoice error:", e);
+      return false;
+    }
+  },
+
+  /**
+   * Delete Invoice in Supabase
+   */
+  async deleteInvoice(invoiceId: string): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return false;
+
+    try {
+      const { error } = await supabase.from("invoices").delete().eq("id", invoiceId);
+      return !error;
+    } catch (e) {
+      console.error("[Supabase] deleteInvoice error:", e);
+      return false;
+    }
+  },
+
+  /**
+   * Create Live URL in Supabase
+   */
+  async createLiveUrl(projectId: string, url: ProjectLiveUrl | Omit<ProjectLiveUrl, "id">): Promise<string | null> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return null;
+
+    try {
+      const id = "id" in url && url.id ? url.id : `url-${Date.now()}`;
+      const { error } = await supabase.from("live_urls").insert({
+        id,
+        project_id: projectId,
+        label: url.label,
+        url: url.url,
+        type: url.type,
+        status: url.status || "live",
+        uptime: url.uptime || "99.98%",
+        last_deployed: url.lastDeployed || "Recently",
+        notes: url.notes || null,
+      });
+      if (error) {
+        console.warn("[Supabase] createLiveUrl error:", error.message);
+        return null;
+      }
+      return id;
+    } catch (err) {
+      console.error("[Supabase] createLiveUrl failed:", err);
+      return null;
+    }
+  },
+
+  /**
+   * Update Live URL in Supabase
+   */
+  async updateLiveUrl(urlId: string, updates: Partial<ProjectLiveUrl>): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return false;
+
+    try {
+      const payload: any = {};
+      if (updates.label !== undefined) payload.label = updates.label;
+      if (updates.url !== undefined) payload.url = updates.url;
+      if (updates.type !== undefined) payload.type = updates.type;
+      if (updates.status !== undefined) payload.status = updates.status;
+      if (updates.uptime !== undefined) payload.uptime = updates.uptime;
+      if (updates.lastDeployed !== undefined) payload.last_deployed = updates.lastDeployed;
+      if (updates.notes !== undefined) payload.notes = updates.notes;
+
+      const { error } = await supabase.from("live_urls").update(payload).eq("id", urlId);
+      return !error;
+    } catch (e) {
+      console.error("[Supabase] updateLiveUrl error:", e);
+      return false;
+    }
+  },
+
+  /**
+   * Delete Live URL in Supabase
+   */
+  async deleteLiveUrl(urlId: string): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return false;
+
+    try {
+      const { error } = await supabase.from("live_urls").delete().eq("id", urlId);
+      return !error;
+    } catch (e) {
+      console.error("[Supabase] deleteLiveUrl error:", e);
+      return false;
+    }
+  },
+
+  /**
+   * Create Comment in Supabase
+   */
+  async createComment(projectId: string, comment: ProjectComment): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return false;
+
+    try {
+      const { error } = await supabase.from("comments").insert({
+        id: comment.id,
+        project_id: projectId,
+        author_name: comment.authorName,
+        author_role: comment.authorRole,
+        author_avatar: comment.authorAvatar || null,
+        message: comment.message,
+        is_pinned: Boolean(comment.isPinned),
+        attachments: comment.attachments || [],
+      });
+      return !error;
+    } catch (err) {
+      console.error("[Supabase] createComment failed:", err);
+      return false;
+    }
+  },
+
+  /**
+   * Delete Comment in Supabase
+   */
+  async deleteComment(commentId: string): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return false;
+
+    try {
+      const { error } = await supabase.from("comments").delete().eq("id", commentId);
+      return !error;
+    } catch (err) {
+      console.error("[Supabase] deleteComment failed:", err);
+      return false;
+    }
+  },
+
+  /**
+   * Create Support Ticket in Supabase
+   */
+  async createSupportTicket(projectId: string, ticket: SupportTicket): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return false;
+
+    try {
+      const { error } = await supabase.from("support_tickets").insert({
+        id: ticket.id,
+        project_id: projectId,
+        ticket_number: ticket.ticketNumber,
+        title: ticket.title,
+        description: ticket.description,
+        category: ticket.category,
+        priority: ticket.priority,
+        status: ticket.status || "open",
+        assigned_engineer: ticket.assignedEngineer || "Arjun Mehta (Lead Systems Architect)",
+        updates: ticket.updates || [],
+      });
+      return !error;
+    } catch (err) {
+      console.error("[Supabase] createSupportTicket failed:", err);
+      return false;
+    }
+  },
+
+  /**
+   * Update Support Ticket in Supabase
+   */
+  async updateSupportTicket(ticketId: string, updates: Partial<SupportTicket>): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return false;
+
+    try {
+      const payload: any = {
+        updated_at: new Date().toISOString(),
+      };
+      if (updates.status !== undefined) payload.status = updates.status;
+      if (updates.priority !== undefined) payload.priority = updates.priority;
+      if (updates.updates !== undefined) payload.updates = updates.updates;
+
+      const { error } = await supabase.from("support_tickets").update(payload).eq("id", ticketId);
+      return !error;
+    } catch (err) {
+      console.error("[Supabase] updateSupportTicket failed:", err);
+      return false;
+    }
+  },
+
+  /**
+   * Create Client Rating in Supabase
+   */
+  async createRating(projectId: string, rating: ClientRating): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return false;
+
+    try {
+      const { error } = await supabase.from("ratings").insert({
+        id: rating.id,
+        project_id: projectId,
+        overall_score: rating.overallScore,
+        engineering_quality: rating.categories.engineeringQuality,
+        communication: rating.categories.communication,
+        velocity: rating.categories.velocity,
+        ui_ux_design: rating.categories.uiUxDesign,
+        feedback_text: rating.feedbackText,
+        author_name: rating.authorName,
+        client_recommendation: rating.clientRecommendation,
+      });
+      return !error;
+    } catch (err) {
+      console.error("[Supabase] createRating failed:", err);
       return false;
     }
   },

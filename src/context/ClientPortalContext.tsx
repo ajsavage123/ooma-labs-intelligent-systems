@@ -953,8 +953,12 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
           }
         });
 
-        const handleRealtimeUpdate = () => {
-          supabaseService.fetchProjects().then((projs) => {
+        const handleRealtimeUpdate = async () => {
+          try {
+            const [projs, cls] = await Promise.all([
+              supabaseService.fetchProjects(),
+              supabaseService.fetchClients(),
+            ]);
             if (projs.length > 0) {
               const sanitized = projs.map((p) => ({
                 ...p,
@@ -962,7 +966,12 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
               }));
               setProjects(sanitized);
             }
-          });
+            if (cls.length > 0) {
+              setClients(cls);
+            }
+          } catch (err) {
+            console.error("[Realtime] Sync error:", err);
+          }
         };
 
         const channel = client
@@ -970,7 +979,18 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
           .on("postgres_changes", { event: "*", schema: "public", table: "milestones" }, handleRealtimeUpdate)
           .on("postgres_changes", { event: "*", schema: "public", table: "invoices" }, handleRealtimeUpdate)
           .on("postgres_changes", { event: "*", schema: "public", table: "projects" }, handleRealtimeUpdate)
-          .subscribe();
+          .on("postgres_changes", { event: "*", schema: "public", table: "live_urls" }, handleRealtimeUpdate)
+          .on("postgres_changes", { event: "*", schema: "public", table: "comments" }, handleRealtimeUpdate)
+          .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets" }, handleRealtimeUpdate)
+          .on("postgres_changes", { event: "*", schema: "public", table: "ratings" }, handleRealtimeUpdate)
+          .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, handleRealtimeUpdate)
+          .subscribe((status) => {
+            if (status === "SUBSCRIBED") {
+              setSupabaseStatus("connected");
+            } else if (status === "CHANNEL_ERROR") {
+              console.warn("[Realtime] Subscription channel error");
+            }
+          });
 
         return () => {
           client.removeChannel(channel);
@@ -1078,6 +1098,10 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return proj;
       })
     );
+
+    if (isSupabaseConfigured()) {
+      supabaseService.createComment(activeProject.id, newComment).catch(console.error);
+    }
   };
 
   const submitRating = (data: {
@@ -1108,6 +1132,10 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return proj;
       })
     );
+
+    if (isSupabaseConfigured()) {
+      supabaseService.createRating(activeProject.id, newRating).catch(console.error);
+    }
   };
 
   const payInvoice = (invoiceId: string, appliedCouponCode?: string, discountAmountINR?: number) => {
@@ -1134,6 +1162,14 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return proj;
       })
     );
+
+    if (isSupabaseConfigured()) {
+      supabaseService.updateInvoice(invoiceId, {
+        status: "paid",
+        paidDate: now,
+        paymentMethod: "Online UPI / NetBanking",
+      }).catch(console.error);
+    }
   };
 
   const submitReferral = (data: {
@@ -1343,10 +1379,21 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return proj;
       })
     );
+
+    if (isSupabaseConfigured()) {
+      supabaseService.createSupportTicket(activeProject.id, newTicket).catch(console.error);
+    }
   };
 
   const addTicketReply = (ticketId: string, message: string) => {
     if (!clientUser) return;
+    const newUpdate = {
+      id: `up-${Date.now()}`,
+      sender: clientUser.name,
+      message,
+      time: "Just now",
+    };
+
     setProjects((prev) =>
       prev.map((proj) => {
         if (proj.id === activeProject.id) {
@@ -1354,18 +1401,14 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
             ...proj,
             supportTickets: proj.supportTickets.map((t) => {
               if (t.id === ticketId) {
+                const updatedUpdates = [...t.updates, newUpdate];
+                if (isSupabaseConfigured()) {
+                  supabaseService.updateSupportTicket(ticketId, { updates: updatedUpdates }).catch(console.error);
+                }
                 return {
                   ...t,
                   updatedAt: "Just now",
-                  updates: [
-                    ...t.updates,
-                    {
-                      id: `up-${Date.now()}`,
-                      sender: clientUser.name,
-                      message,
-                      time: "Just now",
-                    },
-                  ],
+                  updates: updatedUpdates,
                 };
               }
               return t;
@@ -1382,6 +1425,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // ----------------------------------------------------
 
   const updateMilestone = (projectId: string, milestoneId: string, updates: Partial<ProjectMilestone>) => {
+    let newOverallProgress = 0;
     setProjects((prev) =>
       prev.map((proj) => {
         if (proj.id === projectId) {
@@ -1392,6 +1436,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
           // Auto-recalculate project overall progress
           const totalProgress = updatedMilestones.reduce((acc, curr) => acc + (curr.progress || 0), 0);
           const newOverall = updatedMilestones.length > 0 ? Math.round(totalProgress / updatedMilestones.length) : 0;
+          newOverallProgress = newOverall;
 
           return {
             ...proj,
@@ -1406,6 +1451,10 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     if (isSupabaseConfigured()) {
       supabaseService.updateMilestone(milestoneId, updates).catch(console.error);
+      supabaseService.updateProject(projectId, {
+        overallProgress: newOverallProgress,
+        status: newOverallProgress === 100 ? "live_deployed" : "in_development",
+      }).catch(console.error);
     }
   };
 
@@ -1427,6 +1476,21 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
               progress: 100,
               completedDate: m.completedDate || "Completed",
             }));
+
+            if (isSupabaseConfigured()) {
+              allDone.forEach((m) => {
+                supabaseService.updateMilestone(m.id, {
+                  status: m.status,
+                  progress: m.progress,
+                  completedDate: m.completedDate,
+                }).catch(console.error);
+              });
+              supabaseService.updateProject(projectId, {
+                overallProgress: 100,
+                status: "live_deployed",
+              }).catch(console.error);
+            }
+
             return {
               ...proj,
               milestones: allDone,
@@ -1548,15 +1612,23 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const addMilestone = (projectId: string, milestone: Omit<ProjectMilestone, "id">) => {
     const newId = `m-${Date.now()}`;
+    const fullMilestone: ProjectMilestone = { ...milestone, id: newId };
     setProjects((prev) =>
       prev.map((proj) => {
         if (proj.id === projectId) {
-          const updated = [...proj.milestones, { ...milestone, id: newId }];
+          const updated = [...proj.milestones, fullMilestone];
           const totalProgress = updated.reduce((acc, curr) => acc + (curr.progress || 0), 0);
+          const newOverall = Math.round(totalProgress / updated.length);
+
+          if (isSupabaseConfigured()) {
+            supabaseService.createMilestone(projectId, fullMilestone).catch(console.error);
+            supabaseService.updateProject(projectId, { overallProgress: newOverall }).catch(console.error);
+          }
+
           return {
             ...proj,
             milestones: updated,
-            overallProgress: Math.round(totalProgress / updated.length),
+            overallProgress: newOverall,
           };
         }
         return proj;
@@ -1570,10 +1642,17 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (proj.id === projectId) {
           const updated = proj.milestones.filter((m) => m.id !== milestoneId);
           const totalProgress = updated.reduce((acc, curr) => acc + (curr.progress || 0), 0);
+          const newOverall = updated.length > 0 ? Math.round(totalProgress / updated.length) : 0;
+
+          if (isSupabaseConfigured()) {
+            supabaseService.deleteMilestone(milestoneId).catch(console.error);
+            supabaseService.updateProject(projectId, { overallProgress: newOverall }).catch(console.error);
+          }
+
           return {
             ...proj,
             milestones: updated,
-            overallProgress: updated.length > 0 ? Math.round(totalProgress / updated.length) : 0,
+            overallProgress: newOverall,
           };
         }
         return proj;
@@ -1597,21 +1676,30 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return proj;
       })
     );
+
+    if (isSupabaseConfigured()) {
+      supabaseService.updateLiveUrl(urlId, updates).catch(console.error);
+    }
   };
 
   const addLiveUrl = (projectId: string, url: Omit<ProjectLiveUrl, "id">) => {
     const newId = `url-${Date.now()}`;
+    const fullUrl: ProjectLiveUrl = { ...url, id: newId };
     setProjects((prev) =>
       prev.map((proj) => {
         if (proj.id === projectId) {
           return {
             ...proj,
-            liveUrls: [...proj.liveUrls, { ...url, id: newId }],
+            liveUrls: [...proj.liveUrls, fullUrl],
           };
         }
         return proj;
       })
     );
+
+    if (isSupabaseConfigured()) {
+      supabaseService.createLiveUrl(projectId, fullUrl).catch(console.error);
+    }
   };
 
   const deleteLiveUrl = (projectId: string, urlId: string) => {
@@ -1626,6 +1714,10 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return proj;
       })
     );
+
+    if (isSupabaseConfigured()) {
+      supabaseService.deleteLiveUrl(urlId).catch(console.error);
+    }
   };
 
   // ----------------------------------------------------
@@ -1634,17 +1726,22 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const addInvoice = (projectId: string, invoice: Omit<ClientPayment, "id">) => {
     const newId = `inv-${Date.now()}`;
+    const fullInvoice: ClientPayment = { ...invoice, id: newId };
     setProjects((prev) =>
       prev.map((proj) => {
         if (proj.id === projectId) {
           return {
             ...proj,
-            payments: [...proj.payments, { ...invoice, id: newId }],
+            payments: [...proj.payments, fullInvoice],
           };
         }
         return proj;
       })
     );
+
+    if (isSupabaseConfigured()) {
+      supabaseService.createInvoice(projectId, fullInvoice).catch(console.error);
+    }
   };
 
   const updateInvoice = (projectId: string, invoiceId: string, updates: Partial<ClientPayment>) => {
@@ -1677,6 +1774,10 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return proj;
       })
     );
+
+    if (isSupabaseConfigured()) {
+      supabaseService.deleteInvoice(invoiceId).catch(console.error);
+    }
   };
 
   // ----------------------------------------------------
@@ -1814,6 +1915,9 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (remaining.length > 0) {
       setActiveProjectId(remaining[0].id);
     }
+    if (isSupabaseConfigured()) {
+      supabaseService.deleteProject(projectId).catch(console.error);
+    }
   };
 
   // ----------------------------------------------------
@@ -1875,20 +1979,36 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setProjects((prev) =>
       prev.map((proj) => {
         if (proj.id === updatedRow.projectId) {
+          let matchedMilestone: ProjectMilestone | undefined;
           const updatedMilestones = proj.milestones.map((m) => {
             if (m.title.toLowerCase() === updatedRow.stageName.toLowerCase()) {
-              return {
+              matchedMilestone = {
                 ...m,
                 status: updatedRow.stageStatus,
                 progress: Number(updatedRow.stageProgress) || 0,
                 dueDate: updatedRow.stageDueDate,
               };
+              return matchedMilestone;
             }
             return m;
           });
 
           const totalProg = updatedMilestones.reduce((acc, curr) => acc + (curr.progress || 0), 0);
           const newOverall = updatedMilestones.length > 0 ? Math.round(totalProg / updatedMilestones.length) : proj.overallProgress;
+
+          if (isSupabaseConfigured()) {
+            if (matchedMilestone) {
+              supabaseService.updateMilestone(matchedMilestone.id, {
+                status: matchedMilestone.status,
+                progress: matchedMilestone.progress,
+                dueDate: matchedMilestone.dueDate,
+              }).catch(console.error);
+            }
+            supabaseService.updateProject(proj.id, {
+              overallProgress: newOverall,
+              title: updatedRow.projectTitle || proj.title,
+            }).catch(console.error);
+          }
 
           return {
             ...proj,

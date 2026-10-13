@@ -3,6 +3,8 @@ import { Search, PenTool, GitPullRequest, FastForward } from "lucide-react";
 import { Suspense, lazy } from "react";
 const InnovationThreeDBackground = lazy(() => import("@/components/InnovationThreeDBackground"));
 import { useIsMobile } from "@/hooks/use-mobile";
+import processArchitectWebp from "@/assets/systematic-process.webp";
+import processArchitectPng from "@/assets/systematic-process.png";
 
 const steps = [
   {
@@ -43,7 +45,7 @@ const InnovationSection = () => {
   const isMobile = useIsMobile();
 
   return (
-    <section id="innovation" className="py-24 bg-[#050505] relative overflow-hidden stitch-grid">
+    <section id="innovation" className="py-16 md:py-24 bg-[#050505] relative overflow-hidden stitch-grid">
       {!isMobile && (
         <Suspense fallback={null}>
           <InnovationThreeDBackground />
@@ -52,14 +54,25 @@ const InnovationSection = () => {
       <div className="absolute inset-0 bg-[#050505]/95 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-2 lg:gap-12 mb-16 md:mb-24">
-          <div className="text-left max-w-3xl">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-0 sm:gap-6 lg:gap-16 mb-12 md:mb-24">
+          <div className="text-left max-w-2xl lg:max-w-xl">
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4 }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70 text-xs font-mono uppercase tracking-widest mb-6"
+            >
+              <span className="w-2 h-2 rounded-full bg-[#EA4335] animate-pulse" />
+              Strategic Architecture
+            </motion.div>
+
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "0px" }}
               transition={{ duration: 0.45 }}
-              className="text-responsive-h2 font-black text-white mb-8 font-display tracking-tight"
+              className="text-responsive-h2 font-black text-white mb-6 md:mb-8 font-display tracking-tight"
             >
               A systematic process <br className="hidden lg:block" />
               to solve <span className="text-gradient-google">hard problems.</span>
@@ -74,6 +87,31 @@ const InnovationSection = () => {
               Ooma Labs doesn't just build apps; we architect targeted interventions for critical operations.
             </motion.p>
           </div>
+
+          {/* Right Column: High-End Cinematic Image Blend */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: true, margin: "0px" }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="w-full max-w-md lg:max-w-none lg:w-[460px] xl:w-[520px] mx-auto lg:mx-0 shrink-0 relative group -mt-10 sm:-mt-14 lg:mt-0"
+          >
+            {/* Ambient Warm Glow behind the developer */}
+            <div className="absolute -inset-4 bg-gradient-to-tr from-[#EA4335]/25 via-[#FBBC05]/15 to-transparent blur-3xl rounded-full opacity-60 group-hover:opacity-90 transition-opacity duration-700 pointer-events-none" />
+
+            {/* Seamless Visual Stage */}
+            <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden">
+              <picture className="w-full h-full flex items-center justify-center">
+                <source srcSet={processArchitectWebp} type="image/webp" />
+                <img
+                  src={processArchitectPng}
+                  alt="Ooma Labs systematic intervention and engineering process"
+                  className="w-full h-full object-contain filter drop-shadow-[0_20px_50px_rgba(234,67,53,0.15)] group-hover:scale-[1.02] transition-transform duration-700"
+                  loading="lazy"
+                />
+              </picture>
+            </div>
+          </motion.div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">

@@ -3,6 +3,8 @@ import { useRef } from "react";
 import rakshith from "@/assets/rakshith.jpg";
 import medexpert from "@/assets/medexpert.jpg";
 import codebluer from "@/assets/codebluer.jpg";
+import explorePortfolioWebp from "@/assets/explore-portfolio.webp";
+import explorePortfolioPng from "@/assets/explore-portfolio.png";
 
 const staticProjects = [
   {
@@ -106,19 +108,31 @@ const ProjectCard = ({ project, index }: { project: Project; index: number }) =>
 
 const PortfolioSection = () => {
   return (
-    <section id="portfolio" className="py-12 md:py-24 bg-[#050505] relative overflow-hidden">
+    <section id="portfolio" className="pt-2 sm:pt-4 md:pt-8 pb-12 md:pb-24 bg-[#050505] relative overflow-hidden">
       <div className="max-w-5xl mx-auto px-6 md:px-12">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6 }}
-          className="mb-12 md:mb-24 text-center"
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.5 }}
+          className="mb-8 md:mb-14 text-center flex flex-col items-center justify-center"
         >
-          <span className="badge-google mb-6 inline-block">Our Projects</span>
-          <h2 className="font-display font-bold text-responsive-h2 text-white mt-4 tracking-tighter">
-            Our <span className="text-[#EA4335]">Portfolio</span>.
-          </h2>
+          {/* Accessible Heading for SEO / Accessibility */}
+          <h2 className="sr-only">Explore Our Portfolio</h2>
+
+          {/* Explore Our Portfolio Banner */}
+          <div className="relative inline-flex items-center justify-center max-w-[320px] sm:max-w-[400px] md:max-w-[480px] w-full mx-auto">
+            <picture className="w-full flex items-center justify-center">
+              <source srcSet={explorePortfolioWebp} type="image/webp" />
+              <img
+                src={explorePortfolioPng}
+                alt="Explore Our Portfolio"
+                className="w-full h-auto object-contain"
+                loading="lazy"
+              />
+            </picture>
+          </div>
+
           <p className="text-responsive-body text-white/50 max-w-2xl mx-auto mt-6">
             A selection of high-performance systems engineered for real-world impact.
           </p>
