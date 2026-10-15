@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { MessageCircle, Phone, Mail, Send, User, AtSign, FileText, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { submitToGoogleSheets } from "@/lib/googleSheets";
+import WaveHelixBackground from "./WaveHelixBackground";
 
 const CTASection = () => {
   const ref = useRef(null);
@@ -62,13 +63,16 @@ const CTASection = () => {
 
   return (
     <section id="connect" className="py-12 md:py-40 bg-[#050505] relative overflow-hidden" ref={ref}>
-      {/* Background radial glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] bg-[#34A853]/5 blur-[150px] rounded-full pointer-events-none" />
+      {/* Animated 3D Wave Helix Background */}
+      <WaveHelixBackground />
+
+      {/* Background subtle radial warm glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[600px] bg-[#FF3300]/10 blur-[150px] rounded-full pointer-events-none z-[1]" />
       
       {/* Grid lines */}
-      <div className="absolute inset-0 stitch-grid opacity-10 pointer-events-none" />
+      <div className="absolute inset-0 stitch-grid opacity-[0.03] pointer-events-none z-[1]" />
 
-      <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10" style={{ zIndex: 10 }}>
         
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
