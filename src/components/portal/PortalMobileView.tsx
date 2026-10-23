@@ -29,9 +29,13 @@ import {
   Building,
   LogOut,
   ArrowRight,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { PortalVipCard } from "./PortalVipCard";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,6 +68,7 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
     logoutClient,
     payInvoice,
     supabaseStatus,
+    addProjectComment,
   } = useClientPortal();
 
   const navigate = useNavigate();
@@ -95,10 +100,52 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const [engineeringLogOpen, setEngineeringLogOpen] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [teamDiscussionOpen, setTeamDiscussionOpen] = useState(false);
+  const [discussionInput, setDiscussionInput] = useState("");
+  const [isPostingDiscussion, setIsPostingDiscussion] = useState(false);
 
   // Copy states
   const [copiedGst, setCopiedGst] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedCodeOnly, setCopiedCodeOnly] = useState(false);
+
+  // P2-2: Robust safe copy to clipboard with fallback
+  const safeCopyToClipboard = async (text: string, successMessage?: string): Promise<boolean> => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+      if (successMessage) toast.success(successMessage);
+      return true;
+    } catch (e) {
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        if (successMessage) toast.success(successMessage);
+        return true;
+      } catch (fallbackErr) {
+        toast.error("Could not copy to clipboard. Please copy manually.");
+        return false;
+      }
+    }
+  };
 
   // Dynamic calculations from activeProject
   const milestones = activeProject.milestones || [];
@@ -145,6 +192,7 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
   const referralPercent = Math.min(100, Math.round((verifiedReferrals / requiredReferrals) * 100));
   const creditAmountINR = referrals?.creditCardAmountINR ?? 4000;
   const referralCode = referrals?.referralCode || "OOMA-RAJESH-BLR";
+  const isCardUnlocked = referrals?.isCardUnlocked || verifiedReferrals >= requiredReferrals;
 
   // Dynamic live URLs
   const liveUrls = activeProject.liveUrls || [];
@@ -193,19 +241,40 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
     }, 500);
   };
 
-  const handleCopyGst = () => {
-    navigator.clipboard.writeText("36AAFCO7891K1Z8");
-    setCopiedGst(true);
-    toast.success("GSTIN copied to clipboard!");
-    setTimeout(() => setCopiedGst(false), 2000);
+  const handleCopyGst = async () => {
+    const ok = await safeCopyToClipboard("36AAFCO7891K1Z8", "GSTIN copied to clipboard!");
+    if (ok) {
+      setCopiedGst(true);
+      setTimeout(() => setCopiedGst(false), 2000);
+    }
   };
 
-  const handleCopyReferral = () => {
-    const link = `https://oomalabs.com/free-quotation?ref=${referralCode}`;
-    navigator.clipboard.writeText(link);
-    setCopiedLink(true);
-    toast.success("Referral invitation link copied!");
-    setTimeout(() => setCopiedLink(false), 2000);
+  const handleCopyReferral = async (overrideText?: string) => {
+    const textToCopy = overrideText || `https://oomalabs.com/free-quotation?ref=${referralCode}`;
+    const isCode = !textToCopy.startsWith("http");
+    const ok = await safeCopyToClipboard(textToCopy, isCode ? "Referral code copied!" : "Referral invitation link copied!");
+    if (ok) {
+      if (isCode) {
+        setCopiedCodeOnly(true);
+        setTimeout(() => setCopiedCodeOnly(false), 2000);
+      } else {
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 2000);
+      }
+    }
+  };
+
+  const handlePostDiscussion = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!discussionInput.trim()) return;
+    const msg = discussionInput.trim();
+    setIsPostingDiscussion(true);
+    if (addProjectComment) {
+      addProjectComment(activeProject.id, msg);
+    }
+    setDiscussionInput("");
+    setIsPostingDiscussion(false);
+    toast.success("Message posted to team discussion!");
   };
 
   const handlePayClick = (payment: ClientPayment, initialMethod?: "upi" | "netbanking" | "neft" | "card") => {
@@ -316,50 +385,17 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
             })}
           </nav>
 
-          {/* Right Action Icons: Realtime Status, Admin Link (Desktop), Bell with Red Dot, Avatar, Hamburger (Mobile) */}
+          {/* Right Action Icons: Admin Link (Role Restricted P0-3), Bell with Red Dot, Avatar with Business Name (P1-3), Hamburger (Mobile) */}
           <div className="flex items-center gap-2 sm:gap-2.5">
-            {/* Supabase Realtime Sync Badge */}
-            <div
-              onClick={() => navigate("/portal/admin")}
-              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors cursor-pointer ${
-                supabaseStatus === "connected"
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                  : supabaseStatus === "connecting"
-                  ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
-                  : supabaseStatus === "error"
-                  ? "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
-                  : "bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100"
-              }`}
-              title="Supabase PostgreSQL Realtime WebSocket Status (Click for Admin Console)"
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  supabaseStatus === "connected"
-                    ? "bg-emerald-500 animate-pulse"
-                    : supabaseStatus === "connecting"
-                    ? "bg-blue-500 animate-spin"
-                    : supabaseStatus === "error"
-                    ? "bg-red-500"
-                    : "bg-amber-400"
-                }`}
-              />
-              <span>
-                {supabaseStatus === "connected"
-                  ? "Realtime Active"
-                  : supabaseStatus === "connecting"
-                  ? "Connecting..."
-                  : supabaseStatus === "error"
-                  ? "Sync Error"
-                  : "Local Mode"}
-              </span>
-            </div>
-
-            <Link
-              to="/portal/admin"
-              className="hidden lg:flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
-            >
-              <span>Admin Manager</span>
-            </Link>
+            {/* P0-3: Admin Manager visible strictly to users with portalRole === 'admin' */}
+            {clientUser?.portalRole === "admin" && (
+              <Link
+                to="/portal/admin"
+                className="hidden lg:flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
+              >
+                <span>Admin Manager</span>
+              </Link>
+            )}
 
             {/* Bell with red notification badge */}
             <button
@@ -371,11 +407,11 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
             </button>
 
-            {/* User Profile Avatar with dropdown for desktop / menu for mobile */}
+            {/* User Profile Avatar: P1-3 shows name AND business name */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="flex items-center gap-2 p-0.5 rounded-full border border-slate-200 hover:border-slate-300 transition-colors shrink-0"
+                  className="flex items-center gap-2 p-1 rounded-full border border-slate-200 hover:border-slate-300 transition-colors shrink-0"
                   title={clientUser?.name || "Client Profile"}
                 >
                   <img
@@ -386,9 +422,14 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                     alt={clientUser?.name || "User"}
                     className="w-8 h-8 rounded-full object-cover"
                   />
-                  <span className="hidden lg:inline text-xs font-bold text-slate-800 pr-2">
-                    {clientUser?.name?.split(" ")[0]}
-                  </span>
+                  <div className="hidden lg:flex flex-col text-left pr-2 leading-tight">
+                    <span className="text-xs font-bold text-slate-800">
+                      {clientUser?.name || "Client"}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium truncate max-w-[140px]">
+                      {clientUser?.company || activeProject.company}
+                    </span>
+                  </div>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-white border-slate-200 text-slate-900 min-w-[200px] shadow-lg">
@@ -431,13 +472,16 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
            ======================================================================= */}
         {activeTab === "home" && (
           <div className="space-y-4 animate-in fade-in duration-150">
-            {/* Title & Subtitle - Exact match of Screenshot 5 Left / Screenshot 1 */}
+            {/* Title & Subtitle - P1-3: Display user name AND business name */}
             <div>
               <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">
-                {clientUser?.name ? `Hi, ${clientUser.name.split(" ")[0]}! 👋` : "Project overview"}
+                {clientUser?.name ? `Hi, ${clientUser.name}! 👋` : "Project overview"}
               </h1>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Here's what's happening with your project.
+                {(clientUser?.company || activeProject.company) ? (
+                  <span className="font-semibold text-slate-700">{clientUser?.company || activeProject.company} • </span>
+                ) : null}
+                Here's what's happening with your project dashboard.
               </p>
             </div>
 
@@ -784,7 +828,7 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                   />
                   <path
                     className="text-emerald-500"
-                    strokeDasharray={`${overallProgress}, 100`}
+                    strokeDasharray={`${Number(overallProgress) || 0}, 100`}
                     strokeWidth="3.5"
                     strokeLinecap="round"
                     stroke="currentColor"
@@ -906,6 +950,31 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                         <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
                           {stageNote}
                         </p>
+
+                        {/* Deliverables Checklist (P1-4) */}
+                        {milestone.deliverables && milestone.deliverables.length > 0 && (
+                          <div className="mt-2.5 pt-2 border-t border-slate-100 space-y-1.5">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                              Deliverables Checklist:
+                            </span>
+                            <div className="space-y-1">
+                              {milestone.deliverables.map((deliv, dIdx) => (
+                                <div key={dIdx} className="flex items-start gap-1.5 text-[11px] text-slate-600 leading-tight">
+                                  {isCompleted ? (
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                                  ) : isInProgress ? (
+                                    <div className="w-3.5 h-3.5 rounded-full border border-blue-400 flex items-center justify-center shrink-0 mt-0.5 text-[8px] text-blue-600 font-bold">
+                                      {dIdx + 1}
+                                    </div>
+                                  ) : (
+                                    <div className="w-3.5 h-3.5 rounded-full border border-slate-300 shrink-0 mt-0.5" />
+                                  )}
+                                  <span className={isCompleted ? "line-through text-slate-400" : ""}>{deliv}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <ChevronRight className="w-4 h-4 text-slate-400 self-center shrink-0 ml-1" />
@@ -1086,23 +1155,21 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                           <span className="text-xs sm:text-sm font-bold text-slate-900 block">
                             {formatINR(payment.amount)}
                           </span>
-                          {/* Preserved pricing with clear Coming Soon state */}
-                          {payment.invoiceNumber === "INV-003" || (payment === pendingPayments[0] && payment.invoiceNumber !== "INV-004") ? (
+                          {/* P1-5: Active Pay Now button on unpaid invoices */}
+                          {!isPaid ? (
                             <button
                               onClick={() => handlePayClick(payment)}
-                              className="bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-[10px] font-bold px-2.5 py-1 rounded-lg mt-1 active:scale-95 transition-all shadow-xs flex items-center gap-1.5"
+                              className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg mt-1 active:scale-95 transition-all shadow-sm flex items-center gap-1.5"
                             >
-                              <span>View Pricing</span>
-                              <span className="bg-amber-100 text-amber-800 border border-amber-300/80 text-[8px] font-bold px-1.5 py-0.2 rounded-full">
-                                Coming Soon
-                              </span>
+                              <CreditCard className="w-3 h-3 text-white" />
+                              <span>Pay Now</span>
                             </button>
                           ) : (
                             <button
                               onClick={() => handlePayClick(payment)}
                               className="bg-slate-100 hover:bg-slate-200 border border-slate-200/60 text-slate-700 text-[10px] font-bold px-2.5 py-1 rounded-lg mt-1 transition-colors"
                             >
-                              View
+                              View Receipt
                             </button>
                           )}
                         </div>
@@ -1303,42 +1370,35 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
               </div>
             </div>
 
-            {/* GOLD VIP PARTNER REWARD CARD (With Generated 3D Luxury Gift Box) */}
-            <div className="bg-gradient-to-r from-[#fef3c7] via-[#fde68a]/70 to-[#fef9c3] border-2 border-amber-400/90 rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-md">
-              <div className="inline-flex items-center gap-1 bg-amber-100/90 text-amber-900 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-amber-300">
-                <span>👑</span>
-                <span>OOMA LABS VIP</span>
-              </div>
+            {/* VIP PARTNER REWARD CARD (P1-3 with Company Name & P2-4 Copy Code) */}
+            <PortalVipCard
+              verifiedCount={verifiedReferrals}
+              requiredCount={requiredReferrals}
+              cardholderName={clientUser?.name || "Client"}
+              companyName={clientUser?.company || activeProject.company}
+              referralCode={referralCode}
+              isUnlocked={isCardUnlocked}
+              creditAmountINR={creditAmountINR}
+              onApplyCredit={() => setActiveTab("billing")}
+            />
 
-              <div className="mt-3">
-                <h3 className="text-sm font-bold text-slate-900">
-                  Partner Reward
-                </h3>
-                <div className="text-3xl sm:text-4xl font-black text-[#b45309] tracking-tight mt-0.5">
-                  {formatINR(creditAmountINR)}
-                </div>
-                <p className="text-[11px] text-amber-900/80 font-medium mt-1">
-                  Unlock after {requiredReferrals} verified referrals
-                </p>
-              </div>
-
-              <div className="absolute right-1 -bottom-2 w-36 h-36 pointer-events-none drop-shadow-lg">
-                <img
-                  src="/vip-gift-reward.jpg"
-                  alt="OOMA LABS VIP Gift Box"
-                  className="w-full h-full object-contain transform rotate-3"
-                />
-              </div>
+            {/* ACTION BUTTONS: Invite partners & Copy Code */}
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => setInviteModalOpen(true)}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3.5 px-4 rounded-xl shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+              >
+                <Share2 className="w-4 h-4 stroke-[2.2]" />
+                <span>Invite Partners</span>
+              </button>
+              <button
+                onClick={() => handleCopyReferral(referralCode)}
+                className="flex-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 border border-amber-300 font-bold text-xs py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+              >
+                {copiedCodeOnly ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-amber-600" />}
+                <span>{copiedCodeOnly ? "Code Copied!" : `Copy Code: ${referralCode}`}</span>
+              </button>
             </div>
-
-            {/* BLUE ACTION BUTTON: Invite partners */}
-            <button
-              onClick={() => setInviteModalOpen(true)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm py-3.5 px-4 rounded-xl shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-            >
-              <Share2 className="w-4 h-4 stroke-[2.2]" />
-              <span>Invite partners</span>
-            </button>
 
             {/* LINK CARDS */}
             <div className="space-y-2.5 pt-1">
@@ -1512,21 +1572,23 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                 </a>
 
                 <div
-                  onClick={() => setAiChatOpen(true)}
+                  onClick={() => setTeamDiscussionOpen(true)}
                   className="bg-[#faf5ff] hover:bg-[#f3e8ff] rounded-2xl p-3.5 border border-purple-200 shadow-sm hover:border-purple-300 flex flex-col justify-between cursor-pointer transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-start justify-between">
                     <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-sm">
                       <MessageSquare className="w-4 h-4" />
                     </div>
-                    <ChevronRight className="w-4 h-4 text-purple-400" />
+                    <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-full">
+                      {activeProject.comments?.length || 0}
+                    </span>
                   </div>
                   <div className="mt-3">
                     <span className="text-xs font-bold text-slate-900 block">
                       Team Discussion
                     </span>
                     <span className="text-[10px] text-slate-500 block mt-0.5">
-                      View messages
+                      Human Pod Thread
                     </span>
                   </div>
                 </div>
@@ -1834,13 +1896,15 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
             </div>
 
             <div className="space-y-1 pt-1 border-t border-slate-200">
-              <Link
-                to="/portal/admin"
-                className="w-full p-2.5 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-between"
-              >
-                <span>Admin Manager & Live Sync</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </Link>
+              {clientUser?.portalRole === "admin" && (
+                <Link
+                  to="/portal/admin"
+                  className="w-full p-2.5 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-between"
+                >
+                  <span>Admin Manager & Live Sync</span>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </Link>
+              )}
               <Link
                 to="/free-quotation"
                 className="w-full p-2.5 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-between"
@@ -1975,11 +2039,19 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
 
             <div className="space-y-1.5">
               <button
-                onClick={handleCopyReferral}
+                onClick={() => handleCopyReferral()}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95"
               >
                 {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 <span>{copiedLink ? "Invitation Link Copied!" : "Copy Invitation Link"}</span>
+              </button>
+
+              <button
+                onClick={() => handleCopyReferral(referralCode)}
+                className="w-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95"
+              >
+                {copiedCodeOnly ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-600" />}
+                <span>{copiedCodeOnly ? "Referral Code Copied!" : `Copy Code: ${referralCode}`}</span>
               </button>
 
               <a
@@ -1995,6 +2067,89 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
               </a>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* =========================================================================
+          REAL HUMAN TEAM DISCUSSION MODAL (P1-6)
+         ========================================================================= */}
+      <Dialog open={teamDiscussionOpen} onOpenChange={setTeamDiscussionOpen}>
+        <DialogContent className="max-w-xs sm:max-w-lg rounded-3xl p-5 bg-white text-slate-900 border border-slate-200 shadow-xl flex flex-col h-[75vh]">
+          <DialogHeader className="text-left space-y-1 pb-3 border-b border-slate-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold">
+                  <MessageSquare className="w-4 h-4" />
+                </div>
+                <div>
+                  <DialogTitle className="text-sm sm:text-base font-black text-slate-900">
+                    Team Discussion
+                  </DialogTitle>
+                  <DialogDescription className="text-[11px] text-slate-500 line-clamp-1">
+                    Direct human thread with Arjun Mehta and OOMA engineering pod
+                  </DialogDescription>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                {activeProject.comments?.length || 0} Messages
+              </span>
+            </div>
+          </DialogHeader>
+
+          {/* Messages Feed */}
+          <div className="flex-1 overflow-y-auto space-y-3 p-1">
+            {(!activeProject.comments || activeProject.comments.length === 0) ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-2">
+                <MessageSquare className="w-8 h-8 text-slate-300" />
+                <p className="text-xs">No comments posted yet. Start the conversation with your engineering team below!</p>
+              </div>
+            ) : (
+              activeProject.comments.map((comment) => {
+                const isClient = comment.authorRole === "client" || comment.authorName === clientUser?.name;
+                return (
+                  <div
+                    key={comment.id}
+                    className={`flex flex-col ${isClient ? "items-end" : "items-start"} space-y-1`}
+                  >
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                      <span className="font-bold text-slate-700">{comment.authorName}</span>
+                      <span className="px-1.5 py-0.2 rounded text-[9px] bg-slate-100 text-slate-600 border border-slate-200/60 uppercase font-semibold">
+                        {comment.authorRole === "lead_architect" ? "Lead Architect" : comment.authorRole === "client" ? "Client" : "Engineering Pod"}
+                      </span>
+                      <span>•</span>
+                      <span>{comment.timestamp || "Just now"}</span>
+                    </div>
+                    <div
+                      className={`max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed shadow-xs ${
+                        isClient
+                          ? "bg-blue-600 text-white rounded-tr-xs"
+                          : "bg-slate-100 text-slate-900 rounded-tl-xs border border-slate-200/60"
+                      }`}
+                    >
+                      {comment.message}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Composer */}
+          <form onSubmit={handlePostDiscussion} className="pt-2 border-t border-slate-100 flex items-center gap-2">
+            <Input
+              value={discussionInput}
+              onChange={(e) => setDiscussionInput(e.target.value)}
+              placeholder={`Message team as ${clientUser?.name || "Client"}...`}
+              className="bg-slate-50 border-slate-200 text-xs h-10 rounded-xl"
+            />
+            <Button
+              type="submit"
+              disabled={isPostingDiscussion || !discussionInput.trim()}
+              className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-3.5 rounded-xl font-bold text-xs shrink-0"
+            >
+              <Send className="w-3.5 h-3.5" />
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
 

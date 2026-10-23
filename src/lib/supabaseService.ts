@@ -242,22 +242,26 @@ export const supabaseService = {
             updates: t.updates || [],
           }));
 
-        // Preserve partner reward state from cache or baseline
+        // Preserve partner reward state from cache or real baseline
+        const cleanCompany = (p.company || "CLIENT").replace(/[^A-Za-z0-9]/g, "").slice(0, 4).toUpperCase();
+        const generatedCode = `OOMA-${cleanCompany}-${p.id.slice(-4).toUpperCase()}`;
         const cachedProj = cachedLocalProjects.find((lp) => lp.id === p.id);
         const referrals: ClientReferralData = cachedProj?.referrals || {
-          referralCode: p.id === "proj-bharatlogistics-01" ? "OOMA-RAJESH-BLR" : "OOMA-" + p.company.slice(0, 4).toUpperCase(),
-          shareableUrl: `https://oomalabs.com/free-quotation?ref=${p.id === "proj-bharatlogistics-01" ? "OOMA-RAJESH-BLR" : "OOMA-" + p.company.slice(0, 4).toUpperCase()}`,
-          totalReferrals: p.id === "proj-bharatlogistics-01" ? 4 : 0,
-          verifiedClientsCount: p.id === "proj-bharatlogistics-01" ? 2 : 0,
+          referralCode: generatedCode,
+          shareableUrl: typeof window !== "undefined"
+            ? `${window.location.origin}/portal/login?mode=signup&ref=${generatedCode}`
+            : `https://oomalabs.com/portal/login?mode=signup&ref=${generatedCode}`,
+          totalReferrals: 0,
+          verifiedClientsCount: 0,
           requiredForUnlock: 4,
           isCouponUnlocked: false,
           isCardUnlocked: false,
           creditCardAmountINR: 4000,
-          cardholderName: p.lead_name || "Client Partner",
+          cardholderName: p.company || "VIP Client Partner",
           unlockedCouponCode: "OOMA-VERIFIED-4X",
           discountPercentage: 20,
-          totalEarnings: p.id === "proj-bharatlogistics-01" ? 150000 : 0,
-          pendingPayout: p.id === "proj-bharatlogistics-01" ? 50000 : 0,
+          totalEarnings: 0,
+          pendingPayout: 0,
           history: [],
         };
 
@@ -312,6 +316,13 @@ export const supabaseService = {
       if (updates.summary !== undefined) payload.summary = updates.summary;
       if (updates.targetLaunchDate !== undefined) payload.target_launch_date = updates.targetLaunchDate;
       if (updates.techStack !== undefined) payload.tech_stack = updates.techStack;
+      if (updates.tier !== undefined) payload.tier = updates.tier;
+      if (updates.dedicatedLead) {
+        if (updates.dedicatedLead.name) payload.lead_name = updates.dedicatedLead.name;
+        if (updates.dedicatedLead.role) payload.lead_role = updates.dedicatedLead.role;
+        if (updates.dedicatedLead.email) payload.lead_email = updates.dedicatedLead.email;
+        if (updates.dedicatedLead.avatar) payload.lead_avatar = updates.dedicatedLead.avatar;
+      }
 
       const { error } = await supabase.from("projects").update(payload).eq("id", projectId);
       if (error) {
@@ -425,6 +436,22 @@ export const supabaseService = {
             uptime: u.uptime,
             last_deployed: u.lastDeployed,
             notes: u.notes,
+          }))
+        );
+      }
+
+      // 6. Comments / Team Messages
+      if (project.comments && project.comments.length > 0) {
+        await supabase.from("comments").upsert(
+          project.comments.map((c) => ({
+            id: c.id,
+            project_id: project.id,
+            author_name: c.authorName,
+            author_role: c.authorRole,
+            author_avatar: c.authorAvatar || null,
+            message: c.message,
+            is_pinned: Boolean(c.isPinned),
+            attachments: c.attachments || [],
           }))
         );
       }
@@ -689,6 +716,26 @@ export const supabaseService = {
   },
 
   /**
+   * Update Comment (e.g. Pin/Unpin) in Supabase
+   */
+  async updateComment(commentId: string, updates: Partial<ProjectComment>): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return false;
+
+    try {
+      const payload: any = {};
+      if (updates.isPinned !== undefined) payload.is_pinned = updates.isPinned;
+      if (updates.message !== undefined) payload.message = updates.message;
+
+      const { error } = await supabase.from("comments").update(payload).eq("id", commentId);
+      return !error;
+    } catch (err) {
+      console.error("[Supabase] updateComment failed:", err);
+      return false;
+    }
+  },
+
+  /**
    * Delete Comment in Supabase
    */
   async deleteComment(commentId: string): Promise<boolean> {
@@ -745,6 +792,7 @@ export const supabaseService = {
       if (updates.status !== undefined) payload.status = updates.status;
       if (updates.priority !== undefined) payload.priority = updates.priority;
       if (updates.updates !== undefined) payload.updates = updates.updates;
+      if (updates.assignedEngineer !== undefined) payload.assigned_engineer = updates.assignedEngineer;
 
       const { error } = await supabase.from("support_tickets").update(payload).eq("id", ticketId);
       return !error;

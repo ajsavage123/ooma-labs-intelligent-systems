@@ -7,10 +7,6 @@ import { Suspense, lazy } from "react";
 import Index from "./pages/Index";
 
 // new workspace/auth pages
-const LoginPage = lazy(() => import("./pages/Login"));
-const PartnershipPage = lazy(() => import("./pages/Partnership"));
-const WorkspaceAccess = lazy(() => import("./pages/WorkspaceAccess"));
-const WorkspaceRoutes = lazy(() => import("./pages/workspace/WorkspaceRoutes"));
 const ProductsPage = lazy(() => import("./pages/Products"));
 const FreelancerApplication = lazy(() => import("./pages/FreelancerApplication"));
 
@@ -24,6 +20,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 // Client Portal Pages
 const ClientPortal = lazy(() => import("./pages/portal/ClientPortal"));
 const ClientPortalLogin = lazy(() => import("./pages/portal/ClientPortalLogin"));
+const ClientOnboarding = lazy(() => import("./pages/portal/ClientOnboarding"));
 const PortalAdminManager = lazy(() => import("./pages/portal/PortalAdminManager"));
 const FreeQuotationPage = lazy(() =>
   import("./pages/FreeQuotationPage").then((module) => ({ default: module.FreeQuotationPage }))
@@ -31,6 +28,9 @@ const FreeQuotationPage = lazy(() =>
 
 import CookieConsent from "./components/CookieConsent";
 import QuoteChatWidget from "./components/QuoteChatWidget";
+import PageLoadingFallback from "./components/PageLoadingFallback";
+import AuthRedirectHandler from "./components/AuthRedirectHandler";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 import { AuthProvider } from "./context/AuthContext";
 import { ClientPortalProvider } from "./context/ClientPortalContext";
@@ -45,20 +45,24 @@ const App = () => (
       {/* auth provider wraps entire app so pages can access user state */}
       <AuthProvider>
         <ClientPortalProvider>
-          <BrowserRouter>
-            <Suspense fallback={null}>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <AuthRedirectHandler />
+            <ErrorBoundary>
+              <Suspense fallback={<PageLoadingFallback />}>
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/login" element={<LoginPage />} />
+                <Route path="/login" element={<Navigate to="/portal/login" replace />} />
                 <Route path="/portal" element={<ClientPortal />} />
                 <Route path="/portal/login" element={<ClientPortalLogin />} />
+                <Route path="/portal/onboarding" element={<ClientOnboarding />} />
                 <Route path="/portal/admin" element={<PortalAdminManager />} />
+                <Route path="/admin" element={<Navigate to="/portal/admin" replace />} />
                 <Route path="/free-quotation" element={<FreeQuotationPage />} />
                 <Route path="/quotation" element={<Navigate to="/free-quotation" replace />} />
                 <Route path="/client-portal" element={<Navigate to="/portal" replace />} />
-                <Route path="/partnership" element={<Navigate to="/" replace />} />
-                <Route path="/workspace-access" element={<WorkspaceAccess />} />
-                <Route path="/workspace/*" element={<WorkspaceRoutes />} />
+                <Route path="/workspace" element={<Navigate to="/portal" replace />} />
+                <Route path="/workspace/*" element={<Navigate to="/portal" replace />} />
+                <Route path="/workspace-access" element={<Navigate to="/portal/login" replace />} />
                 <Route path="/products" element={<ProductsPage />} />
                 <Route path="/freelance" element={<FreelancerApplication />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -69,9 +73,10 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
-            <CookieConsent />
-            <QuoteChatWidget />
-          </BrowserRouter>
+          </ErrorBoundary>
+          <CookieConsent />
+          <QuoteChatWidget />
+        </BrowserRouter>
         </ClientPortalProvider>
       </AuthProvider>
     </TooltipProvider>

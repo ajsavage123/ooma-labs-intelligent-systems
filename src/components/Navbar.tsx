@@ -38,17 +38,13 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
   }, [menuOpen]);
 
   const handleLoginLogout = () => {
-    if (state.currentUser) {
-      dispatch({ type: "LOGOUT" });
-      navigate("/");
-    } else {
-      navigate("/partnership");
-    }
+    navigate("/portal/login");
   };
 
   const navItems = [
     { label: 'Home', href: '/' },
     { label: 'Client Portal', href: '/portal', isSpecial: true },
+    { label: 'Admin Console', href: '/portal/admin' },
     { label: 'Services', href: '#services' },
     { label: 'Portfolio', href: '#portfolio' },
     { label: 'Vision', href: '#vision' },
@@ -169,7 +165,13 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.1 + i * 0.1, duration: 0.5 }}
                       href={item.href}
-                      onClick={() => setMenuOpen(false)}
+                      onClick={(e) => {
+                        if (item.href.startsWith('/') && !item.href.includes('#')) {
+                          e.preventDefault();
+                          navigate(item.href);
+                        }
+                        setMenuOpen(false);
+                      }}
                       className="group flex items-center gap-6"
                     >
                       <span className={`text-3xl sm:text-4xl lg:text-5xl font-display font-bold transition-all duration-500 group-hover:pl-4 ${

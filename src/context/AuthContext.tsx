@@ -85,23 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const base = stored ? JSON.parse(stored) : init;
       // ensure there is an admin user
       if (base.users.length === 0) {
-        const admin: User = {
-          id: uuidv4(),
-          name: "Admin",
-          email: "admin@oomalabs.com",
-          role: "admin",
-          workspace_access: true,
-        };
-        // Add test partner user
-        const testUser: User = {
-          id: uuidv4(),
-          name: "Test User",
-          email: "testuser@ooma.com",
-          role: "partner",
-          workspace_access: true,
-          password: "test1234",
-        };
-        base.users = [admin, testUser];
+        base.users = [];
         base.currentUser = null;
       }
       return base;

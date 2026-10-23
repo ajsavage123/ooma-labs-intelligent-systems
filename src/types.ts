@@ -84,7 +84,8 @@ export interface ClientUser {
   avatar?: string;
   phone?: string;
   joinedDate: string;
-  portalRole: "client_admin" | "client_viewer";
+  portalRole: "admin" | "client_admin" | "client_viewer";
+  onboarded?: boolean;
 }
 
 export type MilestoneStatus = "completed" | "in_progress" | "pending";
@@ -169,7 +170,7 @@ export interface SupportTicket {
   ticketNumber: string;
   title: string;
   description: string;
-  category: "bug" | "change_request" | "feature" | "billing" | "security";
+  category: "bug" | "change_request" | "feature" | "billing" | "security" | "general_inquiry";
   priority: TicketPriority;
   status: TicketStatus;
   createdAt: string;
@@ -238,6 +239,7 @@ export interface ClientProject {
     avatar: string;
     email: string;
     status: string;
+    phone?: string;
   };
   milestones: ProjectMilestone[];
   liveUrls: ProjectLiveUrl[];

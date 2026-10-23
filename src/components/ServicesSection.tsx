@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Laptop, Cpu, TrendingUp, Link, Wrench, Palette, Bot, CheckCircle2, ChevronDown } from "lucide-react";
+import { Laptop, Cpu, TrendingUp, Link, Wrench, Palette, Workflow, CheckCircle2, ChevronDown } from "lucide-react";
 
 const serviceCategories = [
   {
@@ -79,7 +79,7 @@ const serviceCategories = [
     ]
   },
   {
-    icon: Bot,
+    icon: Workflow,
     title: "AI & Automation",
     color: "text-[#FBBC05]",
     bg: "bg-[#FBBC05]/10",

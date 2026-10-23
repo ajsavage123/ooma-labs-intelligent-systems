@@ -142,7 +142,7 @@ export const PortalComments: React.FC = () => {
                 <ThumbsUp className="w-3 h-3" />
                 <span>Helpful</span>
               </button>
-              <span>OOMA Client Workspace</span>
+              <span>OOMA Project Dashboard</span>
             </div>
           </div>
         ))}

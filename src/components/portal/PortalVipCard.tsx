@@ -22,6 +22,8 @@ interface PortalVipCardProps {
   verifiedCount: number;
   requiredCount?: number;
   cardholderName?: string;
+  companyName?: string;
+  referralCode?: string;
   isUnlocked?: boolean;
   creditAmountINR?: number;
   onApplyCredit?: () => void;
@@ -31,6 +33,8 @@ export const PortalVipCard: React.FC<PortalVipCardProps> = ({
   verifiedCount,
   requiredCount = 4,
   cardholderName = "Rajesh Sharma",
+  companyName,
+  referralCode = "OOMA-VERIFIED-4X",
   isUnlocked = false,
   creditAmountINR = 4000,
   onApplyCredit,
@@ -59,10 +63,26 @@ export const PortalVipCard: React.FC<PortalVipCardProps> = ({
     setIsHovered(false);
   };
 
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText("OOMA-VERIFIED-4X");
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+  const handleCopyCode = async (codeToCopy = referralCode || "OOMA-VERIFIED-4X") => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(codeToCopy);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = codeToCopy;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch (e) {
+      console.warn("Clipboard copy failed:", e);
+    }
   };
 
   return (
@@ -237,11 +257,11 @@ export const PortalVipCard: React.FC<PortalVipCardProps> = ({
             </div>
 
             {/* Discreet Cardholder Pill */}
-            <div className="absolute bottom-2.5 left-3 sm:bottom-3 sm:left-4 pointer-events-none z-10 flex items-center gap-1.5 sm:gap-2">
-              <span className="text-[9px] sm:text-[10px] font-mono tracking-wider uppercase text-amber-200/90 bg-black/50 backdrop-blur-md px-1.5 py-0.5 rounded border border-amber-500/30">
-                {cardholderName}
+            <div className="absolute bottom-2.5 left-3 sm:bottom-3 sm:left-4 pointer-events-none z-10 flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <span className="text-[9px] sm:text-[10px] font-mono tracking-wider uppercase text-amber-200/90 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded border border-amber-500/30">
+                {cardholderName}{companyName ? ` • ${companyName}` : ""}
               </span>
-              <span className="text-[8px] sm:text-[9px] font-mono text-zinc-300/80 bg-black/50 backdrop-blur-md px-1 py-0.5 rounded border border-zinc-700/40">
+              <span className="text-[8px] sm:text-[9px] font-mono text-zinc-300/80 bg-black/60 backdrop-blur-md px-1 py-0.5 rounded border border-zinc-700/40">
                 •••• {creditAmountINR}
               </span>
             </div>
@@ -336,7 +356,7 @@ export const PortalVipCard: React.FC<PortalVipCardProps> = ({
                   <span>COUPON: OOMA-VERIFIED-4X</span>
                   <button
                     type="button"
-                    onClick={handleCopyCode}
+                    onClick={() => handleCopyCode()}
                     className="text-zinc-400 hover:text-white transition-colors"
                   >
                     {copied ? <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400" /> : <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
@@ -348,10 +368,20 @@ export const PortalVipCard: React.FC<PortalVipCardProps> = ({
               </div>
             </div>
           ) : (
-            <div className="bg-zinc-950/60 border border-amber-500/20 rounded-xl sm:rounded-2xl p-2 sm:p-4 text-center space-y-1 sm:space-y-2">
+            <div className="bg-zinc-950/60 border border-amber-500/20 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 text-center space-y-2">
               <p className="text-[10px] sm:text-xs text-zinc-300 leading-snug">
-                Share your partner link. As peers deposit their advance, your card progressively unlocks!
+                Share your partner invitation link or VIP code. As peers verify and deposit their advance, your card progressively unlocks!
               </p>
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleCopyCode(referralCode || "OOMA-VIP")}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 active:scale-[0.98] transition-all"
+                >
+                  {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
+                  <span>{copied ? "Code Copied!" : `Copy Code: ${referralCode || "OOMA-VIP"}`}</span>
+                </button>
+              </div>
               <div className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-amber-400 font-bold">
                 <span>Status: {verifiedCount} of 4 Verified Clients</span>
                 <ChevronRight className="w-3 h-3" />

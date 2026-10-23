@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 import React, {
   useState,
   useEffect,
@@ -33,7 +34,7 @@ const BUSINESS_TYPES = [
   "Others",
 ];
 
-type WidgetState = "idle" | "popup" | "bubble" | "chat";
+type WidgetState = "idle" | "bubble" | "chat";
 
 /* ─── Custom Inputs & Dropdowns ──────────────────────────── */
 interface InputFieldProps {
@@ -289,6 +290,13 @@ ChatMessages.displayName = "ChatMessages";
 
 /* ─── Main Widget ────────────────────────────────────────── */
 const QuoteChatWidget: React.FC = () => {
+  const location = useLocation();
+  const isPortalRoute = location.pathname.startsWith("/portal");
+
+  if (isPortalRoute) {
+    return null;
+  }
+
   const [widgetState, setWidgetState] = useState<WidgetState>("idle");
   const [mood, setMood] = useState<"happy" | "sad">("happy");
   const [hasUnread, setHasUnread] = useState(false);
@@ -392,42 +400,16 @@ const QuoteChatWidget: React.FC = () => {
     return () => window.removeEventListener("cookie-consent-changed", checkConsent);
   }, []);
 
-  /* Always show bubble+badge immediately. Show popup after 10 s on first visit. */
+  /* Always show bubble+badge immediately without intrusive popups */
   useEffect(() => {
     setWidgetState("bubble");
     setHasUnread(true);
-
-    const seen = localStorage.getItem("ql_popupSeen");
-    if (seen || cookieConsentActive) return;
-
-    const t = setTimeout(() => {
-      setWidgetState("popup");
-    }, 10_000);
-    return () => clearTimeout(t);
-  }, [cookieConsentActive]);
+  }, []);
 
   const triggerJump = () => {
     setShouldJump(true);
     setTimeout(() => setShouldJump(false), 1100);
   };
-
-  const closePopup = useCallback(() => {
-    localStorage.setItem("ql_popupSeen", "true");
-    setWidgetState("bubble");
-    setHasUnread(true);
-    setMood("sad");
-    setShowBubble(true);
-    if (sadTimeoutRef.current) clearTimeout(sadTimeoutRef.current);
-    sadTimeoutRef.current = setTimeout(() => {
-      setShowBubble(false);
-      setMood("happy");
-    }, 5000);
-
-    // Bounces exactly when the shrinking centered card overlaps the bubble
-    setTimeout(() => {
-      triggerJump();
-    }, 400);
-  }, []);
 
   const openChat  = useCallback(() => {
     setWidgetState("chat");
@@ -508,15 +490,6 @@ const QuoteChatWidget: React.FC = () => {
   const bottomOffset = `${bottomMargin}px`;
   const rightOffset = `${rightMargin}px`;
 
-  /* Mathematically mapped coordinates to shrink the centered modal popup precisely to the bubble's location */
-  const popupExit = {
-    opacity: 0,
-    scale: 0.01,
-    x: windowSize.width / 2 - (rightMargin + bubbleRadius),
-    y: windowSize.height / 2 - (bottomMargin + bubbleRadius),
-    transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
-  };
-
   const sharedFormProps: Omit<QuoteFormProps, "compact"> = {
     nameRef, emailRef, phoneRef,
     bizType, setBizType,
@@ -524,74 +497,11 @@ const QuoteChatWidget: React.FC = () => {
     errs, onSend: handleSend,
   };
 
-  /* Check if the quotation form is currently open (either center modal popup or bottom-right chat panel) */
-  const isFormOpen = widgetState === "chat" || widgetState === "popup";
+  /* Check if the quotation chat panel is currently open */
+  const isFormOpen = widgetState === "chat";
 
   return (
     <>
-      {/* ══════════ 1. POPUP (centered) ══════════ */}
-      <AnimatePresence>
-        {widgetState === "popup" && (
-          <>
-            <motion.div
-              key="qw-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, transition: { duration: 0.22 } }}
-              className="fixed inset-0 z-[200] bg-black/75 backdrop-blur-[4px]"
-              onClick={closePopup}
-            />
-            <motion.div
-              key="qw-popup"
-              initial={{ opacity: 0, scale: 0.9, y: 28 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={popupExit}
-              transition={{ type: "spring", stiffness: 310, damping: 26 }}
-              className="fixed inset-0 z-[201] flex items-center justify-center p-4 pointer-events-none"
-            >
-              <div
-                className="pointer-events-auto w-full max-w-[420px] relative"
-                style={{
-                  background: "linear-gradient(160deg, #0a0a0f 0%, #111119 100%)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: "2rem",
-                  boxShadow: "0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(66,133,244,0.15)",
-                  overflow: "hidden",
-                }}
-              >
-                {/* Top glow accent bar */}
-                <div style={{ height: "3px", background: "linear-gradient(90deg, #4285F4 0%, #7c3aed 50%, #34A853 100%)" }} />
-
-                <div className="p-7 sm:p-8">
-                  {/* Close */}
-                  <button
-                    onClick={closePopup}
-                    aria-label="Close"
-                    className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full transition-colors hover:bg-white/10 bg-white/5 border border-white/10 cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5 text-white/65" />
-                  </button>
-
-                  {/* Online badge */}
-                  <span className="flex items-center gap-1.5 text-[9px] font-bold tracking-[0.25em] uppercase mb-4 text-[#34A853]">
-                    <span className="inline-block w-2 h-2 rounded-full bg-[#34A853] animate-pulse" />
-                    Online Now
-                  </span>
-
-                  <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight mb-2 font-display">
-                    Get an Instant Quotation
-                  </h2>
-                  <p className="text-xs sm:text-sm mb-6 text-white/40 leading-relaxed">
-                    Free. No commitments. Delivered straight on WhatsApp.
-                  </p>
-
-                  <QuoteForm {...sharedFormProps} />
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
       {/* ══════════ 2. CHAT PANEL (above bubble, bottom-right) ══════════ */}
       <AnimatePresence>
@@ -801,63 +711,52 @@ const QuoteChatWidget: React.FC = () => {
                     <rect x="6.5" y="5" width="19" height="12" rx="2" fill="#121212" stroke="#424242" strokeWidth="0.5" />
 
                     {/* Left eye */}
-                    <motion.circle
-                      cx="11.5"
-                      cy={10.5}
-                      r={1.8}
-                      fill="white"
+                    <motion.g
                       style={{ transformOrigin: "11.5px 10.5px" }}
                       animate={{
-                        cy: isFormOpen ? 8.5 : 10.5,
-                        r: 1.8,
+                        y: isFormOpen ? -2 : 0,
                         scaleY: [1, 1, 1, 0.1, 1, 1],
                       }}
                       transition={{
-                        cy: { type: "spring", stiffness: 200, damping: 15 },
+                        y: { type: "spring", stiffness: 200, damping: 15 },
                         scaleY: {
                           repeat: Infinity,
                           duration: 4.5,
                           times: [0, 0.9, 0.92, 0.94, 0.96, 1],
-                          ease: "easeInOut"
-                        }
+                          ease: "easeInOut",
+                        },
                       }}
-                    />
+                    >
+                      <circle cx="11.5" cy="10.5" r="1.8" fill="white" />
+                    </motion.g>
 
                     {/* Right eye */}
-                    <motion.circle
-                      cx="20.5"
-                      cy={10.5}
-                      r={1.8}
-                      fill="white"
+                    <motion.g
                       style={{ transformOrigin: "20.5px 10.5px" }}
                       animate={{
-                        cy: isFormOpen ? 8.5 : 10.5,
-                        r: 1.8,
+                        y: isFormOpen ? -2 : 0,
                         scaleY: [1, 1, 1, 0.1, 1, 1],
                       }}
                       transition={{
-                        cy: { type: "spring", stiffness: 200, damping: 15 },
+                        y: { type: "spring", stiffness: 200, damping: 15 },
                         scaleY: {
                           repeat: Infinity,
                           duration: 4.5,
                           times: [0, 0.9, 0.92, 0.94, 0.96, 1],
-                          ease: "easeInOut"
-                        }
+                          ease: "easeInOut",
+                        },
                       }}
-                    />
+                    >
+                      <circle cx="20.5" cy="10.5" r="1.8" fill="white" />
+                    </motion.g>
 
                     {/* Smiling/Sad mouth */}
-                    <motion.path
-                      d="M 14,13.5 Q 16,15.0 18,13.5"
-                      animate={{
-                        d: mood === "happy" 
-                          ? "M 14,13.5 Q 16,15.0 18,13.5" 
-                          : "M 14,15.5 Q 16,13.8 18,15.5"
-                      }}
-                      transition={{ type: "spring", stiffness: 150, damping: 12 }}
+                    <path
+                      d={mood === "happy" ? "M 14,13.5 Q 16,15.0 18,13.5" : "M 14,15.5 Q 16,13.8 18,15.5"}
                       stroke="white"
                       strokeWidth="1.2"
                       fill="none"
+                      strokeLinecap="round"
                     />
                   </motion.g>
                 </svg>

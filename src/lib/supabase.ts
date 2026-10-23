@@ -14,6 +14,12 @@ export const getSupabaseConfig = (): { url: string; anonKey: string } => {
   };
 };
 
+export const resetSupabaseClient = () => {
+  supabaseInstance = null;
+  cachedUrl = "";
+  cachedKey = "";
+};
+
 export const saveSupabaseConfig = (url: string, anonKey: string) => {
   if (typeof window !== "undefined") {
     if (url.trim()) {
@@ -26,10 +32,13 @@ export const saveSupabaseConfig = (url: string, anonKey: string) => {
     } else {
       localStorage.removeItem("ooma_supabase_anon_key");
     }
+    resetSupabaseClient();
   }
 };
 
 let supabaseInstance: SupabaseClient | null = null;
+let cachedUrl = "";
+let cachedKey = "";
 
 export const getSupabaseClient = (): SupabaseClient | null => {
   const { url, anonKey } = getSupabaseConfig();
@@ -44,7 +53,8 @@ export const getSupabaseClient = (): SupabaseClient | null => {
   }
 
   try {
-    if (!supabaseInstance) {
+    // If config has changed or instance doesn't exist, instantiate fresh client
+    if (!supabaseInstance || cachedUrl !== url || cachedKey !== anonKey) {
       supabaseInstance = createClient(url, anonKey, {
         auth: {
           persistSession: true,
@@ -56,6 +66,8 @@ export const getSupabaseClient = (): SupabaseClient | null => {
           },
         },
       });
+      cachedUrl = url;
+      cachedKey = anonKey;
     }
     return supabaseInstance;
   } catch (error) {

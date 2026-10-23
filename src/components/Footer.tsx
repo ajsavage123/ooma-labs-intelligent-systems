@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Instagram, Linkedin, Twitter, Mail, Phone, MessageCircle, MapPin, ArrowRight, ChevronDown } from "lucide-react";
 import { useState } from "react";
@@ -216,13 +217,11 @@ const Footer = () => {
           <p className="text-[10px] tracking-[0.2em] uppercase text-white/20 font-bold">
             © {new Date().getFullYear()} Ooma Labs. All rights reserved.
           </p>
-          <div className="flex gap-6">
-            <a href="/privacy-policy" className="text-[10px] tracking-[0.15em] uppercase text-white/20 hover:text-white/60 transition-colors font-bold">
-              Privacy Policy
-            </a>
-            <a href="/terms-of-service" className="text-[10px] tracking-[0.15em] uppercase text-white/20 hover:text-white/60 transition-colors font-bold">
-              Terms of Service
-            </a>
+          <div className="flex flex-wrap gap-4 sm:gap-6">
+            <Link to="/portal/admin" className="text-[10px] tracking-[0.15em] uppercase text-white/40 hover:text-white transition-colors font-bold">Admin Console</Link>
+            <Link to="/portal" className="text-[10px] tracking-[0.15em] uppercase text-white/40 hover:text-white transition-colors font-bold">Client Portal</Link>
+            <Link to="/privacy-policy" className="text-[10px] tracking-[0.15em] uppercase text-white/20 hover:text-white/60 transition-colors font-bold">Privacy Policy</Link>
+            <Link to="/terms-of-service" className="text-[10px] tracking-[0.15em] uppercase text-white/20 hover:text-white/60 transition-colors font-bold">Terms of Service</Link>
           </div>
         </div>
       </div>

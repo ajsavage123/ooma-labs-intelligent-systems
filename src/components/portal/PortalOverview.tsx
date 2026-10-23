@@ -17,8 +17,7 @@ import {
   ArrowRight,
   Zap,
   Check,
-  Sparkles,
-} from "lucide-react";
+  } from "lucide-react";
 
 interface PortalOverviewProps {
   onNavigateTab: (tab: string) => void;

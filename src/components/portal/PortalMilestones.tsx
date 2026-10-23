@@ -112,6 +112,46 @@ export const PortalMilestones: React.FC = () => {
                 />
               </div>
 
+              {/* Deliverables Checklist (P1-4) */}
+              {rawMilestone.deliverables && rawMilestone.deliverables.length > 0 && (
+                <div className="p-3 sm:p-4 bg-[#141417] border-t border-[#27272a] space-y-2">
+                  <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-zinc-300">
+                    <span className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Stage Deliverables Checklist:</span>
+                    </span>
+                    <span className="text-[10px] text-zinc-400">
+                      {isCompleted ? `${rawMilestone.deliverables.length}/${rawMilestone.deliverables.length} Delivered` : isInProgress ? `In Progress` : `Pending`}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-1">
+                    {rawMilestone.deliverables.map((deliv, dIdx) => (
+                      <div
+                        key={dIdx}
+                        className={`flex items-start gap-2 p-2 rounded-lg border text-[11px] leading-snug ${
+                          isCompleted
+                            ? "bg-emerald-950/20 border-emerald-500/20 text-emerald-200"
+                            : isInProgress
+                            ? "bg-blue-950/20 border-blue-500/20 text-zinc-300"
+                            : "bg-[#18181b] border-[#27272a] text-zinc-400"
+                        }`}
+                      >
+                        <div className="shrink-0 mt-0.5">
+                          {isCompleted ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          ) : (
+                            <div className="w-3.5 h-3.5 rounded-full border border-zinc-600 flex items-center justify-center text-[8px] text-zinc-400">
+                              {dIdx + 1}
+                            </div>
+                          )}
+                        </div>
+                        <span>{deliv}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Read-Only Stage Engineering Log Note */}
               {logNote && (
                 <div className="p-2.5 sm:p-5 bg-[#121316] border-t border-[#27272a] rounded-b-xl sm:rounded-b-2xl space-y-1">

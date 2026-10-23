@@ -36,7 +36,7 @@ const FAQ_DATA: FAQItem[] = [
     category: "vip_card",
     question: "How do I unlock the OOMA LABS VIP Partner Credit Card (₹4,000)?",
     answer:
-      "Share your unique quotation link (/free-quotation?ref=...) with fellow enterprise founders. Each referred peer who submits their project requirements, undergoes architectural vetting, and deposits their project advance counts as 1 verified client. The card uncovers progressively by 25% with each verified peer (1/4, 2/4, 3/4). When you reach 4 verified clients, the card unlocks completely with ₹4,000 credit redeemable on milestone invoices and an exclusive 20% discount code.",
+      "Share your unique partner invite link with fellow enterprise founders. Each referred peer who creates an account, completes project onboarding, and deposits their project advance counts as 1 verified client. The card uncovers progressively by 25% with each verified peer (1/4, 2/4, 3/4). When you reach 4 verified clients, the card unlocks completely with ₹4,000 credit redeemable on milestone invoices and an exclusive 20% discount code.",
     highlights: ["Progressive 25% Reveal", "4 Verified Advance Payments", "₹4,000 Credit Limit", "20% Discount Code"],
   },
   {

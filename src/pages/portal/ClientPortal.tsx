@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link, Navigate } from "react-router-dom";
 import { useClientPortal } from "../../context/ClientPortalContext";
 import { PortalPayModal } from "../../components/portal/PortalPayModal";
 import { PortalRatingModal } from "../../components/portal/PortalRatingModal";
@@ -7,13 +7,20 @@ import { PortalTicketModal } from "../../components/portal/PortalTicketModal";
 import { PortalMobileView, MobileTabKey } from "../../components/portal/PortalMobileView";
 import { Button } from "@/components/ui/button";
 import { ClientPayment } from "../../types";
+import { Cpu, Code2, ArrowRight, LogOut, ShieldCheck, Mail, Phone, ExternalLink, Layers, Plus } from "lucide-react";
 
 export const ClientPortal: React.FC = () => {
   const {
     clientUser,
+    authLoading,
+    activeProject,
+    userProjects,
+    projects,
+    logoutClient,
     payInvoice,
     submitRating,
     createSupportTicket,
+    supabaseStatus,
   } = useClientPortal();
 
   const navigate = useNavigate();
@@ -27,34 +34,160 @@ export const ClientPortal: React.FC = () => {
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
 
-  if (!clientUser) {
+  // 1. Loading State
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
-        <div className="max-w-md w-full p-8 rounded-3xl bg-white border border-slate-200 shadow-xl text-center space-y-4">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-xl border border-blue-100 shadow-sm">
-            OL
-          </div>
-          <h2 className="text-xl font-black text-slate-900 tracking-tight">Client Login Required</h2>
-          <p className="text-xs text-slate-500 font-medium leading-relaxed">
-            Please log in with your client credentials to access your OOMA LABS enterprise workspace.
-          </p>
-          <Button
-            onClick={() => navigate("/portal/login")}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-md shadow-blue-500/20 active:scale-95 transition-all"
-          >
-            Go to Client Login
-          </Button>
+      <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center p-4 text-white">
+        <div className="w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center font-bold text-blue-400 mb-4 animate-pulse">
+          OL
         </div>
+        <div className="w-5 h-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-3" />
+        <p className="text-xs text-zinc-400 font-medium">Connecting to OOMA LABS real-time database...</p>
       </div>
     );
   }
 
+  // 2. Authentication Required - Auto-redirect directly to login
+  if (!clientUser) {
+    return <Navigate to="/portal/login" replace />;
+  }
+
+  // 3. Authenticated but No Active Projects Yet (New Project Dashboard)
+  if (!activeProject) {
+    return (
+      <div className="min-h-screen bg-[#09090b] text-white flex flex-col justify-between">
+        {/* Header */}
+        <header className="p-4 sm:p-6 border-b border-[#27272a] max-w-6xl mx-auto w-full flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-500/20 flex items-center justify-center font-bold text-blue-400 text-xs">
+              OL
+            </div>
+            <div>
+              <div className="text-xs font-bold text-white">{clientUser.name}</div>
+              <div className="text-[11px] text-zinc-400">{clientUser.company}</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              {supabaseStatus === "connected" ? "Live Cloud Connected" : "Connecting..."}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => logoutClient()}
+              className="bg-[#18181b] hover:bg-[#27272a] border-[#27272a] text-zinc-300 hover:text-white text-xs h-8 rounded-lg flex items-center gap-1.5"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sign Out</span>
+            </Button>
+          </div>
+        </header>
+
+        {/* Project Dashboard Provisioning Main Card */}
+        <main className="flex-1 max-w-3xl mx-auto w-full p-4 sm:p-8 flex flex-col justify-center space-y-6">
+          <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 mb-2">
+                  <Cpu className="w-3.5 h-3.5" />
+                  Project Dashboard Setup In Progress
+                </div>
+                <h1 className="text-xl sm:text-2xl font-bold text-white">
+                  Welcome, {clientUser.name}!
+                </h1>
+                <p className="text-xs sm:text-sm text-zinc-400">
+                  Your client account is authenticated and securely registered in our PostgreSQL database.
+                </p>
+              </div>
+
+              <div className="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                <Layers className="w-6 h-6" />
+              </div>
+            </div>
+
+            <div className="p-4 bg-[#121316] border border-[#27272a] rounded-xl space-y-2 text-xs text-zinc-300">
+              <div className="font-semibold text-white flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                Dedicated Project Workspace
+              </div>
+              <p className="text-zinc-400 leading-relaxed text-[11px] sm:text-xs">
+                Your workspace is ready. Set up your project details to view development progress, team updates, live demo links, and invoices in one place.
+              </p>
+            </div>
+
+            {/* Complete Onboarding Action */}
+            <div>
+              <Button
+                onClick={() => navigate("/portal/onboarding")}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 rounded-xl shadow-lg shadow-blue-600/20 text-xs flex items-center justify-center gap-2"
+              >
+                <Code2 className="w-4 h-4 text-blue-200" />
+                <span>Configure Project & View Dashboard</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <Link
+                to="/portal/onboarding"
+                className="p-4 rounded-xl bg-[#121316] hover:bg-[#202024] border border-[#27272a] transition-colors flex items-center justify-between group"
+              >
+                <div>
+                  <div className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">Configure Project Dashboard</div>
+                  <div className="text-[11px] text-zinc-400">Configure project requirements and milestones</div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
+              </Link>
+
+              <a
+                href="https://wa.me/918006662364?text=Namaste%20OOMA%20LABS%20Lead%20Architect%2C%20I%20have%20registered%20my%20client%20account."
+                target="_blank"
+                rel="noreferrer"
+                className="p-4 rounded-xl bg-[#121316] hover:bg-[#202024] border border-[#27272a] transition-colors flex items-center justify-between group"
+              >
+                <div>
+                  <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">Direct WhatsApp Desk</div>
+                  <div className="text-[11px] text-zinc-400">Connect with Lead Architect Arjun Mehta</div>
+                </div>
+                <ExternalLink className="w-4 h-4 text-zinc-500 group-hover:text-emerald-400 transition-colors" />
+              </a>
+            </div>
+
+            {/* Admin Bypass Link if user has admin privileges */}
+            {clientUser.portalRole === "admin" && (
+              <div className="pt-4 border-t border-[#27272a] flex items-center justify-between">
+                <span className="text-xs text-zinc-400">Admin Privileges Active:</span>
+                <Button
+                  size="sm"
+                  onClick={() => navigate("/portal/admin")}
+                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg h-8 flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Open Admin Project Manager</span>
+                </Button>
+              </div>
+            )}
+          </div>
+        </main>
+
+        {/* Footer */}
+        <footer className="p-4 text-center text-xs text-zinc-600 border-t border-[#27272a]">
+          OOMA LABS INC. Enterprise Client Portal & Telematics Suite.
+        </footer>
+      </div>
+    );
+  }
+
+  // 4. Authenticated & Active Project Present
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* =======================================================================
-          UNIFIED CLIENT PORTAL WORKSPACE (MOBILE & DESKTOP PARITY)
-          Identical 5 tabs (Home, Stages, Billing, Rewards, Hub), crisp tile borders,
-          high-contrast card edges, zero lorry graphics, and seamless responsive layout.
+          UNIFIED CLIENT PROJECT DASHBOARD (MOBILE & DESKTOP PARITY)
+          Backed by 100% Real-Time Supabase WebSocket database synchronisation.
          ======================================================================= */}
       <PortalMobileView
         initialTab={["home", "stages", "billing", "rewards", "hub"].includes(tabFromQuery) ? tabFromQuery : "home"}

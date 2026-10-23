@@ -106,11 +106,27 @@ export const PortalPayModal: React.FC<PortalPayModalProps> = ({
 
   const netPayable = Math.max(0, payment.amount - discountAmount);
 
-  const handleCopy = (field: string, text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedBankField(field);
-    toast.success(`${field} copied to clipboard!`);
-    setTimeout(() => setCopiedBankField(null), 2000);
+  const handleCopy = async (field: string, text: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+      setCopiedBankField(field);
+      toast.success(`${field} copied to clipboard!`);
+      setTimeout(() => setCopiedBankField(null), 2000);
+    } catch (e) {
+      toast.error(`Could not copy ${field}. Please copy manually.`);
+    }
   };
 
   const handlePay = () => {
@@ -133,6 +149,12 @@ export const PortalPayModal: React.FC<PortalPayModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg bg-white border border-slate-200 text-slate-900 rounded-3xl p-0 shadow-2xl max-h-[92vh] overflow-y-auto">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Payment Settlement Desk</DialogTitle>
+          <DialogDescription>
+            Secure Indian payment settlement desk for milestone invoices
+          </DialogDescription>
+        </DialogHeader>
         {/* =======================================================================
             HIGH-TRUST HEADER: RAZORPAY & NPCI OFFICIAL VERIFIED SCHEME
            ======================================================================= */}
@@ -218,20 +240,20 @@ export const PortalPayModal: React.FC<PortalPayModalProps> = ({
           </div>
         ) : (
           <div className="p-5 sm:p-6 space-y-4 bg-white">
-            {/* ONLINE GATEWAY COMING SOON ALERT BANNER */}
-            <div className="p-3.5 bg-amber-50 border border-amber-200/90 rounded-2xl flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 border border-amber-300/60 shadow-xs">
-                <Lock className="w-4 h-4" />
+            {/* PAYMENT SETTLEMENT DESK SIMULATION MODE ALERT BANNER */}
+            <div className="p-3.5 bg-blue-50 border border-blue-200/90 rounded-2xl flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0 border border-blue-300/60 shadow-xs">
+                <ShieldCheck className="w-4 h-4 text-blue-600" />
               </div>
               <div>
-                <div className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
-                  <span>Online Payment Gateway — Coming Soon</span>
-                  <span className="text-[9px] bg-amber-200 text-amber-900 px-1.5 py-0.2 rounded font-black uppercase">
-                    Staging
+                <div className="text-xs font-bold text-blue-950 flex items-center gap-1.5">
+                  <span>Payment Settlement Desk</span>
+                  <span className="text-[9px] bg-blue-200 text-blue-900 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">
+                    Simulation Mode
                   </span>
                 </div>
-                <p className="text-[11px] text-amber-800/90 leading-tight mt-0.5">
-                  Direct online gateway processing is currently activating. You can review all milestone pricings, GST, and invoice breakdowns below.
+                <p className="text-[11px] text-blue-800/90 leading-tight mt-0.5">
+                  Direct online settlement simulation is active. Review milestone pricing, GST details, apply referral discounts, or click Verify &amp; Pay to disburse in simulation mode.
                 </p>
               </div>
             </div>
@@ -843,15 +865,25 @@ export const PortalPayModal: React.FC<PortalPayModalProps> = ({
                   Close Breakdown
                 </Button>
                 <Button
-                  disabled
-                  className="flex-1 bg-slate-100 text-slate-400 border border-slate-200 font-bold text-xs h-11 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 shadow-none"
+                  onClick={handlePay}
+                  disabled={isProcessing}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs h-11 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all"
                 >
-                  <Lock className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Gateway Coming Soon</span>
+                  {isProcessing ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Verifying Settlement...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                      <span>Verify &amp; Pay {formatINR(netPayable)}</span>
+                    </>
+                  )}
                 </Button>
               </div>
               <p className="text-[10px] text-slate-500 text-center leading-relaxed">
-                Online gateway transactions are currently paused. For milestone disbursements, please use corporate direct transfer (details under NEFT / RTGS) or contact your account manager.
+                Clicking <strong>Verify &amp; Pay</strong> simulates real-time NPCI/Razorpay escrow settlement, marks the milestone invoice as paid, and updates your project balance.
               </p>
             </div>
           </div>

@@ -25,43 +25,73 @@ export const formatINR = (amount: number): string => {
 // ==============================================================================
 // CANONICAL 6 DELIVERY STAGES & EDITABLE NOTES (CLEAN - NO CLUTTER)
 // ==============================================================================
-export const CANONICAL_6_STAGES: { stage: number; title: string; defaultNotes: string }[] = [
+export const CANONICAL_6_STAGES: { stage: number; title: string; defaultNotes: string; deliverables: string[] }[] = [
   {
     stage: 1,
     title: "1. Client Discovery",
     defaultNotes: "Intake of all client assets, credentials, brand guidelines, and infrastructure access.",
+    deliverables: [
+      "Brand identity & design tokens intake",
+      "Cloud architecture & access credentials handover",
+      "Executive stakeholder roadmap alignment",
+    ],
   },
   {
     stage: 2,
     title: "2. Objective Requirements Gathering",
     defaultNotes: "Formal Scope of Work (SOW), functional specifications, user story journeys, and database models.",
+    deliverables: [
+      "Scope of Work (SOW) signed & baseline locked",
+      "Database entity-relationship (ER) schemas",
+      "API contract & technical journey mapping",
+    ],
   },
   {
     stage: 3,
     title: "3. UI/UX Development",
     defaultNotes: "Figma wireframes, design tokens, responsive prototype testing, and design sign-off.",
+    deliverables: [
+      "Interactive Figma desktop & mobile wireframes",
+      "Design tokens & responsive UI component library",
+      "Client executive prototype sign-off",
+    ],
   },
   {
     stage: 4,
     title: "4. Development",
     defaultNotes: "Fullstack engineering implementation, backend APIs, database migrations, and frontend state architecture.",
+    deliverables: [
+      "PostgreSQL database migrations & RLS policies",
+      "Core business logic backend APIs & microservices",
+      "Frontend application state & real-time UI integration",
+    ],
   },
   {
     stage: 5,
     title: "5. Testing",
     defaultNotes: "End-to-end QA, cross-device testing, security penetration audits, and client User Acceptance Testing (UAT).",
+    deliverables: [
+      "Cross-browser & mobile viewport verification",
+      "Automated integration & security vulnerability audit",
+      "Client User Acceptance Testing (UAT) clearance",
+    ],
   },
   {
     stage: 6,
     title: "6. Hosting",
     defaultNotes: "Production cloud launch (AWS/GCP), custom domain DNS and SSL certificate binding, and 24/7 monitoring handover.",
+    deliverables: [
+      "Production cloud infrastructure provisioning (AWS/GCP)",
+      "Custom domain DNS configuration & SSL TLS 1.3 certs",
+      "24/7 uptime monitoring & operational maintenance handover",
+    ],
   },
 ];
 
 export const CANONICAL_6_PHASES = CANONICAL_6_STAGES.map((s) => ({
   title: s.title,
   description: s.defaultNotes,
-  deliverables: [] as string[],
+  deliverables: s.deliverables,
 }));
 
 export function ensure6PhaseMilestones(project: {
@@ -89,6 +119,7 @@ export function ensure6PhaseMilestones(project: {
       title: CANONICAL_6_STAGES[idx]?.title || m.title,
       notes: m.notes || m.description || CANONICAL_6_STAGES[idx]?.defaultNotes || "",
       description: m.notes || m.description || CANONICAL_6_STAGES[idx]?.defaultNotes || "",
+      deliverables: m.deliverables && m.deliverables.length > 0 ? m.deliverables : (CANONICAL_6_STAGES[idx]?.deliverables || []),
     }));
   }
 
@@ -115,7 +146,7 @@ export function ensure6PhaseMilestones(project: {
       progress,
       dueDate: existing?.dueDate || (idx === 5 ? (project.targetLaunchDate || "Target Handover") : `Target: Week ${(idx + 1) * 2}`),
       completedDate: isCompleted ? (existing?.completedDate || project.startDate || "Completed") : undefined,
-      deliverables: [],
+      deliverables: existing?.deliverables && existing.deliverables.length > 0 ? existing.deliverables : (stage.deliverables || []),
     };
   });
 }
@@ -728,6 +759,12 @@ interface ClientPortalContextType {
   addTicketReply: (ticketId: string, message: string) => void;
 
   // --- ADMIN & SPREADSHEET PORTAL CONTROLS ---
+  updateTicketStatus: (projectId: string, ticketId: string, status: SupportTicket["status"], assignedEngineer?: string) => void;
+  adminReplyToTicket: (projectId: string, ticketId: string, message: string) => void;
+  adminPostComment: (projectId: string, message: string, isPinned?: boolean) => void;
+  togglePinComment: (projectId: string, commentId: string) => void;
+  deleteComment: (projectId: string, commentId: string) => void;
+  updateProjectDetails: (projectId: string, updates: Partial<ClientProject>) => void;
   updateMilestone: (projectId: string, milestoneId: string, updates: Partial<ProjectMilestone>) => void;
   advanceProjectStage: (projectId: string) => void;
   setProjectStageIndex: (projectId: string, stageIndex: number) => void;
@@ -761,11 +798,43 @@ interface ClientPortalContextType {
   supabaseStatus: "connected" | "unconfigured" | "connecting" | "error";
   syncSupabase: () => Promise<{ success: boolean; message: string }>;
   uploadLocalToSupabase: () => Promise<{ success: boolean; message: string }>;
+
+  // Auth & Session Verification (P0-1, P0-2, P1-1)
+  authLoading: boolean;
+  userProjects: ClientProject[];
+  signInWithPassword: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  signUpWithPassword: (params: {
+    name: string;
+    company: string;
+    email: string;
+    phone?: string;
+    password: string;
+    referralCode?: string;
+  }) => Promise<{ success: boolean; error?: string; needsEmailConfirmation?: boolean }>;
+  resendVerificationEmail: (email: string, referralCode?: string) => Promise<{ success: boolean; error?: string }>;
+  signInWithOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
+  signInWithOAuth: (provider: "google" | "facebook") => Promise<{ success: boolean; error?: string; isProviderDisabled?: boolean }>;
+  completeOnboarding: (data: {
+    name: string;
+    company: string;
+    title: string;
+    phone: string;
+    projectTitle: string;
+    projectCategory: string;
+    requirementScope: string;
+    timeline: string;
+    budgetRange: string;
+    referralCode?: string;
+  }) => Promise<void>;
+  purgeAllDemoData: () => Promise<{ success: boolean; count: number }>;
+  addProjectComment: (projectId: string, message: string) => void;
 }
 
 const ClientPortalContext = createContext<ClientPortalContextType | undefined>(undefined);
 
 export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [authLoading, setAuthLoading] = useState<boolean>(isSupabaseConfigured());
+
   const [clients, setClients] = useState<ClientUser[]>(() => {
     try {
       const saved = localStorage.getItem("ooma_all_clients_inr");
@@ -777,6 +846,10 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
   });
 
   const [clientUser, setClientUser] = useState<ClientUser | null>(() => {
+    // P1-1: In Supabase mode, do NOT assume mock user or untrusted localStorage before session verification
+    if (isSupabaseConfigured()) {
+      return null;
+    }
     try {
       const savedUser = localStorage.getItem("ooma_client_user_inr");
       if (savedUser) return JSON.parse(savedUser);
@@ -933,6 +1006,80 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
     });
   }, []);
 
+  // P1-1: Verify active Supabase session on boot (localStorage cannot spoof session)
+  useEffect(() => {
+    let isMounted = true;
+
+    const verifySession = async () => {
+      if (!isSupabaseConfigured()) {
+        setAuthLoading(false);
+        return;
+      }
+
+      const client = getSupabaseClient();
+      if (!client) {
+        setAuthLoading(false);
+        return;
+      }
+
+      try {
+        const { data: { session }, error: sessionError } = await client.auth.getSession();
+        if (sessionError || !session?.user) {
+          // No active session: wipe display cache
+          if (isMounted) {
+            setClientUser(null);
+            localStorage.removeItem("ooma_client_user_inr");
+            localStorage.removeItem("ooma_real_client_user");
+          }
+        } else {
+          // Valid authenticated session: load real profile by user.id
+          const { data: profile } = await client
+            .from("profiles")
+            .select("*")
+            .eq("id", session.user.id)
+            .maybeSingle();
+
+          const loadedUser: ClientUser = profile ? {
+            id: profile.id,
+            name: profile.full_name || profile.name || session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "Client",
+            email: profile.email || session.user.email || "",
+            company: profile.company_name || profile.company || "Enterprise Client",
+            title: profile.title || "Project Director",
+            avatar: profile.avatar_url || profile.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+            joinedDate: profile.created_at ? new Date(profile.created_at).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
+            portalRole: profile.role || "client_admin",
+          } : {
+            id: session.user.id,
+            name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "Client",
+            email: session.user.email || "",
+            company: session.user.user_metadata?.company || "Enterprise Client",
+            title: "Project Director",
+            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+            joinedDate: new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
+            portalRole: "client_admin",
+          };
+
+          if (isMounted) {
+            setClientUser(loadedUser);
+            localStorage.setItem("ooma_client_user_inr", JSON.stringify(loadedUser));
+            localStorage.setItem("ooma_real_client_user", JSON.stringify(loadedUser));
+          }
+        }
+      } catch (e) {
+        console.error("[Session verification error]", e);
+        if (isMounted) setClientUser(null);
+      } finally {
+        if (isMounted) setAuthLoading(false);
+      }
+    };
+
+    verifySession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Initial fetch and Realtime sync listener
   useEffect(() => {
     if (isSupabaseConfigured()) {
@@ -940,16 +1087,41 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       const client = getSupabaseClient();
       if (client) {
-        // Handle OAuth Sign-in redirects (Google, Facebook)
-        client.auth.getSession().then(({ data: { session } }) => {
-          if (session?.user?.email) {
-            loginClient(session.user.email);
-          }
-        });
+        const { data: authListener } = client.auth.onAuthStateChange(async (event, session) => {
+          if (event === "SIGNED_OUT") {
+            setClientUser(null);
+            localStorage.removeItem("ooma_client_user_inr");
+            localStorage.removeItem("ooma_real_client_user");
+          } else if (session?.user && (event === "SIGNED_IN" || event === "USER_UPDATED" || event === "TOKEN_REFRESHED")) {
+            const { data: profile } = await client
+              .from("profiles")
+              .select("*")
+              .eq("id", session.user.id)
+              .maybeSingle();
 
-        const { data: authListener } = client.auth.onAuthStateChange((event, session) => {
-          if (session?.user?.email && (event === "SIGNED_IN" || event === "USER_UPDATED")) {
-            loginClient(session.user.email);
+            const updatedUser: ClientUser = profile ? {
+              id: profile.id,
+              name: profile.full_name || profile.name || session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "Client",
+              email: profile.email || session.user.email || "",
+              company: profile.company_name || profile.company || "Enterprise Client",
+              title: profile.title || "Project Director",
+              avatar: profile.avatar_url || profile.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+              joinedDate: profile.created_at ? new Date(profile.created_at).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
+              portalRole: profile.role || "client_admin",
+            } : {
+              id: session.user.id,
+              name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "Client",
+              email: session.user.email || "",
+              company: session.user.user_metadata?.company || "Enterprise Client",
+              title: "Project Director",
+              avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+              joinedDate: new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
+              portalRole: "client_admin",
+            };
+
+            setClientUser(updatedUser);
+            localStorage.setItem("ooma_client_user_inr", JSON.stringify(updatedUser));
+            localStorage.setItem("ooma_real_client_user", JSON.stringify(updatedUser));
           }
         });
 
@@ -1011,8 +1183,12 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const activeProject: ClientProject = useMemo(() => {
     const cleanMilestones = ensure6PhaseMilestones(rawActiveProject);
+    // P1-4: Calculate dynamic overall progress from milestone average
+    const totalProgress = cleanMilestones.reduce((acc, curr) => acc + (Number(curr.progress) || 0), 0);
+    const dynamicOverall = cleanMilestones.length > 0 ? Math.round(totalProgress / cleanMilestones.length) : 0;
     return {
       ...rawActiveProject,
+      overallProgress: dynamicOverall,
       milestones: cleanMilestones,
     };
   }, [rawActiveProject]);
@@ -1065,6 +1241,10 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const logoutClient = () => {
     setClientUser(null);
+    localStorage.removeItem("ooma_client_user_inr");
+    localStorage.removeItem("ooma_real_client_user");
+    localStorage.removeItem("ooma_active_project_id_inr");
+    localStorage.removeItem("ooma_real_active_project_id");
     const client = getSupabaseClient();
     if (client) {
       client.auth.signOut().catch(console.error);
@@ -1073,6 +1253,380 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const selectProject = (id: string) => {
     setActiveProjectId(id);
+  };
+
+  // ----------------------------------------------------
+  // AUTHENTICATION & SESSION MANAGEMENT (P0-1, P0-2, P1-1)
+  // ----------------------------------------------------
+
+  // P0-1: Strictly enforce password verification without fallback to profiles
+  const signInWithPassword = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+    const cleanEmail = email.trim().toLowerCase();
+    const supabase = getSupabaseClient();
+
+    if (!supabase) {
+      const found = clients.find((c) => c.email.toLowerCase() === cleanEmail);
+      if (found) {
+        setClientUser(found);
+        return { success: true };
+      }
+      return { success: false, error: "Database connection unavailable." };
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: cleanEmail,
+      password: pass,
+    });
+
+    // P0-1: STRICT - RETURN FAILURE IMMEDIATELY ON ERROR! NO PROFILES FALLBACK!
+    if (error || !data.user) {
+      return {
+        success: false,
+        error: error?.message || "Invalid email or password. Please verify your credentials.",
+      };
+    }
+
+    // Success! Load user profile strictly by user.id
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    const client: ClientUser = profile ? {
+      id: profile.id,
+      name: profile.full_name || profile.name || data.user.user_metadata?.full_name || cleanEmail.split("@")[0],
+      email: profile.email || cleanEmail,
+      company: profile.company_name || profile.company || "Enterprise Client",
+      title: profile.title || "Project Director",
+      avatar: profile.avatar_url || profile.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+      joinedDate: profile.created_at ? new Date(profile.created_at).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
+      portalRole: profile.role || "client_admin",
+    } : {
+      id: data.user.id,
+      name: data.user.user_metadata?.full_name || cleanEmail.split("@")[0],
+      email: cleanEmail,
+      company: data.user.user_metadata?.company || "Enterprise Client",
+      title: "Project Director",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+      joinedDate: new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
+      portalRole: "client_admin",
+    };
+
+    setClientUser(client);
+    localStorage.setItem("ooma_client_user_inr", JSON.stringify(client));
+    localStorage.setItem("ooma_real_client_user", JSON.stringify(client));
+
+    try {
+      const remoteProjects = await supabaseService.fetchProjects();
+      if (remoteProjects.length > 0) {
+        const sanitized = remoteProjects.map((p) => ({ ...p, milestones: ensure6PhaseMilestones(p) }));
+        setProjects(sanitized);
+        const userProj = sanitized.find((p) => p.clientId === client.id);
+        if (userProj) {
+          setActiveProjectId(userProj.id);
+          localStorage.setItem("ooma_active_project_id_inr", userProj.id);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load user projects:", e);
+    }
+
+    return { success: true };
+  };
+
+  // P0-2: Strict sign-up with error propagation and 429 rate limit handling
+  const signUpWithPassword = async (params: {
+    name: string;
+    company: string;
+    email: string;
+    phone?: string;
+    password: string;
+    referralCode?: string;
+  }): Promise<{ success: boolean; error?: string; needsEmailConfirmation?: boolean }> => {
+    const cleanEmail = params.email.trim().toLowerCase();
+    const supabase = getSupabaseClient();
+
+    if (!supabase) {
+      return { success: false, error: "Database connection unavailable." };
+    }
+
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: cleanEmail,
+      password: params.password,
+      options: {
+        data: {
+          full_name: params.name,
+          company: params.company,
+          phone: params.phone,
+          referral_code: params.referralCode,
+        },
+      },
+    });
+
+    // P0-2: Surface errors without masking or creating mock IDs
+    if (authError) {
+      let msg = authError.message;
+      if (authError.status === 429 || msg.toLowerCase().includes("rate limit") || msg.toLowerCase().includes("too many")) {
+        msg = "Too many sign-up requests. Please wait a minute before trying again.";
+      }
+      return { success: false, error: msg };
+    }
+
+    if (!authData?.user) {
+      return { success: false, error: "Could not create client account." };
+    }
+
+    const userId = authData.user.id;
+    const client: ClientUser = {
+      id: userId,
+      name: params.name,
+      email: cleanEmail,
+      company: params.company,
+      title: "Project Director",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+      joinedDate: new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
+      portalRole: "client_admin",
+    };
+
+    try {
+      await supabase.from("profiles").upsert({
+        id: userId,
+        email: cleanEmail,
+        full_name: params.name,
+        company_name: params.company,
+        phone: params.phone || null,
+        role: "client_admin",
+        updated_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn("[SignUp] Profile upsert error:", err);
+    }
+
+    setClients((prev) => [...prev.filter((c) => c.id !== userId), client]);
+    setClientUser(client);
+    localStorage.setItem("ooma_client_user_inr", JSON.stringify(client));
+    localStorage.setItem("ooma_real_client_user", JSON.stringify(client));
+
+    return {
+      success: true,
+      needsEmailConfirmation: !authData.session,
+    };
+  };
+
+  const resendVerificationEmail = async (email: string, referralCode?: string): Promise<{ success: boolean; error?: string }> => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { success: false, error: "Database connection unavailable." };
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: email.trim().toLowerCase(),
+      });
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  };
+
+  const signInWithOtp = async (email: string): Promise<{ success: boolean; error?: string }> => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { success: false, error: "Database connection unavailable." };
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim().toLowerCase(),
+        options: {
+          emailRedirectTo: `${window.location.origin}/portal`,
+        },
+      });
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  };
+
+  const signInWithOAuth = async (provider: "google" | "facebook"): Promise<{ success: boolean; error?: string; isProviderDisabled?: boolean }> => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { success: false, error: "Database connection unavailable." };
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/portal`,
+        },
+      });
+      if (error) {
+        const isProviderDisabled = error.message.toLowerCase().includes("provider is not enabled") || error.message.toLowerCase().includes("unsupported");
+        return { success: false, error: error.message, isProviderDisabled };
+      }
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  };
+
+  const completeOnboarding = async (data: {
+    name: string;
+    company: string;
+    title: string;
+    phone: string;
+    projectTitle: string;
+    projectCategory: string;
+    requirementScope: string;
+    timeline: string;
+    budgetRange: string;
+    referralCode?: string;
+  }): Promise<void> => {
+    const client = clientUser || {
+      id: `client-${Date.now()}`,
+      name: data.name,
+      email: "client@enterprise.com",
+      company: data.company,
+      title: data.title,
+      phone: data.phone,
+      avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80",
+      joinedDate: new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
+      portalRole: "client_admin" as const,
+    };
+
+    const newProjectId = `proj-${Date.now()}`;
+    const newMilestones = ensure6PhaseMilestones({
+      id: newProjectId,
+      overallProgress: 10,
+    });
+
+    const newProject: ClientProject = {
+      ...INITIAL_PROJECTS[0],
+      id: newProjectId,
+      clientId: client.id,
+      company: data.company,
+      title: data.projectTitle,
+      summary: data.requirementScope || "Production engineering implementation roadmap.",
+      tier: "Enterprise AI Suite",
+      targetLaunchDate: data.timeline || "Within 60 Days",
+      overallProgress: 10,
+      techStack: ["React 19", "TypeScript", "Node.js", "PostgreSQL", "TailwindCSS", "AWS Cloud"],
+      milestones: newMilestones,
+      liveUrls: [
+        {
+          id: `url-s-${Date.now()}`,
+          label: "Development Staging",
+          url: "https://staging.oomalabs.com",
+          type: "staging",
+          status: "live",
+          uptime: "99.9%",
+          lastDeployed: "Just now",
+        },
+      ],
+      payments: [
+        {
+          id: `inv-${Date.now()}`,
+          invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+          milestoneTitle: "Discovery & Objective Scope Formalization",
+          amount: 150000,
+          currency: "INR",
+          issueDate: new Date().toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }),
+          dueDate: new Date(Date.now() + 7 * 86400000).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }),
+          status: "pending",
+          gstSacCode: "SAC-998314",
+        },
+      ],
+      comments: [
+        {
+          id: `c-init-${Date.now()}`,
+          authorName: "Arjun Mehta",
+          authorRole: "lead_architect",
+          authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+          message: `Welcome ${data.name}! We have provisioned your architecture dashboard for ${data.projectTitle}. Feel free to drop comments or questions here directly.`,
+          timestamp: "Just now",
+          isPinned: true,
+        },
+      ],
+      ratings: [],
+      supportTickets: [],
+      referrals: {
+        referralCode: `OOMA-${data.company.replace(/[^a-zA-Z]/g, "").slice(0, 4).toUpperCase() || "VIP"}-${Math.floor(1000 + Math.random() * 9000)}`,
+        shareableUrl: "https://oomalabs.com/portal/login?mode=signup&ref=OOMA-VIP",
+        totalReferrals: 0,
+        totalEarnings: 0,
+        pendingPayout: 0,
+        requiredForUnlock: 4,
+        verifiedClientsCount: 0,
+        isCouponUnlocked: false,
+        isCardUnlocked: false,
+        creditCardAmountINR: 14000,
+        cardholderName: data.name,
+        unlockedCouponCode: "OOMA-DISCOVERY-50K",
+        discountPercentage: 20,
+        history: [],
+      },
+    };
+
+    setClients((prev) => [...prev.filter((c) => c.id !== client.id), client]);
+    setClientUser(client);
+    setProjects((prev) => [newProject, ...prev]);
+    setActiveProjectId(newProjectId);
+
+    if (isSupabaseConfigured()) {
+      supabaseService.createClientAndProject(client, newProject).catch(console.error);
+    }
+  };
+
+  const purgeAllDemoData = async (): Promise<{ success: boolean; count: number }> => {
+    const demoIds = ["client-bharatlogistics", "client-swasthyacare", "proj-bharatlogistics-01", "proj-swasthyacare-02"];
+    let count = 0;
+
+    setProjects((prev) => {
+      const filtered = prev.filter((p) => {
+        const isDemo = demoIds.includes(p.id) || demoIds.includes(p.clientId) || p.company.includes("BharatLogistics") || p.company.includes("SwasthyaCare");
+        if (isDemo) count++;
+        return !isDemo;
+      });
+      localStorage.setItem("ooma_client_projects_inr", JSON.stringify(filtered));
+      return filtered;
+    });
+
+    setClients((prev) => {
+      const filtered = prev.filter((c) => {
+        const isDemo = demoIds.includes(c.id) || c.company.includes("BharatLogistics") || c.company.includes("SwasthyaCare");
+        return !isDemo;
+      });
+      localStorage.setItem("ooma_all_clients_inr", JSON.stringify(filtered));
+      return filtered;
+    });
+
+    return { success: true, count };
+  };
+
+  // P1-6: Dedicated Project Comment Thread
+  const addProjectComment = (projectId: string, message: string) => {
+    if (!message.trim()) return;
+    const newComment: ProjectComment = {
+      id: `c-${Date.now()}`,
+      authorName: clientUser?.name || "Client",
+      authorRole: "client",
+      authorAvatar: clientUser?.avatar || "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80",
+      message: message.trim(),
+      timestamp: "Just now",
+      isPinned: false,
+    };
+
+    setProjects((prev) =>
+      prev.map((proj) => {
+        if (proj.id === projectId) {
+          return {
+            ...proj,
+            comments: [...(proj.comments || []), newComment],
+          };
+        }
+        return proj;
+      })
+    );
+
+    if (isSupabaseConfigured()) {
+      supabaseService.createComment(projectId, newComment).catch(console.error);
+    }
   };
 
   const addComment = (message: string, attachments?: { name: string; url: string; size: string }[]) => {
@@ -1418,6 +1972,181 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return proj;
       })
     );
+  };
+
+  // ----------------------------------------------------
+  // ADMIN ACTIONS: SUPPORT TICKETS, DISCUSSIONS & SETTINGS
+  // ----------------------------------------------------
+
+  const updateTicketStatus = (projectId: string, ticketId: string, status: SupportTicket["status"], assignedEngineer?: string) => {
+    let targetTicket: SupportTicket | undefined;
+    setProjects((prev) =>
+      prev.map((proj) => {
+        if (proj.id === projectId) {
+          return {
+            ...proj,
+            supportTickets: proj.supportTickets.map((t) => {
+              if (t.id === ticketId) {
+                const sysUpdate = {
+                  id: `up-${Date.now()}`,
+                  sender: "OOMA Admin Operations",
+                  message: `Ticket marked as ${status.toUpperCase().replace(/_/g, ' ')}${assignedEngineer ? ` (Assigned: ${assignedEngineer})` : ""}`,
+                  time: "Just now",
+                };
+                const updatedTicket: SupportTicket = {
+                  ...t,
+                  status,
+                  assignedEngineer: assignedEngineer || t.assignedEngineer,
+                  updatedAt: "Just now",
+                  updates: [...t.updates, sysUpdate],
+                };
+                targetTicket = updatedTicket;
+                return updatedTicket;
+              }
+              return t;
+            }),
+          };
+        }
+        return proj;
+      })
+    );
+
+    if (isSupabaseConfigured() && targetTicket) {
+      supabaseService.updateSupportTicket(ticketId, {
+        status,
+        assignedEngineer: assignedEngineer || targetTicket.assignedEngineer,
+        updates: targetTicket.updates,
+      }).catch(console.error);
+    }
+  };
+
+  const adminReplyToTicket = (projectId: string, ticketId: string, message: string) => {
+    let targetTicketUpdates: SupportTicket["updates"] | undefined;
+    setProjects((prev) =>
+      prev.map((proj) => {
+        if (proj.id === projectId) {
+          return {
+            ...proj,
+            supportTickets: proj.supportTickets.map((t) => {
+              if (t.id === ticketId) {
+                const newReply = {
+                  id: `up-${Date.now()}`,
+                  sender: "Arjun Mehta (Lead Systems Architect)",
+                  message,
+                  time: "Just now",
+                };
+                targetTicketUpdates = [...t.updates, newReply];
+                return {
+                  ...t,
+                  updatedAt: "Just now",
+                  updates: targetTicketUpdates,
+                };
+              }
+              return t;
+            }),
+          };
+        }
+        return proj;
+      })
+    );
+
+    if (isSupabaseConfigured() && targetTicketUpdates) {
+      supabaseService.updateSupportTicket(ticketId, {
+        updates: targetTicketUpdates,
+      }).catch(console.error);
+    }
+  };
+
+  const adminPostComment = (projectId: string, message: string, isPinned = false) => {
+    const newComment: ProjectComment = {
+      id: `c-${Date.now()}`,
+      authorName: "Arjun Mehta",
+      authorRole: "lead_architect",
+      authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+      message,
+      timestamp: "Just now",
+      isPinned: Boolean(isPinned),
+    };
+
+    setProjects((prev) =>
+      prev.map((proj) => {
+        if (proj.id === projectId) {
+          return {
+            ...proj,
+            comments: [...proj.comments, newComment],
+          };
+        }
+        return proj;
+      })
+    );
+
+    if (isSupabaseConfigured()) {
+      supabaseService.createComment(projectId, newComment).catch(console.error);
+    }
+  };
+
+  const togglePinComment = (projectId: string, commentId: string) => {
+    let newPinned = false;
+    setProjects((prev) =>
+      prev.map((proj) => {
+        if (proj.id === projectId) {
+          return {
+            ...proj,
+            comments: proj.comments.map((c) => {
+              if (c.id === commentId) {
+                newPinned = !c.isPinned;
+                return { ...c, isPinned: newPinned };
+              }
+              return c;
+            }),
+          };
+        }
+        return proj;
+      })
+    );
+
+    if (isSupabaseConfigured()) {
+      supabaseService.updateComment(commentId, { isPinned: newPinned }).catch(console.error);
+    }
+  };
+
+  const deleteComment = (projectId: string, commentId: string) => {
+    setProjects((prev) =>
+      prev.map((proj) => {
+        if (proj.id === projectId) {
+          return {
+            ...proj,
+            comments: proj.comments.filter((c) => c.id !== commentId),
+          };
+        }
+        return proj;
+      })
+    );
+
+    if (isSupabaseConfigured()) {
+      supabaseService.deleteComment(commentId).catch(console.error);
+    }
+  };
+
+  const updateProjectDetails = (projectId: string, updates: Partial<ClientProject>) => {
+    setProjects((prev) =>
+      prev.map((proj) => {
+        if (proj.id === projectId) {
+          return {
+            ...proj,
+            ...updates,
+            dedicatedLead: updates.dedicatedLead
+              ? { ...proj.dedicatedLead, ...updates.dedicatedLead }
+              : proj.dedicatedLead,
+          };
+        }
+        return proj;
+      })
+    );
+
+    if (isSupabaseConfigured()) {
+      supabaseService.updateProject(projectId, updates).catch(console.error);
+    }
   };
 
   // ----------------------------------------------------
@@ -1897,10 +2626,19 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       },
     };
 
-    setClients((prev) => [...prev, newClient]);
-    setProjects((prev) => [newProject, ...prev]);
+    setClients((prev) => {
+      const updated = [...prev, newClient];
+      if (typeof window !== "undefined") localStorage.setItem("ooma_cached_clients", JSON.stringify(updated));
+      return updated;
+    });
+    setProjects((prev) => {
+      const updated = [newProject, ...prev];
+      if (typeof window !== "undefined") localStorage.setItem("ooma_cached_projects", JSON.stringify(updated));
+      return updated;
+    });
     setClientUser(newClient);
     setActiveProjectId(newProjectId);
+    if (typeof window !== "undefined") localStorage.setItem("ooma_real_active_project_id", newProjectId);
 
     if (isSupabaseConfigured()) {
       supabaseService.createClientAndProject(newClient, newProject).catch(console.error);
@@ -2156,6 +2894,12 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
         addTicketReply,
 
         // Admin & Spreadsheet operations
+        updateTicketStatus,
+        adminReplyToTicket,
+        adminPostComment,
+        togglePinComment,
+        deleteComment,
+        updateProjectDetails,
         updateMilestone,
         advanceProjectStage,
         setProjectStageIndex,
@@ -2178,6 +2922,18 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
         supabaseStatus,
         syncSupabase,
         uploadLocalToSupabase,
+
+        // Auth & Project Comments
+        authLoading,
+        userProjects,
+        signInWithPassword,
+        signUpWithPassword,
+        resendVerificationEmail,
+        signInWithOtp,
+        signInWithOAuth,
+        completeOnboarding,
+        purgeAllDemoData,
+        addProjectComment,
       }}
     >
       {children}

@@ -141,29 +141,136 @@ ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ratings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.support_tickets ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow public read access to profiles" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to profiles" ON public.profiles FOR ALL USING (true);
+-- Helper function to check if the caller has an admin role
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+$$;
 
-CREATE POLICY "Allow public read access to projects" ON public.projects FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to projects" ON public.projects FOR ALL USING (true);
+-- PROFILES: Users read/update their own profile; admins can read all
+DROP POLICY IF EXISTS "Allow public read access to profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow public write access to profiles" ON public.profiles;
 
-CREATE POLICY "Allow public read access to milestones" ON public.milestones FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to milestones" ON public.milestones FOR ALL USING (true);
+CREATE POLICY "Users can read own profile or admin reads all" ON public.profiles
+  FOR SELECT USING (auth.uid() = id OR public.is_admin());
 
-CREATE POLICY "Allow public read access to live_urls" ON public.live_urls FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to live_urls" ON public.live_urls FOR ALL USING (true);
+CREATE POLICY "Users can update own profile" ON public.profiles
+  FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "Allow public read access to invoices" ON public.invoices FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to invoices" ON public.invoices FOR ALL USING (true);
+CREATE POLICY "Users can insert own profile on signup" ON public.profiles
+  FOR INSERT WITH CHECK (auth.uid() = id);
 
-CREATE POLICY "Allow public read access to comments" ON public.comments FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to comments" ON public.comments FOR ALL USING (true);
+-- PROJECTS: Client reads their own project; admins can read/write all
+DROP POLICY IF EXISTS "Allow public read access to projects" ON public.projects;
+DROP POLICY IF EXISTS "Allow public write access to projects" ON public.projects;
 
-CREATE POLICY "Allow public read access to ratings" ON public.ratings FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to ratings" ON public.ratings FOR ALL USING (true);
+CREATE POLICY "Clients read own projects, admins read all" ON public.projects
+  FOR SELECT USING (auth.uid() = client_id OR public.is_admin());
 
-CREATE POLICY "Allow public read access to support_tickets" ON public.support_tickets FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to support_tickets" ON public.support_tickets FOR ALL USING (true);
+CREATE POLICY "Admins or owners insert projects" ON public.projects
+  FOR INSERT WITH CHECK (auth.uid() = client_id OR public.is_admin());
+
+CREATE POLICY "Admins or owners update projects" ON public.projects
+  FOR UPDATE USING (auth.uid() = client_id OR public.is_admin());
+
+CREATE POLICY "Admins delete projects" ON public.projects
+  FOR DELETE USING (public.is_admin());
+
+-- MILESTONES: Read and write scoped to project ownership or admin
+DROP POLICY IF EXISTS "Allow public read access to milestones" ON public.milestones;
+DROP POLICY IF EXISTS "Allow public write access to milestones" ON public.milestones;
+
+CREATE POLICY "View milestones for own project" ON public.milestones
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.projects p WHERE p.id = milestones.project_id AND (p.client_id = auth.uid() OR public.is_admin()))
+  );
+
+CREATE POLICY "Admins or project owner insert milestones" ON public.milestones
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.projects p WHERE p.id = milestones.project_id AND (p.client_id = auth.uid() OR public.is_admin()))
+  );
+
+CREATE POLICY "Admins update milestones" ON public.milestones
+  FOR UPDATE USING (public.is_admin());
+
+-- LIVE URLS: Scoped to project ownership or admin
+DROP POLICY IF EXISTS "Allow public read access to live_urls" ON public.live_urls;
+DROP POLICY IF EXISTS "Allow public write access to live_urls" ON public.live_urls;
+
+CREATE POLICY "View live URLs for own project" ON public.live_urls
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.projects p WHERE p.id = live_urls.project_id AND (p.client_id = auth.uid() OR public.is_admin()))
+  );
+
+CREATE POLICY "Admins manage live URLs" ON public.live_urls
+  FOR ALL USING (public.is_admin());
+
+-- INVOICES: Scoped to project ownership or admin
+DROP POLICY IF EXISTS "Allow public read access to invoices" ON public.invoices;
+DROP POLICY IF EXISTS "Allow public write access to invoices" ON public.invoices;
+
+CREATE POLICY "View invoices for own project" ON public.invoices
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.projects p WHERE p.id = invoices.project_id AND (p.client_id = auth.uid() OR public.is_admin()))
+  );
+
+CREATE POLICY "Admins manage invoices" ON public.invoices
+  FOR ALL USING (public.is_admin());
+
+-- COMMENTS: Scoped to project
+DROP POLICY IF EXISTS "Allow public read access to comments" ON public.comments;
+DROP POLICY IF EXISTS "Allow public write access to comments" ON public.comments;
+
+CREATE POLICY "View comments for own project" ON public.comments
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.projects p WHERE p.id = comments.project_id AND (p.client_id = auth.uid() OR public.is_admin()))
+  );
+
+CREATE POLICY "Add comments to own project" ON public.comments
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.projects p WHERE p.id = comments.project_id AND (p.client_id = auth.uid() OR public.is_admin()))
+  );
+
+-- RATINGS: Scoped to project
+DROP POLICY IF EXISTS "Allow public read access to ratings" ON public.ratings;
+DROP POLICY IF EXISTS "Allow public write access to ratings" ON public.ratings;
+
+CREATE POLICY "View ratings for own project" ON public.ratings
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.projects p WHERE p.id = ratings.project_id AND (p.client_id = auth.uid() OR public.is_admin()))
+  );
+
+CREATE POLICY "Submit rating for own project" ON public.ratings
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.projects p WHERE p.id = ratings.project_id AND (p.client_id = auth.uid() OR public.is_admin()))
+  );
+
+-- SUPPORT TICKETS: Scoped to project
+DROP POLICY IF EXISTS "Allow public read access to support_tickets" ON public.support_tickets;
+DROP POLICY IF EXISTS "Allow public write access to support_tickets" ON public.support_tickets;
+
+CREATE POLICY "View support tickets for own project" ON public.support_tickets
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.projects p WHERE p.id = support_tickets.project_id AND (p.client_id = auth.uid() OR public.is_admin()))
+  );
+
+CREATE POLICY "Create support ticket for own project" ON public.support_tickets
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.projects p WHERE p.id = support_tickets.project_id AND (p.client_id = auth.uid() OR public.is_admin()))
+  );
+
+CREATE POLICY "Update support tickets" ON public.support_tickets
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.projects p WHERE p.id = support_tickets.project_id AND (p.client_id = auth.uid() OR public.is_admin()))
+  );
 
 -- Enable Realtime WebSockets
 ALTER PUBLICATION supabase_realtime ADD TABLE public.projects;
@@ -174,46 +281,15 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.comments;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.support_tickets;
 
 -- ==============================================================================
--- INITIAL SEED DATA (Indian Enterprise Clients)
+-- PRODUCTION SETUP & PURGE OF HISTORICAL DEMO SEED DATA
 -- ==============================================================================
-INSERT INTO public.profiles (id, name, email, company, title, phone, avatar_url, role)
-VALUES
-  ('client-bharatlogistics', 'Rajesh Sharma', 'rajesh.sharma@bharatlogistics.in', 'BharatLogistics Tech Pvt Ltd', 'Chief Operating Officer', '+91 98490 21345', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80', 'client'),
-  ('client-swasthyacare', 'Priya Nair', 'priya.nair@swasthyacare.com', 'SwasthyaCare Digital Health', 'VP of Product Engineering', '+91 98201 55432', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80', 'client')
-ON CONFLICT (id) DO NOTHING;
+-- If your database previously had demo/seed projects, run this to ensure a clean production environment:
+DELETE FROM public.live_urls WHERE project_id IN ('proj-bharatlogistics-01', 'proj-swasthyacare-01');
+DELETE FROM public.invoices WHERE project_id IN ('proj-bharatlogistics-01', 'proj-swasthyacare-01');
+DELETE FROM public.milestones WHERE project_id IN ('proj-bharatlogistics-01', 'proj-swasthyacare-01');
+DELETE FROM public.comments WHERE project_id IN ('proj-bharatlogistics-01', 'proj-swasthyacare-01');
+DELETE FROM public.ratings WHERE project_id IN ('proj-bharatlogistics-01', 'proj-swasthyacare-01');
+DELETE FROM public.support_tickets WHERE project_id IN ('proj-bharatlogistics-01', 'proj-swasthyacare-01');
+DELETE FROM public.projects WHERE id IN ('proj-bharatlogistics-01', 'proj-swasthyacare-01');
+DELETE FROM public.profiles WHERE id IN ('client-bharatlogistics', 'client-swasthyacare');
 
-INSERT INTO public.projects (id, client_id, title, company, summary, tier, overall_progress, status, start_date, target_launch_date, tech_stack)
-VALUES
-  ('proj-bharatlogistics-01', 'client-bharatlogistics', 'Pan-India Fleet Operations & FASTag Dispatch Portal', 'BharatLogistics Tech Pvt Ltd', 'Enterprise logistics platform tracking 1,200+ inter-city transport trucks across India with live GPS, automated FASTag toll tracking, GST E-Way Bill integration, and driver mobile app.', 'Strategic Engineering', 82, 'in_development', 'Jan 10, 2025', 'April 20, 2025', ARRAY['React', 'TypeScript', 'Node.js', 'PostgreSQL', 'Google Maps India', 'NIC E-Way Bill API']),
-  ('proj-swasthyacare-01', 'client-swasthyacare', 'ABDM Health Records & AI Clinic Automation', 'SwasthyaCare Digital Health', 'Ayushman Bharat Digital Mission (ABDM) M1-M3 certified health repository, automated OPD consultation booking, and electronic prescription delivery.', 'Strategic Engineering', 45, 'in_development', 'Feb 01, 2025', 'May 30, 2025', ARRAY['Next.js', 'FastAPI', 'PostgreSQL', 'ABDM Gateway', 'WhatsApp Cloud API'])
-ON CONFLICT (id) DO NOTHING;
-
-INSERT INTO public.milestones (id, project_id, title, description, status, progress, due_date, completed_date, deliverables, sort_order)
-VALUES
-  ('m-1', 'proj-bharatlogistics-01', 'Phase 1: Client Discovery', 'Intake and audit of client assets, existing brand design tokens, AWS/GCP cloud environments, and external telematics vendor API credentials.', 'completed', 100, 'Jan 18, 2025', 'Jan 17, 2025', ARRAY['Client Asset & Brand Guideline Ingestion', 'NIC E-Way Bill & NETC FASTag API Keys Verification', 'Cloud Infrastructure Scoping & Access Setup'], 1),
-  ('m-2', 'proj-bharatlogistics-01', 'Phase 2: Objective Requirements Gathering', 'Formal Scope of Work (SOW), multi-depot operational workflows, functional specifications, and PostgreSQL database ER schemas.', 'completed', 100, 'Jan 30, 2025', 'Jan 29, 2025', ARRAY['Formal SOW & Functional Requirement Document', 'PostgreSQL Schema & Depot Partitioning Model', 'Dispatcher & Driver User Story Mapping'], 2),
-  ('m-3', 'proj-bharatlogistics-01', 'Phase 3: UI/UX Development', 'High-contrast driver screens optimized for direct sunlight, transport dispatcher operations console, and interactive Figma design sign-off.', 'completed', 100, 'Feb 18, 2025', 'Feb 17, 2025', ARRAY['Figma Design System & High-Contrast Mobile Tokens', 'Dispatcher Fleet Map & Toll Ledger Wireframes', 'Client Design Review & Final Sign-Off'], 3),
-  ('m-4', 'proj-bharatlogistics-01', 'Phase 4: Development', 'Fullstack engineering: Live GPS map telemetry, NPCI FASTag webhook integration, driver web application, and GST tax invoicing engine.', 'in_progress', 85, 'March 28, 2025', NULL, ARRAY['Live GPS Telematics & FASTag Toll Ledger APIs', 'Driver Trip Manifest & E-Way Bill QR Scanner UI', 'GST Compliant Invoicing Engine (HSN/SAC 9965)'], 4),
-  ('m-5', 'proj-bharatlogistics-01', 'Phase 5: Testing', 'End-to-end integration testing across 4 regional transport hubs, security vulnerability assessment, and client User Acceptance Testing (UAT).', 'pending', 20, 'April 10, 2025', NULL, ARRAY['Cross-Browser & Low-Connectivity Mobile QA', 'OWASP Top 10 Security Penetration Audit', 'Client User Acceptance Testing (UAT) Sign-Off'], 5),
-  ('m-6', 'proj-bharatlogistics-01', 'Phase 6: Hosting', 'Production cloud launch on AWS Mumbai, domain SSL/TLS certificate binding, 99.98% uptime monitoring, and final handover.', 'pending', 0, 'April 20, 2025', NULL, ARRAY['Production AWS Mumbai Multi-AZ Launch', 'DNS & SSL Certificate Binding (fleet.bharatlogistics.in)', '24/7 Sentry & CloudWatch Monitoring Handover'], 6)
-ON CONFLICT (id) DO UPDATE SET
-  title = EXCLUDED.title,
-  description = EXCLUDED.description,
-  deliverables = EXCLUDED.deliverables,
-  sort_order = EXCLUDED.sort_order;
-
-INSERT INTO public.invoices (id, project_id, invoice_number, milestone_title, amount, currency, gst_sac, issue_date, due_date, paid_date, status, payment_method)
-VALUES
-  ('inv-001', 'proj-bharatlogistics-01', 'INV-2025-0102', 'Milestone 1: Project Kickoff & Database Architecture', 450000, 'INR', '998314', 'Jan 15, 2025', 'Jan 30, 2025', 'Jan 28, 2025', 'paid', 'HDFC Bank NEFT/RTGS'),
-  ('inv-002', 'proj-bharatlogistics-01', 'INV-2025-0148', 'Milestone 2: Live GPS Tracking & FASTag Toll API', 550000, 'INR', '998314', 'Feb 15, 2025', 'March 02, 2025', 'Feb 27, 2025', 'paid', 'Corporate NetBanking (ICICI)'),
-  ('inv-003', 'proj-bharatlogistics-01', 'INV-2025-0219', 'Milestone 3: Driver Mobile Web App & E-Way Bill Verification', 450000, 'INR', '998314', 'March 01, 2025', 'March 25, 2025', NULL, 'pending', NULL),
-  ('inv-004', 'proj-bharatlogistics-01', 'INV-2025-0290', 'Milestone 4: GST Invoicing, Fuel Calculator & Launch', 400000, 'INR', '998314', 'April 01, 2025', 'April 25, 2025', NULL, 'pending', NULL)
-ON CONFLICT (id) DO NOTHING;
-
-INSERT INTO public.live_urls (id, project_id, label, url, type, status, uptime, last_deployed, notes)
-VALUES
-  ('url-1', 'proj-bharatlogistics-01', 'Production Dashboard', 'https://ops.bharatlogistics.in', 'production', 'live', '99.98%', '4 hours ago', 'Primary dispatch console for North & West logistics corridors.'),
-  ('url-2', 'proj-bharatlogistics-01', 'Staging & QA Environment', 'https://stage.bharatlogistics.in', 'staging', 'live', '99.95%', 'Yesterday at 18:30 IST', 'Build #192: FASTag ICICI NETC auto-reconciliation active.'),
-  ('url-3', 'proj-bharatlogistics-01', 'Figma Design System', 'https://figma.com/@oomalabs/bharat-logistics-system', 'figma', 'live', '100%', 'Updated weekly', 'Complete mobile & web components with Indian Hindi localization specs.'),
-  ('url-4', 'proj-bharatlogistics-01', 'REST API Documentation', 'https://api-docs.bharatlogistics.in', 'api_docs', 'live', '99.99%', '3 days ago', 'Swagger specs for GPS telematics vendors and warehouse ERPs.')
-ON CONFLICT (id) DO NOTHING;

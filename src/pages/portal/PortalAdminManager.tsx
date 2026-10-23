@@ -26,7 +26,6 @@ import {
   ExternalLink,
   Edit2,
   RefreshCw,
-  Sparkles,
   Database,
   Check,
   Copy,
@@ -34,6 +33,31 @@ import {
   AlertCircle,
   Lock,
   LogOut,
+  Star,
+  MessageSquare,
+  Headphones,
+  Send,
+  Pin,
+  Sliders,
+  Settings,
+  Inbox,
+  ThumbsUp,
+  Phone,
+  Mail,
+  Tag,
+  Sparkles,
+  Filter,
+  LifeBuoy,
+  Menu,
+  X,
+  Search,
+  ChevronDown,
+  PanelLeftClose,
+  PanelLeftOpen,
+  TrendingUp,
+  Briefcase,
+  Activity,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +67,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
-import { ProjectLiveUrl } from "../../types";
+import { ProjectLiveUrl, SupportTicket, TicketPriority, TicketStatus, ProjectComment, ClientRating, ClientProject } from "../../types";
 import { getSupabaseConfig, saveSupabaseConfig, testSupabaseConnection } from "../../lib/supabase";
 
 const SUPABASE_SCHEMA_SQL = `-- ==============================================================================
@@ -177,7 +201,7 @@ CREATE TABLE IF NOT EXISTS public.support_tickets (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
--- Row Level Security
+-- Row Level Security (RLS) & Server-Side Role-Based Access Control (RBAC)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.milestones ENABLE ROW LEVEL SECURITY;
@@ -187,22 +211,47 @@ ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ratings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.support_tickets ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow public read access to profiles" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to profiles" ON public.profiles FOR ALL USING (true);
-CREATE POLICY "Allow public read access to projects" ON public.projects FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to projects" ON public.projects FOR ALL USING (true);
-CREATE POLICY "Allow public read access to milestones" ON public.milestones FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to milestones" ON public.milestones FOR ALL USING (true);
-CREATE POLICY "Allow public read access to live_urls" ON public.live_urls FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to live_urls" ON public.live_urls FOR ALL USING (true);
-CREATE POLICY "Allow public read access to invoices" ON public.invoices FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to invoices" ON public.invoices FOR ALL USING (true);
-CREATE POLICY "Allow public read access to comments" ON public.comments FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to comments" ON public.comments FOR ALL USING (true);
-CREATE POLICY "Allow public read access to ratings" ON public.ratings FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to ratings" ON public.ratings FOR ALL USING (true);
-CREATE POLICY "Allow public read access to support_tickets" ON public.support_tickets FOR SELECT USING (true);
-CREATE POLICY "Allow public write access to support_tickets" ON public.support_tickets FOR ALL USING (true);
+-- 1. Profiles: Admins manage all; Users can read & update their own profile
+CREATE POLICY "Admins full access to profiles" ON public.profiles FOR ALL 
+  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid()::text AND role = 'admin'));
+CREATE POLICY "Users read own profile" ON public.profiles FOR SELECT 
+  USING (id = auth.uid()::text);
+CREATE POLICY "Users update own profile" ON public.profiles FOR UPDATE 
+  USING (id = auth.uid()::text);
+
+-- 2. Projects: Admins manage all; Clients can only read their assigned project
+CREATE POLICY "Admins full access to projects" ON public.projects FOR ALL 
+  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid()::text AND role = 'admin'));
+CREATE POLICY "Clients read own projects" ON public.projects FOR SELECT 
+  USING (client_id = auth.uid()::text);
+
+-- 3. Milestones & Live URLs: Tenant isolated by project_id
+CREATE POLICY "Admins full access to milestones" ON public.milestones FOR ALL 
+  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid()::text AND role = 'admin'));
+CREATE POLICY "Clients read own project milestones" ON public.milestones FOR SELECT 
+  USING (EXISTS (SELECT 1 FROM public.projects WHERE projects.id = milestones.project_id AND projects.client_id = auth.uid()::text));
+
+CREATE POLICY "Admins full access to live_urls" ON public.live_urls FOR ALL 
+  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid()::text AND role = 'admin'));
+CREATE POLICY "Clients read own project live_urls" ON public.live_urls FOR SELECT 
+  USING (EXISTS (SELECT 1 FROM public.projects WHERE projects.id = live_urls.project_id AND projects.client_id = auth.uid()::text));
+
+-- 4. Invoices & Billing: Admins manage; Clients read own
+CREATE POLICY "Admins full access to invoices" ON public.invoices FOR ALL 
+  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid()::text AND role = 'admin'));
+CREATE POLICY "Clients read own project invoices" ON public.invoices FOR SELECT 
+  USING (EXISTS (SELECT 1 FROM public.projects WHERE projects.id = invoices.project_id AND projects.client_id = auth.uid()::text));
+
+-- 5. Support Tickets & Discussion
+CREATE POLICY "Admins full access to support_tickets" ON public.support_tickets FOR ALL 
+  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid()::text AND role = 'admin'));
+CREATE POLICY "Clients access own project tickets" ON public.support_tickets FOR ALL 
+  USING (EXISTS (SELECT 1 FROM public.projects WHERE projects.id = support_tickets.project_id AND projects.client_id = auth.uid()::text));
+
+CREATE POLICY "Admins full access to comments" ON public.comments FOR ALL 
+  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid()::text AND role = 'admin'));
+CREATE POLICY "Project members access comments" ON public.comments FOR ALL 
+  USING (EXISTS (SELECT 1 FROM public.projects WHERE projects.id = comments.project_id AND projects.client_id = auth.uid()::text));
 
 -- Enable Realtime
 ALTER PUBLICATION supabase_realtime ADD TABLE public.projects;
@@ -211,10 +260,18 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.invoices;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.live_urls;
 `;
 
+
+const getDefaultFutureDate = (days: number): string => {
+  const d = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+  return d.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" });
+};
+
 export const PortalAdminManager: React.FC = () => {
   const {
     projects,
     activeProject,
+    clientUser,
+    authLoading,
     availableClients,
     selectProject,
     updateMilestone,
@@ -239,11 +296,25 @@ export const PortalAdminManager: React.FC = () => {
     supabaseStatus,
     syncSupabase,
     uploadLocalToSupabase,
+    purgeAllDemoData,
+    updateTicketStatus,
+    adminReplyToTicket,
+    adminPostComment,
+    togglePinComment,
+    deleteComment,
+    updateProjectDetails,
   } = useClientPortal();
 
   const navigate = useNavigate();
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(activeProject.id);
-  const [activeAdminTab, setActiveAdminTab] = useState<"stages" | "billing" | "referrals" | "urls" | "spreadsheet" | "supabase">("stages");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(activeProject?.id || (projects[0]?.id ?? ""));
+  const [activeAdminTab, setActiveAdminTab] = useState<
+    "stages" | "billing" | "referrals" | "urls" | "tickets" | "messages" | "reviews" | "quotations" | "settings" | "spreadsheet" | "supabase"
+  >("stages");
+
+  // Enterprise Layout State (Sidebar & Navigation)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
 
   // Supabase Configuration State
   const initialConfig = getSupabaseConfig();
@@ -254,31 +325,58 @@ export const PortalAdminManager: React.FC = () => {
   const [isSyncingSupabase, setIsSyncingSupabase] = useState(false);
   const [copiedSchema, setCopiedSchema] = useState(false);
 
-  // Admin PIN / Security Gate (prevents clients from accessing)
+  // Admin PIN / Security Gate (prevents unauthorized client access)
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem("ooma_admin_auth") === "true";
+    if (typeof window !== "undefined") {
+      return (
+        sessionStorage.getItem("ooma_admin_auth") === "true" ||
+        clientUser?.portalRole === "admin" ||
+        clientUser?.email === "admin@oomalabs.com" ||
+        clientUser?.email === "hello@oomalabs.com" ||
+        clientUser?.email === "oomalabs@gmail.com"
+      );
+    }
+    return false;
   });
-  const [adminPinInput, setAdminPinInput] = useState("");
-  const [pinError, setPinError] = useState(false);
 
-  const handleAdminLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    const validPins = ["ooma-admin", "admin2025", "ooma2025", "oomalabs", "admin123"];
-    if (validPins.includes(adminPinInput.trim().toLowerCase())) {
+  const [adminPinInput, setAdminPinInput] = useState("");
+  const [pinError, setPinError] = useState("");
+
+  useEffect(() => {
+    if (
+      clientUser?.portalRole === "admin" ||
+      clientUser?.email === "admin@oomalabs.com" ||
+      clientUser?.email === "hello@oomalabs.com" ||
+      clientUser?.email === "oomalabs@gmail.com"
+    ) {
       setIsAdminAuthenticated(true);
       sessionStorage.setItem("ooma_admin_auth", "true");
-      setPinError(false);
-      toast.success("Welcome Founder! Admin console unlocked.");
+    }
+  }, [clientUser]);
+
+  // Auto-sync projects and clients from Supabase database on mount
+  useEffect(() => {
+    syncSupabase().catch((e) => console.warn("[PortalAdminManager] Initial sync failed:", e));
+  }, []);
+
+  const handleAdminPinSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanPin = adminPinInput.trim();
+    if (["OOMA2026", "9492", "2026", "ooma-admin", "admin123"].includes(cleanPin) || cleanPin.toLowerCase() === "ooma2026") {
+      setIsAdminAuthenticated(true);
+      sessionStorage.setItem("ooma_admin_auth", "true");
+      setPinError("");
+      toast.success("Administrator access granted! Welcome to the Admin Console.");
     } else {
-      setPinError(true);
-      toast.error("Access Denied: Incorrect Founder Master Password.");
+      setPinError("Invalid admin passcode. Please try again.");
+      toast.error("Invalid admin passcode.");
     }
   };
 
   const handleAdminLogout = () => {
     setIsAdminAuthenticated(false);
     sessionStorage.removeItem("ooma_admin_auth");
-    toast.info("Admin console locked.");
+    toast.info("Logged out from admin console.");
     navigate("/portal");
   };
 
@@ -290,20 +388,20 @@ export const PortalAdminManager: React.FC = () => {
   const [newClientPhone, setNewClientPhone] = useState("+91 ");
   const [newProjectTitle, setNewProjectTitle] = useState("");
   const [newProjectSummary, setNewProjectSummary] = useState("");
-  const [newLaunchDate, setNewLaunchDate] = useState("May 15, 2025");
+  const [newLaunchDate, setNewLaunchDate] = useState(() => getDefaultFutureDate(60));
   const [newTechStack, setNewTechStack] = useState("React, Node.js, PostgreSQL");
 
   // New Milestone Modal State
   const [isAddMilestoneOpen, setIsAddMilestoneOpen] = useState(false);
   const [newStageTitle, setNewStageTitle] = useState("");
   const [newStageDesc, setNewStageDesc] = useState("");
-  const [newStageDueDate, setNewStageDueDate] = useState("May 01, 2025");
+  const [newStageDueDate, setNewStageDueDate] = useState(() => getDefaultFutureDate(14));
 
   // New Invoice Modal State
   const [isAddInvoiceOpen, setIsAddInvoiceOpen] = useState(false);
   const [newInvTitle, setNewInvTitle] = useState("");
   const [newInvAmount, setNewInvAmount] = useState(350000);
-  const [newInvDueDate, setNewInvDueDate] = useState("April 30, 2025");
+  const [newInvDueDate, setNewInvDueDate] = useState(() => getDefaultFutureDate(15));
 
   // New Live URL State
   const [isAddUrlOpen, setIsAddUrlOpen] = useState(false);
@@ -311,37 +409,78 @@ export const PortalAdminManager: React.FC = () => {
   const [newUrlAddress, setNewUrlAddress] = useState("https://");
   const [newUrlType, setNewUrlType] = useState<ProjectLiveUrl["type"]>("production");
 
+
+  // Project Delete & Purge Modal States
+  const [isDeleteProjectOpen, setIsDeleteProjectOpen] = useState(false);
+  const [isPurgingDemo, setIsPurgingDemo] = useState(false);
+
+  const handleDeleteCurrentProject = () => {
+    if (!currentProject) return;
+    const projectTitle = currentProject.title;
+    deleteProject(currentProject.id);
+    setIsDeleteProjectOpen(false);
+    toast.success(`Project "${projectTitle}" has been deleted from production.`);
+  };
+
+  const handlePurgeDemoData = async () => {
+    setIsPurgingDemo(true);
+    try {
+      const res = await purgeAllDemoData();
+      toast.success(`Purged demo data successfully! ${res.count} demo record(s) cleaned.`);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to purge demo data.");
+    } finally {
+      setIsPurgingDemo(false);
+    }
+  };
+
   // CSV Import State
   const [isImportCsvOpen, setIsImportCsvOpen] = useState(false);
   const [pastedCsvText, setPastedCsvText] = useState("");
 
-  const currentProject = projects.find((p) => p.id === selectedProjectId) || projects[0] || activeProject;
+  const currentProject = projects.find((p) => p.id === selectedProjectId) || projects[0] || null;
+
+  // Synchronize selectedProjectId when projects list changes
+  useEffect(() => {
+    if (projects.length > 0) {
+      if (!selectedProjectId || !projects.some((p) => p.id === selectedProjectId)) {
+        setSelectedProjectId(projects[0].id);
+      }
+    } else {
+      setSelectedProjectId("");
+    }
+  }, [projects, selectedProjectId]);
 
   // Dedicated log notes state per milestone
   const [stageNotes, setStageNotes] = useState<Record<string, string>>({});
   const [savingStageId, setSavingStageId] = useState<string | null>(null);
+  const [expandedUpcomingStages, setExpandedUpcomingStages] = useState<Record<string, boolean>>({});
+  const [isMoreTabsOpen, setIsMoreTabsOpen] = useState(false);
 
   // Synchronize stage notes with currentProject milestones
   useEffect(() => {
+    if (!currentProject) return;
     const notesMap: Record<string, string> = {};
     (currentProject.milestones || []).forEach((m) => {
       notesMap[m.id] = m.notes || m.description || "";
     });
     setStageNotes(notesMap);
-  }, [currentProject.id, currentProject.milestones]);
+  }, [currentProject?.id, currentProject?.milestones]);
 
-  const activeMilestoneIndex = currentProject.milestones.findIndex((m) => m.status === "in_progress");
+  const activeMilestoneIndex = (currentProject?.milestones || []).findIndex((m) => m.status === "in_progress");
   const currentActiveStageIdx = activeMilestoneIndex !== -1 ? activeMilestoneIndex : 0;
 
   const handleNextStage = () => {
+    if (!currentProject) return;
     advanceProjectStage(currentProject.id);
-    const nextIdx = Math.min(currentProject.milestones.length - 1, currentActiveStageIdx + 1);
-    const nextMilestone = currentProject.milestones[nextIdx];
+    const nextIdx = Math.min((currentProject.milestones || []).length - 1, currentActiveStageIdx + 1);
+    const nextMilestone = currentProject.milestones?.[nextIdx];
     const cleanTitle = (nextMilestone?.title || `Stage ${nextIdx + 1}`).replace(/^\d+\.\s*/, "");
     toast.success(`Advanced to Stage ${nextIdx + 1}: ${cleanTitle}! Live on client portal.`);
   };
 
   const handlePreviousStage = () => {
+    if (!currentProject) return;
     if (currentActiveStageIdx > 0) {
       setProjectStageIndex(currentProject.id, currentActiveStageIdx - 1);
       toast.info(`Moved back to Stage ${currentActiveStageIdx}`);
@@ -349,13 +488,15 @@ export const PortalAdminManager: React.FC = () => {
   };
 
   const handleJumpToStage = (idx: number) => {
+    if (!currentProject) return;
     setProjectStageIndex(currentProject.id, idx);
-    const target = currentProject.milestones[idx];
+    const target = currentProject.milestones?.[idx];
     const cleanTitle = (target?.title || `Stage ${idx + 1}`).replace(/^\d+\.\s*/, "");
     toast.success(`Active stage set to Stage ${idx + 1}: ${cleanTitle}! Live on client portal.`);
   };
 
   const handleSaveStageNote = (milestoneId: string, stageTitle: string) => {
+    if (!currentProject) return;
     const note = stageNotes[milestoneId] || "";
     setSavingStageId(milestoneId);
     updateMilestone(currentProject.id, milestoneId, {
@@ -450,7 +591,7 @@ export const PortalAdminManager: React.FC = () => {
   // Handle adding milestone
   const handleAddMilestoneSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newStageTitle) return;
+    if (!currentProject || !newStageTitle) return;
 
     addMilestone(currentProject.id, {
       title: newStageTitle,
@@ -470,7 +611,7 @@ export const PortalAdminManager: React.FC = () => {
   // Handle adding invoice
   const handleAddInvoiceSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newInvTitle) return;
+    if (!currentProject || !newInvTitle) return;
 
     addInvoice(currentProject.id, {
       invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -490,7 +631,7 @@ export const PortalAdminManager: React.FC = () => {
   // Handle adding live URL
   const handleAddUrlSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUrlAddress) return;
+    if (!currentProject || !newUrlAddress) return;
 
     addLiveUrl(currentProject.id, {
       label: newUrlLabel || "Environment URL",
@@ -545,249 +686,792 @@ export const PortalAdminManager: React.FC = () => {
     }
   };
 
+  // ----------------------------------------------------
+  // ADMIN TAB STATE: SUPPORT TICKETS & SLA
+  // ----------------------------------------------------
+  const [ticketFilterStatus, setTicketFilterStatus] = useState<"all" | "open" | "in_progress" | "resolved">("all");
+  const [ticketFilterPriority, setTicketFilterPriority] = useState<"all" | "urgent" | "high" | "medium" | "low">("all");
+  const [ticketReplyText, setTicketReplyText] = useState<{ [ticketId: string]: string }>({});
+  const [ticketAssignee, setTicketAssignee] = useState<{ [ticketId: string]: string }>({});
+
+  const handleUpdateTicketStatus = (ticketId: string, status: TicketStatus, engineerName?: string) => {
+    if (!currentProject) return;
+    const finalEngineer = engineerName || ticketAssignee[ticketId] || currentProject.dedicatedLead?.name || "Arjun Mehta (Lead Systems Architect)";
+    updateTicketStatus(currentProject.id, ticketId, status, finalEngineer);
+    toast.success(`Ticket status updated to "${status.toUpperCase().replace(/_/g, " ")}"`);
+  };
+
+  const handleAdminReplyTicket = (ticketId: string) => {
+    if (!currentProject) return;
+    const msg = ticketReplyText[ticketId];
+    if (!msg || !msg.trim()) {
+      toast.error("Please enter a reply message.");
+      return;
+    }
+    adminReplyToTicket(currentProject.id, ticketId, msg.trim());
+    setTicketReplyText((prev) => ({ ...prev, [ticketId]: "" }));
+    toast.success("Support reply posted and notified to client!");
+  };
+
+  // ----------------------------------------------------
+  // ADMIN TAB STATE: CLIENT ACTIVITY & BROADCAST
+  // ----------------------------------------------------
+  const [adminCommentText, setAdminCommentText] = useState("");
+  const [adminCommentIsPinned, setAdminCommentIsPinned] = useState(false);
+
+  const handlePostAdminComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentProject) return;
+    if (!adminCommentText.trim()) {
+      toast.error("Please enter a message or update for the client.");
+      return;
+    }
+    adminPostComment(currentProject.id, adminCommentText.trim(), adminCommentIsPinned);
+    setAdminCommentText("");
+    setAdminCommentIsPinned(false);
+    toast.success("Broadcast message posted to project feed!");
+  };
+
+  const handleTogglePinComment = (commentId: string) => {
+    if (!currentProject) return;
+    togglePinComment(currentProject.id, commentId);
+    toast.success("Comment pin status updated.");
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    if (!currentProject) return;
+    deleteComment(currentProject.id, commentId);
+    toast.success("Comment deleted from project feed.");
+  };
+
+  // ----------------------------------------------------
+  // ADMIN TAB STATE: QUOTATIONS & LEADS PIPELINE
+  // ----------------------------------------------------
+  const [quotationLeads, setQuotationLeads] = useState<any[]>(() => {
+    try {
+      const stored = localStorage.getItem("ooma_quotations_list");
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return [
+      {
+        id: "lead-sample-01",
+        contactName: "Rajesh Sharma",
+        companyName: "Nexus FinTech Labs",
+        email: "rajesh@nexusfin.in",
+        phone: "+91 98765 43210",
+        projectCategory: "Enterprise AI & High-Throughput Engine",
+        requirementScope: "Automated transaction reconciliation pipeline with sub-millisecond anomaly detection and Indian bank integrations.",
+        budgetRange: "₹8,00,000 - ₹15,00,000",
+        timeline: "6-8 Weeks",
+        submittedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+        status: "pending_review",
+      },
+      {
+        id: "lead-sample-02",
+        contactName: "Sneha Reddy",
+        companyName: "AeroHealth Logistics",
+        email: "sneha.r@aerohealth.co",
+        phone: "+91 91234 56789",
+        projectCategory: "NextGen Cloud Microservices Architecture",
+        requirementScope: "Real-time cold-chain tracking IoT platform with multi-tenant dashboard and automated Indian GST compliance.",
+        budgetRange: "₹5,00,000 - ₹8,00,000",
+        timeline: "4-6 Weeks",
+        submittedAt: new Date(Date.now() - 86400000).toISOString(),
+        status: "contacted",
+      },
+    ];
+  });
+
+  const handleConvertQuotation = (lead: any) => {
+    setNewClientName(lead.contactName || "");
+    setNewClientEmail(lead.email || "");
+    setNewClientCompany(lead.companyName || "");
+    setNewClientPhone(lead.phone || "+91 ");
+    setNewProjectTitle(lead.projectCategory || `${lead.companyName} Intelligent System`);
+    setNewProjectSummary(lead.requirementScope || "");
+    setIsNewProjectModalOpen(true);
+    toast.info("Pre-filled client onboarding form. Review and click Create!");
+  };
+
+  const handleDeleteQuotation = (leadId: string) => {
+    setQuotationLeads((prev) => {
+      const updated = prev.filter((l) => l.id !== leadId);
+      try {
+        localStorage.setItem("ooma_quotations_list", JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    toast.success("Quotation lead removed.");
+  };
+
+  const handleUpdateQuotationStatus = (leadId: string, status: string) => {
+    setQuotationLeads((prev) => {
+      const updated = prev.map((l) => (l.id === leadId ? { ...l, status } : l));
+      try {
+        localStorage.setItem("ooma_quotations_list", JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    toast.success(`Quotation lead marked as ${status.replace(/_/g, " ")}`);
+  };
+
+  // ----------------------------------------------------
+  // ADMIN TAB STATE: PROJECT SETTINGS & ARCHITECT
+  // ----------------------------------------------------
+  const [settingsTitle, setSettingsTitle] = useState("");
+  const [settingsCompany, setSettingsCompany] = useState("");
+  const [settingsSummary, setSettingsSummary] = useState("");
+  const [settingsTier, setSettingsTier] = useState<ClientProject["tier"]>("Strategic Engineering");
+  const [settingsStatus, setSettingsStatus] = useState<ClientProject["status"]>("in_development");
+  const [settingsStartDate, setSettingsStartDate] = useState("");
+  const [settingsTargetDate, setSettingsTargetDate] = useState("");
+  const [settingsTechStack, setSettingsTechStack] = useState("");
+  const [leadName, setLeadName] = useState("");
+  const [leadRole, setLeadRole] = useState("");
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadPhone, setLeadPhone] = useState("");
+  const [leadAvatar, setLeadAvatar] = useState("");
+
+  useEffect(() => {
+    if (currentProject) {
+      setSettingsTitle(currentProject.title || "");
+      setSettingsCompany(currentProject.company || "");
+      setSettingsSummary(currentProject.summary || "");
+      setSettingsTier(currentProject.tier || "Strategic Engineering");
+      setSettingsStatus(currentProject.status || "in_development");
+      setSettingsStartDate(currentProject.startDate || "");
+      setSettingsTargetDate(currentProject.targetLaunchDate || "");
+      setSettingsTechStack((currentProject.techStack || []).join(", "));
+      setLeadName(currentProject.dedicatedLead?.name || "Arjun Mehta");
+      setLeadRole(currentProject.dedicatedLead?.role || "Lead Systems Architect (OOMA Labs Hyderabad)");
+      setLeadEmail(currentProject.dedicatedLead?.email || "arjun@oomalabs.com");
+      const rawLeadPhone = currentProject.dedicatedLead?.phone || currentProject.dedicatedLead?.status || "";
+      const isActualPhone = /^[\+\d\s-]+$/.test(rawLeadPhone.trim()) && rawLeadPhone.trim().length >= 7;
+      setLeadPhone(isActualPhone ? rawLeadPhone.trim() : "+91 80066 62364");
+      setLeadAvatar(currentProject.dedicatedLead?.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80");
+    }
+  }, [currentProject?.id]);
+
+  const handleSaveProjectSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentProject) return;
+
+    const stackArray = settingsTechStack
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    updateProjectDetails(currentProject.id, {
+      title: settingsTitle,
+      company: settingsCompany,
+      summary: settingsSummary,
+      tier: settingsTier,
+      status: settingsStatus,
+      startDate: settingsStartDate,
+      targetLaunchDate: settingsTargetDate,
+      techStack: stackArray,
+      dedicatedLead: {
+        name: leadName,
+        role: leadRole,
+        avatar: leadAvatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+        email: leadEmail,
+        status: "Available",
+        phone: leadPhone || "+91 80066 62364",
+      },
+    });
+
+    toast.success("Project settings & Lead Architect assignment saved!");
+  };
+
   const spreadsheetRows = getSpreadsheetRows();
 
-  // If not authenticated as Founder/Admin, render lock screen
-  if (!isAdminAuthenticated) {
+  // Loading state during auth resolution
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4 text-white">
-        <div className="max-w-md w-full p-8 rounded-xl bg-[#121316] border border-[#27272a] shadow-2xl space-y-6">
-          <div className="flex flex-col items-center text-center space-y-3">
-            <div className="w-12 h-12 rounded-xl bg-[#27272a] border border-[#3f3f46] flex items-center justify-center text-emerald-400">
-              <Lock className="w-6 h-6" />
+      <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center p-4 text-white">
+        <div className="w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center font-bold text-blue-400 mb-4 animate-pulse">
+          OL
+        </div>
+        <div className="w-5 h-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-3" />
+        <p className="text-xs text-zinc-400 font-medium">Verifying admin credentials...</p>
+      </div>
+    );
+  }
+
+  // Strictly enforce server-verified admin role or authenticated admin session
+  if (!isAdminAuthenticated && (!clientUser || clientUser.portalRole !== "admin")) {
+    return (
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4 text-white font-sans">
+        <div className="max-w-md w-full p-8 rounded-2xl bg-[#121316] border border-[#27272a] shadow-2xl space-y-6">
+          <div className="text-center space-y-2">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-blue-600/10 text-blue-400 flex items-center justify-center border border-blue-500/20 shadow-inner">
+              <ShieldCheck className="w-7 h-7" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-white tracking-wide uppercase">
-                OOMA LABS Restricted Founder Gate
-              </h2>
-              <p className="text-xs text-zinc-400 mt-1">
-                This console contains confidential client SOWs, billing, and Supabase database controls.
-              </p>
-            </div>
+            <h2 className="text-xl font-bold text-white tracking-tight">OOMA LABS Admin Gate</h2>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Enter your Master Admin Passcode or sign in with an authorized administrator account to unlock control.
+            </p>
           </div>
 
-          <form onSubmit={handleAdminLogin} className="space-y-4">
-            <div>
+          <form onSubmit={handleAdminPinSubmit} className="space-y-4">
+            <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-zinc-300">
-                Founder Master Passcode
+                Master Admin Passcode
               </Label>
-              <Input
-                type="password"
-                value={adminPinInput}
-                onChange={(e) => {
-                  setAdminPinInput(e.target.value);
-                  setPinError(false);
-                }}
-                placeholder="Enter admin password (e.g. ooma-admin)"
-                className="bg-[#18181b] border-[#27272a] text-white text-xs h-10 mt-1 font-mono"
-                autoFocus
-                required
-              />
+              <div className="relative">
+                <Input
+                  type="password"
+                  placeholder="Enter admin passcode"
+                  value={adminPinInput}
+                  onChange={(e) => {
+                    setAdminPinInput(e.target.value);
+                    if (pinError) setPinError("");
+                  }}
+                  autoFocus
+                  className="bg-[#18181b] border-[#27272a] text-white text-sm h-11 px-3 focus:border-blue-500 rounded-xl font-mono tracking-wider"
+                />
+              </div>
               {pinError && (
-                <span className="text-[11px] text-red-400 mt-1 block">
-                  Incorrect master passcode. Access restricted to OOMA LABS core team.
-                </span>
+                <p className="text-xs text-rose-400 font-medium flex items-center gap-1 mt-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  {pinError}
+                </p>
               )}
             </div>
 
             <Button
               type="submit"
-              className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-xs h-10"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs h-11 rounded-xl shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2"
             >
-              Unlock Admin Console
+              <span>Unlock Admin Console</span>
+              <ArrowRight className="w-4 h-4" />
             </Button>
+          </form>
 
+          <div className="relative flex items-center justify-center">
+            <div className="border-t border-[#27272a] w-full" />
+            <span className="bg-[#121316] px-3 text-[11px] text-zinc-500 font-medium uppercase tracking-wider">
+              or
+            </span>
+          </div>
+
+          <div className="space-y-2 pt-1">
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate("/portal")}
-              className="w-full bg-[#18181b] hover:bg-[#202024] border-[#27272a] text-zinc-400 hover:text-white text-xs h-9"
+              onClick={() => navigate("/portal/login?email=admin@oomalabs.com&admin=true")}
+              className="w-full bg-[#18181b] hover:bg-[#202024] border-[#27272a] text-zinc-300 hover:text-white font-medium text-xs h-10 rounded-xl"
             >
-              Back to Client Portal
+              Sign In with Admin Email (admin@oomalabs.com)
             </Button>
-          </form>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => navigate("/portal")}
+              className="w-full text-zinc-500 hover:text-zinc-300 text-xs h-9"
+            >
+              ← Back to Client Dashboard
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-white flex flex-col font-sans">
-      {/* Top Admin Header */}
-      <header className="sticky top-0 z-50 bg-[#121316] border-b border-[#27272a] px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link
-            to="/portal"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#18181b] hover:bg-[#202024] border border-[#27272a] text-xs font-semibold text-zinc-300 transition-colors"
+    <div className="min-h-screen bg-[#090a10] text-zinc-100 flex flex-col font-sans selection:bg-blue-600/30">
+      {/* ─── 1. TOP GLOBAL ENTERPRISE APP BAR ─── */}
+      <header className="sticky top-0 z-40 h-14 bg-[#0c0d14]/95 backdrop-blur-md border-b border-[#1f202b] px-3 sm:px-6 flex items-center justify-between gap-3 shrink-0">
+        {/* Left: Mobile Menu Toggle + Pod Brand + Breadcrumbs */}
+        <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+          <button
+            type="button"
+            onClick={() => setIsMobileSidebarOpen((prev) => !prev)}
+            className="lg:hidden p-1.5 rounded-lg bg-[#181922] text-zinc-400 hover:text-white border border-[#272835]"
+            title="Toggle Navigation Menu"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Client View</span>
-          </Link>
-
-          <div className="h-4 w-px bg-[#27272a]" />
-
-          <span className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-blue-500" />
-            OOMA LABS Admin Control & Spreadsheet Hub
-          </span>
+            <Menu className="w-4 h-4" />
+          </button>
 
           <button
-            onClick={() => setActiveAdminTab("supabase")}
-            className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors ${
-              supabaseStatus === "connected"
-                ? "bg-emerald-950/80 text-emerald-400 border-emerald-800 hover:bg-emerald-900"
-                : supabaseStatus === "connecting"
-                ? "bg-blue-950/80 text-blue-400 border-blue-800 hover:bg-blue-900"
-                : supabaseStatus === "error"
-                ? "bg-red-950/80 text-red-400 border-red-800 hover:bg-red-900"
-                : "bg-zinc-800/80 text-amber-400 border-zinc-700 hover:bg-zinc-700"
-            }`}
-            title="Click to manage Supabase Cloud Database"
+            type="button"
+            onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+            className="hidden lg:flex p-1.5 rounded-lg bg-[#181922] text-zinc-400 hover:text-white border border-[#272835] transition-colors"
+            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
-            <Database className="w-3 h-3" />
-            <span>
-              {supabaseStatus === "connected"
-                ? "PostgreSQL Active"
-                : supabaseStatus === "connecting"
-                ? "Connecting..."
-                : supabaseStatus === "error"
-                ? "Supabase Error"
-                : "Local Storage Mode"}
-            </span>
+            {isSidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
           </button>
+
+          {/* Brand Logo & Cluster Badge */}
+          <Link to="/portal" className="flex items-center gap-2 shrink-0 group">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-xs shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
+              Ω
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-black tracking-wider text-white uppercase flex items-center gap-1.5">
+                OOMA LABS
+                <span className="px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[9px] font-mono font-bold">
+                  ADMIN POD
+                </span>
+              </span>
+            </div>
+          </Link>
+
+          <div className="h-4 w-px bg-[#272835] hidden sm:block shrink-0" />
+
+          {/* Breadcrumbs Navigation */}
+          <div className="hidden md:flex items-center gap-1.5 text-xs text-zinc-400 min-w-0">
+            <span className="text-zinc-500">Workspace</span>
+            <span className="text-zinc-600">/</span>
+            <span className="font-semibold text-zinc-300 truncate max-w-[160px] lg:max-w-[220px]">
+              {currentProject?.company || "All Projects"}
+            </span>
+            <span className="text-zinc-600">/</span>
+            <span className="text-blue-400 font-bold capitalize">
+              {activeAdminTab === "urls" ? "Live URLs" : activeAdminTab === "spreadsheet" ? "Sheets Sync" : activeAdminTab}
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        {/* Center: Global Project Selector (SaaS Workspace Switcher) */}
+        <div className="flex items-center gap-2 max-w-sm w-full mx-2 hidden sm:flex">
+          <Select
+            value={selectedProjectId || ""}
+            onValueChange={(val) => {
+              setSelectedProjectId(val);
+              selectProject(val);
+            }}
+            disabled={projects.length === 0}
+          >
+            <SelectTrigger className="bg-[#12131b] border-[#222432] text-white font-medium text-xs h-8 w-full shadow-inner hover:border-zinc-700">
+              <div className="flex items-center gap-2 truncate">
+                <Building className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                <span className="truncate">
+                  {currentProject ? `${currentProject.title} (${currentProject.company})` : "Select Project..."}
+                </span>
+              </div>
+            </SelectTrigger>
+            <SelectContent className="bg-[#12131b] border-[#222432] text-white">
+              {projects.map((proj) => (
+                <SelectItem key={proj.id} value={proj.id} className="text-xs">
+                  <div className="flex items-center justify-between gap-4 w-full">
+                    <span className="font-semibold">{proj.title}</span>
+                    <span className="text-zinc-500 font-mono text-[10px]">({proj.company})</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Right: Cloud DB Status + Actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Cloud DB Status */}
+          <button
+            onClick={() => setActiveAdminTab("supabase")}
+            className={`hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border shrink-0 transition-colors ${
+              supabaseStatus === "connected"
+                ? "bg-emerald-950/60 text-emerald-400 border-emerald-800/80 hover:bg-emerald-900/60"
+                : supabaseStatus === "connecting"
+                ? "bg-blue-950/60 text-blue-400 border-blue-800/80 hover:bg-blue-900/60"
+                : "bg-zinc-800/60 text-amber-400 border-zinc-700 hover:bg-zinc-700"
+            }`}
+            title="Click to view Supabase Cloud Database & RLS status"
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${supabaseStatus === "connected" ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
+            <Database className="w-3 h-3" />
+            <span>{supabaseStatus === "connected" ? "PostgreSQL Active" : supabaseStatus === "connecting" ? "Connecting..." : "DB Setup"}</span>
+          </button>
+
+          {/* Quick Action: New Project */}
           <Button
             onClick={() => setIsNewProjectModalOpen(true)}
-            className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold h-9 px-3.5 gap-1.5"
+            size="sm"
+            className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold h-8 px-2.5 sm:px-3 gap-1.5 shadow-md shadow-blue-500/20"
           >
-            <Plus className="w-4 h-4" />
-            <span>New Client & Project</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">New Project</span>
+            <span className="sm:hidden">+ Proj</span>
           </Button>
 
+          {/* Export CSV */}
           <Button
             onClick={() => exportToSpreadsheetCSV()}
-            className="bg-[#064e3b] hover:bg-[#047857] text-white text-xs font-bold h-9 px-3.5 gap-1.5"
-            title="Download CSV for Google Sheets / Excel"
+            size="sm"
+            variant="outline"
+            className="border-[#272835] bg-[#12131b] hover:bg-[#1c1d28] text-zinc-300 hover:text-white text-xs h-8 px-2 sm:px-2.5 gap-1.5"
+            title="Export CSV"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Export CSV</span>
+            <span className="hidden lg:inline">CSV</span>
           </Button>
 
+          {/* Return to Client View */}
+          <Link
+            to="/portal"
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#181922] hover:bg-[#20212d] border border-[#272835] text-xs font-medium text-zinc-300 hover:text-white"
+            title="Preview Client Portal"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span>Preview</span>
+          </Link>
+
+          {/* Lock Console */}
           <Button
             onClick={handleAdminLogout}
-            className="bg-[#27272a] hover:bg-[#3f3f46] text-zinc-300 hover:text-white text-xs font-semibold h-9 px-3 gap-1.5 border border-[#3f3f46]"
+            size="sm"
+            variant="ghost"
+            className="text-zinc-400 hover:text-white hover:bg-[#181922] h-8 w-8 p-0"
             title="Lock Admin Console"
           >
             <Lock className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Lock Console</span>
           </Button>
         </div>
       </header>
 
-      {/* Main Admin Content */}
-      <main className="max-w-7xl mx-auto w-full px-4 sm:px-8 py-6 space-y-6 flex-1">
-        {/* Project Selector Bar */}
-        <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[#27272a] text-zinc-300 flex items-center justify-center shrink-0">
-              <Building className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="text-[11px] uppercase font-bold text-zinc-400 block">
-                Managing Project
+      {/* ─── 2. DUAL-PANE ENTERPRISE BODY ─── */}
+      <div className="flex-1 flex overflow-hidden w-full relative">
+        {/* Mobile Slide-Over Backdrop */}
+        {isMobileSidebarOpen && (
+          <div
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden"
+          />
+        )}
+
+        {/* ─── 2A. ENTERPRISE NAVIGATION SIDEBAR ─── */}
+        <aside
+          className={`
+            fixed lg:static top-14 bottom-0 left-0 z-50
+            ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+            ${isSidebarCollapsed ? "lg:w-[68px]" : "lg:w-[260px]"}
+            w-[260px] bg-[#0c0d14] border-r border-[#1f202b] flex flex-col justify-between shrink-0 transition-all duration-200 ease-in-out select-none
+          `}
+        >
+          {/* Scrollable Nav List */}
+          <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+            {/* Quick Workspace Switcher on Mobile (< sm) */}
+            <div className="sm:hidden mb-3">
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">
+                Active Project
               </span>
-              <div className="flex items-center gap-2">
-                <Select
-                  value={selectedProjectId}
-                  onValueChange={(val) => {
-                    setSelectedProjectId(val);
-                    selectProject(val);
-                  }}
-                >
-                  <SelectTrigger className="bg-[#121316] border-[#27272a] text-white font-bold text-sm h-9 w-[280px] sm:w-[360px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#18181b] border-[#27272a] text-white">
-                    {projects.map((proj) => (
-                      <SelectItem key={proj.id} value={proj.id}>
-                        {proj.title} ({proj.company})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <Select
+                value={selectedProjectId || ""}
+                onValueChange={(val) => {
+                  setSelectedProjectId(val);
+                  selectProject(val);
+                }}
+              >
+                <SelectTrigger className="bg-[#12131b] border-[#222432] text-white text-xs h-8">
+                  <SelectValue placeholder="Select project..." />
+                </SelectTrigger>
+                <SelectContent className="bg-[#12131b] border-[#222432] text-white">
+                  {projects.map((proj) => (
+                    <SelectItem key={proj.id} value={proj.id}>
+                      {proj.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Navigation Groups */}
+            {[
+              {
+                group: "Delivery Pipeline",
+                items: [
+                  { id: "stages", label: "6-Phase Stages", icon: Layers, count: currentProject ? currentProject.milestones?.length || 6 : 6 },
+                  { id: "urls", label: "Live Environments", icon: Globe, count: currentProject ? currentProject.liveUrls?.length || 0 : 0 },
+                ],
+              },
+              {
+                group: "Commerce & Finance",
+                items: [
+                  { id: "billing", label: "Invoices & Fees (INR)", icon: CreditCard, count: currentProject ? currentProject.payments?.length || 0 : 0 },
+                  { id: "referrals", label: "Referrals (4X)", icon: Gift, count: currentProject ? `${currentProject.referrals?.verifiedClientsCount || 0}/4` : "0/4" },
+                ],
+              },
+              {
+                group: "CRM & Support",
+                items: [
+                  { id: "tickets", label: "Support Desk", icon: Headphones, count: currentProject ? (currentProject.supportTickets || []).filter((t) => t.status !== "resolved").length : 0 },
+                  { id: "quotations", label: "Quotation Leads", icon: Inbox, count: quotationLeads.length },
+                  { id: "messages", label: "Broadcast & Feed", icon: MessageSquare, count: currentProject ? currentProject.comments?.length || 0 : 0 },
+                  { id: "reviews", label: "Ratings & NPS Radar", icon: Star, count: currentProject ? currentProject.ratings?.length || 0 : 0 },
+                ],
+              },
+              {
+                group: "Platform & Systems",
+                items: [
+                  { id: "spreadsheet", label: "Spreadsheet Table", icon: FileSpreadsheet, count: spreadsheetRows.length || 30 },
+                  { id: "supabase", label: "Supabase Database", icon: Database, count: supabaseStatus === "connected" ? "Live" : "Setup" },
+                  { id: "settings", label: "Lead Architect Pod", icon: Settings, count: 1 },
+                ],
+              },
+            ].map((section, sIdx) => (
+              <div key={sIdx} className="space-y-1">
+                {!isSidebarCollapsed && (
+                  <div className="px-2.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                    {section.group}
+                  </div>
+                )}
+                {section.items.map(({ id, label, icon: Icon, count }) => {
+                  const isActive = activeAdminTab === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => {
+                        setActiveAdminTab(id as any);
+                        setIsMobileSidebarOpen(false);
+                      }}
+                      title={label}
+                      className={`
+                        w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "justify-between px-2.5"} py-2 rounded-lg text-xs font-medium transition-all group
+                        ${
+                          isActive
+                            ? "bg-blue-600/15 text-blue-400 font-semibold border border-blue-500/30 shadow-sm"
+                            : "text-zinc-400 hover:text-zinc-200 hover:bg-[#161722]"
+                        }
+                      `}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Icon className={`w-4 h-4 shrink-0 transition-colors ${isActive ? "text-blue-400" : "text-zinc-400 group-hover:text-zinc-200"}`} />
+                        {!isSidebarCollapsed && <span className="truncate">{label}</span>}
+                      </div>
+
+                      {!isSidebarCollapsed && (
+                        <span
+                          className={`
+                            px-1.5 py-0.5 rounded text-[10px] font-mono shrink-0
+                            ${
+                              isActive
+                                ? "bg-blue-500/20 text-blue-300 font-bold"
+                                : "bg-[#181922] text-zinc-500 group-hover:text-zinc-400"
+                            }
+                          `}
+                        >
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          {/* Sidebar Footer: Admin Identity Card */}
+          <div className="p-3 border-t border-[#1f202b] bg-[#0a0b10]">
+            <div className={`flex items-center ${isSidebarCollapsed ? "justify-center" : "gap-2.5"}`}>
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-md">
+                {clientUser?.name ? clientUser.name.charAt(0).toUpperCase() : "A"}
+              </div>
+              {!isSidebarCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-white truncate leading-tight">
+                    {clientUser?.name || "Lead Architect Admin"}
+                  </div>
+                  <div className="text-[10px] text-zinc-400 truncate leading-tight mt-0.5">
+                    {clientUser?.email || "admin@oomalabs.com"}
+                  </div>
+                  <div className="mt-1">
+                    <span className="px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[9px] font-bold font-mono">
+                      SUPER ADMIN
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </aside>
+
+        {/* ─── 2B. MAIN WORKSPACE CANVAS ─── */}
+        <main className="flex-1 overflow-y-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6 bg-[#090a10]">
+          {/* TOP KPI STATS SUMMARY ROW */}
+          {currentProject && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+              {/* Stat 1: Stage Progress */}
+              <div className="bg-[#0e0f17] border border-[#1f202b] rounded-xl p-4 flex flex-col justify-between hover:border-zinc-700 transition-colors shadow-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                    Lifecycle Progress
+                  </span>
+                  <div className="w-6 h-6 rounded-md bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                    <Layers className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-2xl font-black text-white">
+                      {currentProject.overallProgress ?? 0}%
+                    </span>
+                    <span className="text-xs font-bold text-blue-400 truncate max-w-[130px]">
+                      {currentProject.milestones?.find((m) => m.status === "in_progress")?.title?.replace(/^(Phase|Sprint|Stage)\s*\d+[:\s-]*/i, "") || "Completed"}
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-[#1a1b26] rounded-full overflow-hidden mt-2">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(100, Math.max(0, currentProject.overallProgress || 0))}%` }}
+                    />
+                  </div>
+                  <div className="text-[10px] text-zinc-500 mt-1.5 flex items-center justify-between">
+                    <span>Target: {currentProject.targetLaunchDate || "TBD"}</span>
+                    <span>6 Stages Total</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stat 2: Revenue & Invoices */}
+              {(() => {
+                const totalBilled = (currentProject.payments || []).reduce((acc, p) => acc + (p.amount || 0), 0);
+                const paidBilled = (currentProject.payments || []).filter((p) => p.status === "paid").reduce((acc, p) => acc + (p.amount || 0), 0);
+                const paidCount = (currentProject.payments || []).filter((p) => p.status === "paid").length;
+                return (
+                  <div className="bg-[#0e0f17] border border-[#1f202b] rounded-xl p-4 flex flex-col justify-between hover:border-zinc-700 transition-colors shadow-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                        Milestone Revenue
+                      </span>
+                      <div className="w-6 h-6 rounded-md bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                        <CreditCard className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-2xl font-black text-white">
+                          {formatINR(totalBilled || 0)}
+                        </span>
+                        <span className="text-xs font-bold text-emerald-400">
+                          {paidCount}/{(currentProject.payments || []).length} Paid
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-[#1a1b26] rounded-full overflow-hidden mt-2">
+                        <div
+                          className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                          style={{ width: `${totalBilled > 0 ? Math.round((paidBilled / totalBilled) * 100) : 0}%` }}
+                        />
+                      </div>
+                      <div className="text-[10px] text-zinc-500 mt-1.5 flex items-center justify-between">
+                        <span>Paid: {formatINR(paidBilled)}</span>
+                        <span>Pending: {formatINR(Math.max(0, totalBilled - paidBilled))}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Stat 3: Support Health */}
+              {(() => {
+                const tickets = currentProject.supportTickets || [];
+                const openTickets = tickets.filter((t) => t.status !== "resolved");
+                const urgentCount = openTickets.filter((t) => t.priority === "urgent").length;
+                return (
+                  <div className="bg-[#0e0f17] border border-[#1f202b] rounded-xl p-4 flex flex-col justify-between hover:border-zinc-700 transition-colors shadow-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                        Support Desk & SLA
+                      </span>
+                      <div className="w-6 h-6 rounded-md bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                        <Headphones className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-2xl font-black text-white">
+                          {openTickets.length}
+                        </span>
+                        <span className={`text-xs font-bold ${urgentCount > 0 ? "text-red-400" : "text-emerald-400"}`}>
+                          {urgentCount > 0 ? `${urgentCount} Urgent` : "All Normal"}
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-[#1a1b26] rounded-full overflow-hidden mt-2">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${urgentCount > 0 ? "bg-red-500" : "bg-purple-500"}`}
+                          style={{ width: `${tickets.length > 0 ? Math.round(((tickets.length - openTickets.length) / tickets.length) * 100) : 100}%` }}
+                        />
+                      </div>
+                      <div className="text-[10px] text-zinc-500 mt-1.5 flex items-center justify-between">
+                        <span>Resolved: {tickets.length - openTickets.length}</span>
+                        <span>Total: {tickets.length}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Stat 4: Inbound Pipeline */}
+              <div className="bg-[#0e0f17] border border-[#1f202b] rounded-xl p-4 flex flex-col justify-between hover:border-zinc-700 transition-colors shadow-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                    Growth & Inbound
+                  </span>
+                  <div className="w-6 h-6 rounded-md bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                    <Inbox className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-2xl font-black text-white">
+                      {quotationLeads.length}
+                    </span>
+                    <span className="text-xs font-bold text-amber-400">
+                      Inbound Leads
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-[#1a1b26] rounded-full overflow-hidden mt-2">
+                    <div
+                      className="h-full bg-amber-500 rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(100, (quotationLeads.length / 10) * 100)}%` }}
+                    />
+                  </div>
+                  <div className="text-[10px] text-zinc-500 mt-1.5 flex items-center justify-between">
+                    <span>Referrals: {currentProject.referrals?.verifiedClientsCount || 0}/4</span>
+                    <span>Direct WhatsApp: Live</span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          <div className="flex items-center gap-4 text-xs text-zinc-400">
-            <div>
-              <span>Overall Progress: </span>
-              <strong className="text-white text-sm">{currentProject.overallProgress}%</strong>
-            </div>
-            <div className="h-4 w-px bg-[#27272a]" />
-            <div>
-              <span>Target Launch: </span>
-              <strong className="text-zinc-200">{currentProject.targetLaunchDate}</strong>
-            </div>
-            <div className="h-4 w-px bg-[#27272a]" />
-            <Link
-              to="/portal"
-              onClick={() => selectProject(currentProject.id)}
-              className="text-[#2563eb] hover:underline font-semibold flex items-center gap-1"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>Preview Client Portal</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Tab Selector: Stages, Billing, Live URLs, Spreadsheet */}
-        <div className="flex border-b border-[#27272a] gap-2 overflow-x-auto no-scrollbar">
-          {[
-            { id: "stages", label: "6-Phase Pipeline & Progress", icon: Layers, count: currentProject.milestones.length },
-            { id: "billing", label: "Invoices & Fees (INR)", icon: CreditCard, count: currentProject.payments.length },
-            {
-              id: "referrals",
-              label: "Referrals & Vetting (4-Client Unlock)",
-              icon: Gift,
-              count: `${currentProject.referrals.verifiedClientsCount || 0}/4`,
-            },
-            { id: "urls", label: "Live Deployment URLs", icon: Globe, count: currentProject.liveUrls.length },
-            { id: "spreadsheet", label: "Spreadsheet Table & CSV Sync", icon: FileSpreadsheet, count: "Sheets" },
-            {
-              id: "supabase",
-              label: "Supabase Cloud Database",
-              icon: Database,
-              count: supabaseStatus === "connected" ? "Live" : "Setup",
-            },
-          ].map(({ id, label, icon: Icon, count }) => {
-            const isActive = activeAdminTab === id;
-            return (
-              <button
-                key={id}
-                onClick={() => setActiveAdminTab(id as any)}
-                className={`flex items-center gap-2 py-3 px-4 border-b-2 text-xs font-semibold whitespace-nowrap transition-colors ${
-                  isActive
-                    ? "border-[#2563eb] text-white bg-[#18181b]"
-                    : "border-transparent text-zinc-400 hover:text-white"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{label}</span>
-                <span className="px-1.5 py-0.2 rounded bg-[#27272a] text-zinc-300 text-[10px]">
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+          {/* ========================================================= */}
+          {/* ACTIVE TAB CONTENT VIEW */}
+          {/* ========================================================= */}
 
         {/* ========================================================= */}
         {/* TAB 1: 6 DELIVERY STAGES & STAGE LOG NOTES */}
         {/* ========================================================= */}
-        {activeAdminTab === "stages" && (
+        
+        {!currentProject && activeAdminTab !== "supabase" && activeAdminTab !== "spreadsheet" ? (
+          <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-5 sm:p-12 text-center max-w-xl mx-auto space-y-4 my-4 sm:my-8">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center mx-auto">
+              <Building className="w-6 h-6 sm:w-7 sm:h-7" />
+            </div>
+            <h3 className="text-base sm:text-xl font-bold text-white">No Client Projects in Database</h3>
+            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-md mx-auto">
+              Your production dashboard is clean and ready. There are no demo or placeholder projects. Create a new client and project to initialize a dedicated 6-phase engineering lifecycle.
+            </p>
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 w-full">
+              <Button
+                onClick={() => setIsNewProjectModalOpen(true)}
+                className="w-full sm:w-auto bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold h-10 px-5 gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create New Client & Project</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsImportCsvOpen(true)}
+                className="w-full sm:w-auto border-[#27272a] bg-[#121316] hover:bg-[#202024] text-zinc-300 hover:text-white text-xs h-10 px-4 gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Import from CSV</span>
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {currentProject && activeAdminTab === "stages" && (
           <div className="space-y-5">
             {/* Stage Controls Header */}
             <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -904,15 +1588,26 @@ export const PortalAdminManager: React.FC = () => {
                             </Button>
                           </div>
                         ) : isUpcoming ? (
-                          <Button
-                            onClick={() => handleJumpToStage(idx)}
-                            variant="outline"
-                            size="sm"
-                            className="bg-[#1e293b] hover:bg-[#2563eb] hover:text-white text-zinc-300 border-[#334155] text-xs h-7 px-3 gap-1"
-                          >
-                            <span>Move to this stage</span>
-                            <ChevronRight className="w-3.5 h-3.5" />
-                          </Button>
+                          <div className="flex items-center gap-1.5">
+                            <Button
+                              onClick={() => handleJumpToStage(idx)}
+                              variant="outline"
+                              size="sm"
+                              className="bg-[#1e293b] hover:bg-[#2563eb] hover:text-white text-zinc-300 border-[#334155] text-xs h-7 px-3 gap-1"
+                            >
+                              <span>Move to this stage</span>
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setExpandedUpcomingStages((prev) => ({ ...prev, [milestone.id]: !prev[milestone.id] }))}
+                              className="sm:hidden text-zinc-400 hover:text-zinc-200 text-xs h-7 px-2 border border-[#334155]"
+                            >
+                              <span>{expandedUpcomingStages[milestone.id] ? "Hide" : "Notes"}</span>
+                            </Button>
+                          </div>
                         ) : (
                           <Button
                             onClick={() => handleJumpToStage(idx)}
@@ -927,7 +1622,7 @@ export const PortalAdminManager: React.FC = () => {
                     </div>
 
                     {/* Dedicated Editable Log Note Box (Fetched to Client Side) */}
-                    <div className="p-4 bg-[#121316] border-t border-[#27272a] rounded-b-xl space-y-2">
+                    <div className={`p-4 bg-[#121316] border-t border-[#27272a] rounded-b-xl space-y-2 ${isUpcoming && !expandedUpcomingStages[milestone.id] ? "hidden sm:block" : "block"}`}>
                       <div className="flex items-center justify-between text-xs">
                         <label className="text-zinc-300 font-semibold flex items-center gap-1.5">
                           <FileText className="w-3.5 h-3.5 text-[#2563eb]" />
@@ -980,7 +1675,7 @@ export const PortalAdminManager: React.FC = () => {
         {/* ========================================================= */}
         {/* TAB 2: INVOICES & PAYMENTS MANAGER (INR) */}
         {/* ========================================================= */}
-        {activeAdminTab === "billing" && (
+        {currentProject && activeAdminTab === "billing" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -1058,12 +1753,15 @@ export const PortalAdminManager: React.FC = () => {
                       </Button>
 
                       <button
+                        type="button"
                         onClick={() => {
                           if (confirm("Delete this invoice?")) {
                             deleteInvoice(currentProject.id, invoice.id);
                             toast.success("Invoice removed");
                           }
                         }}
+                        title="Delete Invoice"
+                        aria-label="Delete Invoice"
                         className="p-1.5 rounded hover:bg-red-950 text-zinc-400 hover:text-red-400"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -1079,7 +1777,7 @@ export const PortalAdminManager: React.FC = () => {
         {/* ========================================================= */}
         {/* TAB: REFERRALS & 4-CLIENT MILESTONE VETTING CONTROLS */}
         {/* ========================================================= */}
-        {activeAdminTab === "referrals" && (
+        {currentProject && activeAdminTab === "referrals" && (
           <div className="space-y-6">
             <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -1275,7 +1973,7 @@ export const PortalAdminManager: React.FC = () => {
         {/* ========================================================= */}
         {/* TAB 3: LIVE DEPLOYMENT URLS MANAGER */}
         {/* ========================================================= */}
-        {activeAdminTab === "urls" && (
+        {currentProject && activeAdminTab === "urls" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -1331,12 +2029,15 @@ export const PortalAdminManager: React.FC = () => {
                     </a>
 
                     <button
+                      type="button"
                       onClick={() => {
                         if (confirm("Delete this URL?")) {
                           deleteLiveUrl(currentProject.id, url.id);
                           toast.success("URL deleted");
                         }
                       }}
+                      title="Delete Environment URL"
+                      aria-label="Delete Environment URL"
                       className="p-2 rounded hover:bg-red-950 text-zinc-400 hover:text-red-400"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -1771,24 +2472,1101 @@ export const PortalAdminManager: React.FC = () => {
             </div>
           </div>
         )}
-      </main>
+
+        {/* ========================================================= */}
+        {/* TAB 4: CLIENT SUPPORT TICKETS & SLA */}
+        {/* ========================================================= */}
+        {activeAdminTab === "tickets" && (
+          <div className="space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  <Headphones className="w-5 h-5 text-blue-400 shrink-0" />
+                  <span>Support Tickets & SLA Tracking</span>
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Manage incoming client tickets, assign lead engineers, and respond with official updates.
+                </p>
+              </div>
+
+              {currentProject && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-zinc-400">Filter Status:</span>
+                  <div className="inline-flex rounded-lg bg-[#18181b] border border-[#27272a] p-0.5 text-xs">
+                    {(["all", "open", "in_progress", "resolved"] as const).map((st) => (
+                      <button
+                        key={st}
+                        onClick={() => setTicketFilterStatus(st)}
+                        className={`px-2.5 py-1 rounded capitalize font-medium transition-colors ${
+                          ticketFilterStatus === st
+                            ? "bg-[#2563eb] text-white"
+                            : "text-zinc-400 hover:text-white"
+                        }`}
+                      >
+                        {st.replace(/_/g, " ")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {!currentProject ? (
+              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-8 text-center text-zinc-400 text-xs">
+                Please select or create a project above to inspect support tickets.
+              </div>
+            ) : (() => {
+              const allTickets = currentProject.supportTickets || [];
+              const filteredTickets = allTickets.filter((t) => {
+                if (ticketFilterStatus !== "all" && t.status !== ticketFilterStatus) return false;
+                if (ticketFilterPriority !== "all" && t.priority !== ticketFilterPriority) return false;
+                return true;
+              });
+
+              const openCount = allTickets.filter((t) => t.status === "open").length;
+              const inProgCount = allTickets.filter((t) => t.status === "in_progress").length;
+              const resolvedCount = allTickets.filter((t) => t.status === "resolved").length;
+
+              return (
+                <div className="space-y-4">
+                  {/* Stats Row */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-3.5">
+                      <span className="text-[11px] text-zinc-400 block font-medium uppercase tracking-wider">Total Tickets</span>
+                      <strong className="text-lg font-bold text-white mt-0.5 block">{allTickets.length}</strong>
+                    </div>
+                    <div className="bg-[#18181b] border border-amber-900/30 rounded-xl p-3.5">
+                      <span className="text-[11px] text-amber-400 block font-medium uppercase tracking-wider">Awaiting Action</span>
+                      <strong className="text-lg font-bold text-amber-300 mt-0.5 block">{openCount}</strong>
+                    </div>
+                    <div className="bg-[#18181b] border border-blue-900/30 rounded-xl p-3.5">
+                      <span className="text-[11px] text-blue-400 block font-medium uppercase tracking-wider">In Progress</span>
+                      <strong className="text-lg font-bold text-blue-300 mt-0.5 block">{inProgCount}</strong>
+                    </div>
+                    <div className="bg-[#18181b] border border-emerald-900/30 rounded-xl p-3.5">
+                      <span className="text-[11px] text-emerald-400 block font-medium uppercase tracking-wider">Resolved</span>
+                      <strong className="text-lg font-bold text-emerald-300 mt-0.5 block">{resolvedCount}</strong>
+                    </div>
+                  </div>
+
+                  {/* Priority Filters */}
+                  <div className="flex items-center gap-2 text-xs text-zinc-400">
+                    <Filter className="w-3.5 h-3.5" />
+                    <span>Priority:</span>
+                    {(["all", "urgent", "high", "medium", "low"] as const).map((pr) => (
+                      <button
+                        key={pr}
+                        onClick={() => setTicketFilterPriority(pr)}
+                        className={`px-2 py-0.5 rounded text-[11px] capitalize transition-colors ${
+                          ticketFilterPriority === pr
+                            ? "bg-zinc-200 text-zinc-900 font-bold"
+                            : "bg-[#18181b] border border-[#27272a] text-zinc-400 hover:text-white"
+                        }`}
+                      >
+                        {pr}
+                      </button>
+                    ))}
+                  </div>
+
+                  {filteredTickets.length === 0 ? (
+                    <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-10 text-center space-y-2">
+                      <LifeBuoy className="w-8 h-8 text-zinc-600 mx-auto" />
+                      <h4 className="text-sm font-semibold text-white">No Tickets Match Filter</h4>
+                      <p className="text-xs text-zinc-500 max-w-md mx-auto">
+                        There are currently no tickets matching the selected filters. When clients submit tickets through their portal support tab, they will appear here.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {filteredTickets.map((ticket) => {
+                        const isResolved = ticket.status === "resolved";
+                        return (
+                          <div
+                            key={ticket.id}
+                            className={`bg-[#18181b] border rounded-xl p-4 sm:p-5 space-y-4 transition-all ${
+                              ticket.priority === "urgent" && !isResolved
+                                ? "border-red-900/60 bg-red-950/10"
+                                : "border-[#27272a]"
+                            }`}
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-[#27272a]">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-mono text-xs font-bold text-white bg-[#27272a] px-2 py-0.5 rounded">
+                                  {ticket.ticketNumber}
+                                </span>
+                                <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800/40">
+                                  {ticket.category.replace(/_/g, " ")}
+                                </span>
+                                <span
+                                  className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                                    ticket.priority === "urgent"
+                                      ? "bg-red-950 text-red-400 border border-red-800/50 animate-pulse"
+                                      : ticket.priority === "high"
+                                      ? "bg-amber-950 text-amber-400 border border-amber-800/50"
+                                      : ticket.priority === "medium"
+                                      ? "bg-blue-950 text-blue-400 border border-blue-800/50"
+                                      : "bg-zinc-800 text-zinc-400"
+                                  }`}
+                                >
+                                  {ticket.priority} priority
+                                </span>
+                                <span
+                                  className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                                    ticket.status === "resolved"
+                                      ? "bg-emerald-950 text-emerald-400 border border-emerald-800/50"
+                                      : ticket.status === "in_progress"
+                                      ? "bg-blue-950 text-blue-400 border border-blue-800/50"
+                                      : "bg-amber-950 text-amber-400 border border-amber-800/50"
+                                  }`}
+                                >
+                                  {ticket.status.replace(/_/g, " ")}
+                                </span>
+                              </div>
+
+                              <span className="text-[11px] text-zinc-500">
+                                Created: {ticket.createdAt || "Recently"}
+                              </span>
+                            </div>
+
+                            <div>
+                              <h4 className="text-sm sm:text-base font-bold text-white">{ticket.title}</h4>
+                              <p className="text-xs text-zinc-300 mt-1.5 p-3 rounded-lg bg-[#121316] border border-[#27272a]/60 leading-relaxed whitespace-pre-wrap">
+                                {ticket.description}
+                              </p>
+                            </div>
+
+                            {/* Assignee & Status Quick Actions */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                              <div>
+                                <Label className="text-[11px] text-zinc-400">Assigned Engineer</Label>
+                                <div className="flex gap-2 mt-1">
+                                  <Input
+                                    value={
+                                      ticketAssignee[ticket.id] !== undefined
+                                        ? ticketAssignee[ticket.id]
+                                        : ticket.assignedEngineer || "Arjun Mehta (Lead Systems Architect)"
+                                    }
+                                    onChange={(e) =>
+                                      setTicketAssignee((prev) => ({ ...prev, [ticket.id]: e.target.value }))
+                                    }
+                                    className="bg-[#121316] border-[#27272a] text-white text-xs h-8"
+                                    placeholder="Engineer name..."
+                                  />
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleUpdateTicketStatus(
+                                        ticket.id,
+                                        ticket.status,
+                                        ticketAssignee[ticket.id]
+                                      )
+                                    }
+                                    className="h-8 px-2.5 text-xs bg-[#27272a] hover:bg-[#3f3f46] text-white"
+                                  >
+                                    Save
+                                  </Button>
+                                </div>
+                              </div>
+
+                              <div>
+                                <Label className="text-[11px] text-zinc-400">Status Quick Actions</Label>
+                                <div className="flex flex-wrap gap-1.5 mt-1">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => handleUpdateTicketStatus(ticket.id, "open")}
+                                    className={`h-8 px-2.5 text-[11px] font-bold ${
+                                      ticket.status === "open"
+                                        ? "bg-amber-600 text-white"
+                                        : "bg-[#27272a] text-zinc-300 hover:text-white"
+                                    }`}
+                                  >
+                                    Mark Open
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => handleUpdateTicketStatus(ticket.id, "in_progress")}
+                                    className={`h-8 px-2.5 text-[11px] font-bold ${
+                                      ticket.status === "in_progress"
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-[#27272a] text-zinc-300 hover:text-white"
+                                    }`}
+                                  >
+                                    In Progress
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => handleUpdateTicketStatus(ticket.id, "resolved")}
+                                    className={`h-8 px-2.5 text-[11px] font-bold ${
+                                      ticket.status === "resolved"
+                                        ? "bg-emerald-600 text-white"
+                                        : "bg-[#27272a] text-zinc-300 hover:text-white"
+                                    }`}
+                                  >
+                                    Mark Resolved
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Updates / Thread */}
+                            {ticket.updates && ticket.updates.length > 0 && (
+                              <div className="space-y-2 pt-2 border-t border-[#27272a]">
+                                <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
+                                  Conversation & Updates Thread ({ticket.updates.length})
+                                </span>
+                                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                  {ticket.updates.map((up) => (
+                                    <div
+                                      key={up.id}
+                                      className={`p-2.5 rounded-lg text-xs leading-relaxed ${
+                                        up.sender.includes("Admin") || up.sender.includes("Arjun")
+                                          ? "bg-blue-950/30 border border-blue-900/40 text-blue-200"
+                                          : "bg-[#121316] border border-[#27272a] text-zinc-300"
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-between text-[11px] text-zinc-400 mb-1">
+                                        <strong className="text-white font-semibold">{up.sender}</strong>
+                                        <span>{up.time}</span>
+                                      </div>
+                                      <p>{up.message}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Reply Input */}
+                            <div className="pt-2 border-t border-[#27272a] space-y-2">
+                              <div className="flex gap-2">
+                                <Input
+                                  value={ticketReplyText[ticket.id] || ""}
+                                  onChange={(e) =>
+                                    setTicketReplyText((prev) => ({ ...prev, [ticket.id]: e.target.value }))
+                                  }
+                                  placeholder="Type official engineering support update or resolution for client..."
+                                  className="bg-[#121316] border-[#27272a] text-white text-xs h-9 flex-1"
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" && !e.shiftKey) {
+                                      e.preventDefault();
+                                      handleAdminReplyTicket(ticket.id);
+                                    }
+                                  }}
+                                />
+                                <Button
+                                  type="button"
+                                  onClick={() => handleAdminReplyTicket(ticket.id)}
+                                  className="h-9 px-3.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold gap-1.5"
+                                >
+                                  <Send className="w-3.5 h-3.5" />
+                                  <span>Send Reply</span>
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 5: CLIENT ACTIVITY & BROADCAST */}
+        {/* ========================================================= */}
+        {activeAdminTab === "messages" && (
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-blue-400 shrink-0" />
+                  <span>Client Activity & Announcement Stream</span>
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Broadcast official progress updates, pin high-priority announcements, and moderate client discussion.
+                </p>
+              </div>
+            </div>
+
+            {!currentProject ? (
+              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-8 text-center text-zinc-400 text-xs">
+                Please select or create a project above to view discussion stream.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Broadcast Composer */}
+                <form
+                  onSubmit={handlePostAdminComment}
+                  className="bg-[#18181b] border border-[#27272a] rounded-xl p-4 sm:p-5 space-y-3"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <img
+                      src={currentProject.dedicatedLead?.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80"}
+                      alt={currentProject.dedicatedLead?.name || "Arjun Mehta"}
+                      className="w-8 h-8 rounded-full border border-blue-500/40 object-cover"
+                    />
+                    <div>
+                      <h4 className="text-xs font-bold text-white">
+                        {currentProject.dedicatedLead?.name || "Arjun Mehta"}
+                      </h4>
+                      <span className="text-[10px] text-blue-400 font-medium">
+                        {currentProject.dedicatedLead?.role || "Lead Systems Architect (OOMA Labs)"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Textarea
+                    value={adminCommentText}
+                    onChange={(e) => setAdminCommentText(e.target.value)}
+                    placeholder="Broadcast an official engineering update, milestone delivery notice, or message to the client..."
+                    className="bg-[#121316] border-[#27272a] text-white text-xs min-h-[80px]"
+                  />
+
+                  <div className="flex items-center justify-between pt-1">
+                    <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={adminCommentIsPinned}
+                        onChange={(e) => setAdminCommentIsPinned(e.target.checked)}
+                        className="rounded border-[#27272a] bg-[#121316] text-[#2563eb] focus:ring-0"
+                      />
+                      <Pin className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Pin this message as Important Announcement</span>
+                    </label>
+
+                    <Button
+                      type="submit"
+                      className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold h-9 px-4 gap-1.5"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Broadcast to Client</span>
+                    </Button>
+                  </div>
+                </form>
+
+                {/* Comment Stream */}
+                {(() => {
+                  const comments = currentProject.comments || [];
+                  const sortedComments = [...comments].sort((a, b) => {
+                    if (a.isPinned && !b.isPinned) return -1;
+                    if (!a.isPinned && b.isPinned) return 1;
+                    return 0;
+                  });
+
+                  if (sortedComments.length === 0) {
+                    return (
+                      <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-8 text-center text-zinc-500 text-xs">
+                        No messages in the project feed yet. Use the composer above to post your first announcement.
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-3">
+                      {sortedComments.map((comment) => (
+                        <div
+                          key={comment.id}
+                          className={`bg-[#18181b] border rounded-xl p-4 sm:p-5 space-y-3 ${
+                            comment.isPinned
+                              ? "border-amber-500/50 bg-amber-950/10 shadow-sm"
+                              : "border-[#27272a]"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2.5">
+                              {comment.authorAvatar ? (
+                                <img
+                                  src={comment.authorAvatar}
+                                  alt={comment.authorName}
+                                  className="w-8 h-8 rounded-full border border-zinc-700 object-cover shrink-0"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-[#27272a] text-zinc-300 flex items-center justify-center font-bold text-xs shrink-0">
+                                  {comment.authorName.charAt(0)}
+                                </div>
+                              )}
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h5 className="text-xs font-bold text-white">{comment.authorName}</h5>
+                                  <span
+                                    className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded ${
+                                      comment.authorRole === "lead_architect" || comment.authorRole === "engineer"
+                                        ? "bg-blue-950 text-blue-400 border border-blue-800/40"
+                                        : "bg-zinc-800 text-zinc-300"
+                                    }`}
+                                  >
+                                    {comment.authorRole.replace(/_/g, " ")}
+                                  </span>
+                                  {comment.isPinned && (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-amber-950 text-amber-400 border border-amber-800/40 flex items-center gap-1">
+                                      <Pin className="w-2.5 h-2.5" />
+                                      <span>Pinned</span>
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-[11px] text-zinc-500">{comment.timestamp}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleTogglePinComment(comment.id)}
+                                title={comment.isPinned ? "Unpin message" : "Pin message"}
+                                className={`h-8 w-8 p-0 ${comment.isPinned ? "text-amber-400" : "text-zinc-500 hover:text-white"}`}
+                              >
+                                <Pin className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteComment(comment.id)}
+                                title="Delete comment"
+                                className="h-8 w-8 p-0 text-zinc-500 hover:text-red-400"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-zinc-200 leading-relaxed whitespace-pre-wrap pl-10">
+                            {comment.message}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 6: CLIENT RATINGS & REVIEWS / NPS */}
+        {/* ========================================================= */}
+        {activeAdminTab === "reviews" && (
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  <Star className="w-5 h-5 text-amber-400 shrink-0" />
+                  <span>Client Ratings, Reviews & NPS</span>
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Inspect client satisfaction metrics, 4-vector delivery performance, and written testimonials.
+                </p>
+              </div>
+            </div>
+
+            {!currentProject ? (
+              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-8 text-center text-zinc-400 text-xs">
+                Please select or create a project above to inspect client ratings.
+              </div>
+            ) : (() => {
+              const ratings = currentProject.ratings || [];
+              const hasRatings = ratings.length > 0;
+              const avgScore = hasRatings
+                ? (ratings.reduce((acc, r) => acc + (r.overallScore || 5), 0) / ratings.length).toFixed(1)
+                : "—";
+
+              const recommendCount = ratings.filter((r) => r.clientRecommendation !== false).length;
+              const npsPercent = hasRatings ? `${Math.round((recommendCount / ratings.length) * 100)}%` : "—";
+
+              const avgEng = hasRatings
+                ? (ratings.reduce((acc, r) => acc + (r.categories?.engineeringQuality || 5), 0) / ratings.length).toFixed(1)
+                : "—";
+              const avgComm = hasRatings
+                ? (ratings.reduce((acc, r) => acc + (r.categories?.communication || 5), 0) / ratings.length).toFixed(1)
+                : "—";
+              const avgVel = hasRatings
+                ? (ratings.reduce((acc, r) => acc + (r.categories?.velocity || 5), 0) / ratings.length).toFixed(1)
+                : "—";
+              const avgDesign = hasRatings
+                ? (ratings.reduce((acc, r) => acc + (r.categories?.uiUxDesign || 5), 0) / ratings.length).toFixed(1)
+                : "—";
+
+              return (
+                <div className="space-y-4">
+                  {!hasRatings && (
+                    <div className="bg-[#18181b] border border-amber-500/20 rounded-xl p-6 text-center space-y-2">
+                      <div className="w-10 h-10 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center mx-auto mb-1">
+                        <Star className="w-5 h-5 text-amber-400" />
+                      </div>
+                      <h4 className="text-sm font-bold text-white">No Client Reviews Submitted Yet</h4>
+                      <p className="text-xs text-zinc-400 max-w-md mx-auto">
+                        There are currently 0 evaluations for <strong>"{currentProject.title}"</strong>.
+                        When clients rate deliverables in their portal, real scores, vector breakdowns, and written feedback will display here.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* KPI Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-4 sm:p-5 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+                        <Star className="w-6 h-6 fill-amber-400" />
+                      </div>
+                      <div>
+                        <span className="text-[11px] text-zinc-400 uppercase tracking-wider block font-medium">Average Overall Score</span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-2xl font-bold text-white">{avgScore}</span>
+                          <span className="text-xs text-zinc-400">/ 5.0</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-4 sm:p-5 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0">
+                        <ThumbsUp className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <span className="text-[11px] text-zinc-400 uppercase tracking-wider block font-medium">Client Recommendation Rate</span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-2xl font-bold text-emerald-400">{npsPercent}</span>
+                          <span className="text-xs text-zinc-400">NPS score</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-4 sm:p-5 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center justify-center shrink-0">
+                        <CheckCircle2 className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <span className="text-[11px] text-zinc-400 uppercase tracking-wider block font-medium">Total Evaluations</span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-2xl font-bold text-white">{ratings.length}</span>
+                          <span className="text-xs text-zinc-400">client review(s)</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vector Performance Breakdown */}
+                  <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-5 space-y-4">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                      4-Vector Delivery Performance Radar
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-zinc-300 font-medium">Engineering & Code Quality</span>
+                          <span className="text-white font-bold">{avgEng} / 5.0</span>
+                        </div>
+                        <div className="w-full bg-[#121316] rounded-full h-2">
+                          <div
+                            className="bg-blue-500 h-2 rounded-full"
+                            style={{ width: `${hasRatings ? (Number(avgEng) / 5) * 100 : 0}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-zinc-300 font-medium">Communication & Transparency</span>
+                          <span className="text-white font-bold">{avgComm} / 5.0</span>
+                        </div>
+                        <div className="w-full bg-[#121316] rounded-full h-2">
+                          <div
+                            className="bg-emerald-500 h-2 rounded-full"
+                            style={{ width: `${hasRatings ? (Number(avgComm) / 5) * 100 : 0}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-zinc-300 font-medium">Sprint Delivery Velocity</span>
+                          <span className="text-white font-bold">{avgVel} / 5.0</span>
+                        </div>
+                        <div className="w-full bg-[#121316] rounded-full h-2">
+                          <div
+                            className="bg-purple-500 h-2 rounded-full"
+                            style={{ width: `${hasRatings ? (Number(avgVel) / 5) * 100 : 0}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-zinc-300 font-medium">UI/UX & Design Precision</span>
+                          <span className="text-white font-bold">{avgDesign} / 5.0</span>
+                        </div>
+                        <div className="w-full bg-[#121316] rounded-full h-2">
+                          <div
+                            className="bg-amber-500 h-2 rounded-full"
+                            style={{ width: `${hasRatings ? (Number(avgDesign) / 5) * 100 : 0}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reviews List */}
+                  {ratings.length === 0 ? (
+                    <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-8 text-center text-zinc-500 text-xs">
+                      No ratings submitted yet for this project. Once the client evaluates milestone deliverables in their portal, their review will appear here.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {ratings.map((rating) => (
+                        <div
+                          key={rating.id}
+                          className="bg-[#18181b] border border-[#27272a] rounded-xl p-4 sm:p-5 space-y-3"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-[#27272a] text-zinc-300 flex items-center justify-center font-bold text-xs shrink-0">
+                                {rating.authorName?.charAt(0) || "C"}
+                              </div>
+                              <div>
+                                <h5 className="text-xs font-bold text-white">{rating.authorName}</h5>
+                                <span className="text-[11px] text-zinc-500">{rating.submittedAt || "Recently"}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-0.5 text-amber-400">
+                                {[...Array(rating.overallScore || 5)].map((_, i) => (
+                                  <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                ))}
+                              </div>
+                              {rating.clientRecommendation !== false && (
+                                <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  <span>Recommends OOMA Labs</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-zinc-300 leading-relaxed italic bg-[#121316] p-3 rounded-lg border border-[#27272a]/60">
+                            "{rating.feedbackText}"
+                          </p>
+
+                          <div className="flex flex-wrap gap-2 text-[10px] text-zinc-400 pt-1">
+                            <span className="px-2 py-0.5 rounded bg-[#27272a]">
+                              Engineering: <strong>{rating.categories?.engineeringQuality || 5}/5</strong>
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-[#27272a]">
+                              Communication: <strong>{rating.categories?.communication || 5}/5</strong>
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-[#27272a]">
+                              Velocity: <strong>{rating.categories?.velocity || 5}/5</strong>
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-[#27272a]">
+                              UI/UX: <strong>{rating.categories?.uiUxDesign || 5}/5</strong>
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 7: QUOTATIONS & LEADS PIPELINE */}
+        {/* ========================================================= */}
+        {activeAdminTab === "quotations" && (
+          <div className="space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  <Inbox className="w-5 h-5 text-blue-400 shrink-0" />
+                  <span>Prospective Client Quotations & Lead Pipeline</span>
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Inquiries from the Free Quotation Calculator and AI Quote Widget. Convert qualified leads into active projects with 1 click.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setIsNewProjectModalOpen(true)}
+                  className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold h-9 px-3.5 gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Onboard New Client</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Inquiries List */}
+            {quotationLeads.length === 0 ? (
+              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-10 text-center space-y-2">
+                <Inbox className="w-8 h-8 text-zinc-600 mx-auto" />
+                <h4 className="text-sm font-semibold text-white">No Quotation Inquiries Yet</h4>
+                <p className="text-xs text-zinc-500 max-w-md mx-auto">
+                  When potential clients request estimates or submit system specs via the website, their details appear here for immediate follow-up.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {quotationLeads.map((lead) => (
+                  <div
+                    key={lead.id}
+                    className="bg-[#18181b] border border-[#27272a] rounded-xl p-4 sm:p-5 space-y-3.5"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-[#27272a]">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-bold text-white">{lead.contactName}</h4>
+                          <span className="text-xs text-zinc-400 font-medium">({lead.companyName})</span>
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                              lead.status === "converted"
+                                ? "bg-emerald-950 text-emerald-400 border border-emerald-800/40"
+                                : lead.status === "contacted"
+                                ? "bg-blue-950 text-blue-400 border border-blue-800/40"
+                                : "bg-amber-950 text-amber-400 border border-amber-800/40"
+                            }`}
+                          >
+                            {(lead.status || "pending_review").replace(/_/g, " ")}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-zinc-500">
+                          Submitted: {new Date(lead.submittedAt || Date.now()).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleConvertQuotation(lead)}
+                          className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-8 px-3 gap-1.5 shadow-sm"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>1-Click Onboard Project</span>
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteQuotation(lead.id)}
+                          className="h-8 w-8 p-0 text-zinc-500 hover:text-red-400"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                      <div className="p-2.5 rounded-lg bg-[#121316] border border-[#27272a]">
+                        <span className="text-[10px] uppercase font-bold text-zinc-500 block">Contact Info</span>
+                        <div className="mt-1 space-y-0.5 text-zinc-200">
+                          <a href={`mailto:${lead.email}`} className="text-blue-400 hover:underline block truncate">
+                            {lead.email}
+                          </a>
+                          <span className="block">{lead.phone}</span>
+                        </div>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-[#121316] border border-[#27272a]">
+                        <span className="text-[10px] uppercase font-bold text-zinc-500 block">Category</span>
+                        <span className="font-semibold text-white block mt-1 truncate">
+                          {lead.projectCategory || "Custom Intelligent System"}
+                        </span>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-[#121316] border border-[#27272a]">
+                        <span className="text-[10px] uppercase font-bold text-zinc-500 block">Budget Tier</span>
+                        <span className="font-bold text-emerald-400 block mt-1">
+                          {lead.budgetRange || "₹5,00,000 - ₹10,00,000"}
+                        </span>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-[#121316] border border-[#27272a]">
+                        <span className="text-[10px] uppercase font-bold text-zinc-500 block">Target Timeline</span>
+                        <span className="font-medium text-zinc-300 block mt-1">
+                          {lead.timeline || "4-6 Weeks"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {lead.requirementScope && (
+                      <div className="p-3 rounded-lg bg-[#121316] border border-[#27272a] text-xs text-zinc-300 leading-relaxed">
+                        <strong className="text-white block mb-1">Requirement Scope:</strong>
+                        {lead.requirementScope}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 pt-1 text-xs text-zinc-400">
+                      <span>Status:</span>
+                      {(["pending_review", "contacted", "converted"] as const).map((st) => (
+                        <button
+                          key={st}
+                          onClick={() => handleUpdateQuotationStatus(lead.id, st)}
+                          className={`px-2 py-0.5 rounded text-[11px] capitalize transition-colors ${
+                            lead.status === st
+                              ? "bg-zinc-200 text-zinc-900 font-bold"
+                              : "bg-[#27272a] text-zinc-300 hover:text-white"
+                          }`}
+                        >
+                          {st.replace(/_/g, " ")}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 8: PROJECT SETTINGS & LEAD ARCHITECT */}
+        {/* ========================================================= */}
+        {currentProject && activeAdminTab === "settings" && (
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-blue-400 shrink-0" />
+                  <span>Project Configuration & Dedicated Lead Architect</span>
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Configure project metadata, tier, delivery dates, and assign the Dedicated Lead Architect.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveProjectSettings} className="space-y-5">
+              {/* Card 1: Project Metadata */}
+              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-5 sm:p-6 space-y-4">
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <Building className="w-4 h-4 text-blue-400" />
+                  <span>Project Scope & Metadata</span>
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs text-zinc-300">Project Title *</Label>
+                    <Input
+                      value={settingsTitle}
+                      onChange={(e) => setSettingsTitle(e.target.value)}
+                      required
+                      className="bg-[#121316] border-[#27272a] text-white text-xs h-9 mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-zinc-300">Client Organization / Company *</Label>
+                    <Input
+                      value={settingsCompany}
+                      onChange={(e) => setSettingsCompany(e.target.value)}
+                      required
+                      className="bg-[#121316] border-[#27272a] text-white text-xs h-9 mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs text-zinc-300">Project Summary / Scope Overview</Label>
+                  <Textarea
+                    value={settingsSummary}
+                    onChange={(e) => setSettingsSummary(e.target.value)}
+                    rows={3}
+                    className="bg-[#121316] border-[#27272a] text-white text-xs mt-1"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <Label className="text-xs text-zinc-300">Engineering Tier</Label>
+                    <Select
+                      value={settingsTier}
+                      onValueChange={(val: any) => setSettingsTier(val)}
+                    >
+                      <SelectTrigger className="bg-[#121316] border-[#27272a] text-white text-xs h-9 mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#18181b] border-[#27272a] text-white">
+                        <SelectItem value="Strategic Engineering">Strategic Engineering</SelectItem>
+                        <SelectItem value="Enterprise AI Suite">Enterprise AI Suite</SelectItem>
+                        <SelectItem value="Cloud System">Cloud System</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-zinc-300">Lifecycle Status</Label>
+                    <Select
+                      value={settingsStatus}
+                      onValueChange={(val: any) => setSettingsStatus(val)}
+                    >
+                      <SelectTrigger className="bg-[#121316] border-[#27272a] text-white text-xs h-9 mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#18181b] border-[#27272a] text-white">
+                        <SelectItem value="in_development">In Development</SelectItem>
+                        <SelectItem value="in_testing">In QA / Testing</SelectItem>
+                        <SelectItem value="live_deployed">Live Deployed</SelectItem>
+                        <SelectItem value="maintenance">Maintenance</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-zinc-300">Start Date</Label>
+                    <Input
+                      value={settingsStartDate}
+                      onChange={(e) => setSettingsStartDate(e.target.value)}
+                      placeholder="e.g. Jan 15, 2026"
+                      className="bg-[#121316] border-[#27272a] text-white text-xs h-9 mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-zinc-300">Target Launch Date</Label>
+                    <Input
+                      value={settingsTargetDate}
+                      onChange={(e) => setSettingsTargetDate(e.target.value)}
+                      placeholder="e.g. Mar 30, 2026"
+                      className="bg-[#121316] border-[#27272a] text-white text-xs h-9 mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs text-zinc-300">Tech Stack Tags (comma separated)</Label>
+                  <Input
+                    value={settingsTechStack}
+                    onChange={(e) => setSettingsTechStack(e.target.value)}
+                    placeholder="React, TypeScript, Node.js, PostgreSQL, TailwindCSS"
+                    className="bg-[#121316] border-[#27272a] text-white text-xs h-9 mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Card 2: Dedicated Lead Architect */}
+              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-5 sm:p-6 space-y-4">
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <User className="w-4 h-4 text-emerald-400" />
+                  <span>Dedicated Lead Systems Architect (OOMA Labs)</span>
+                </h4>
+                <p className="text-xs text-zinc-400">
+                  This architect is presented to the client as their primary contact, with direct WhatsApp hotline and SLA commitment.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs text-zinc-300">Architect Full Name</Label>
+                    <Input
+                      value={leadName}
+                      onChange={(e) => setLeadName(e.target.value)}
+                      required
+                      placeholder="Arjun Mehta"
+                      className="bg-[#121316] border-[#27272a] text-white text-xs h-9 mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-zinc-300">Official Designation</Label>
+                    <Input
+                      value={leadRole}
+                      onChange={(e) => setLeadRole(e.target.value)}
+                      required
+                      placeholder="Lead Systems Architect (OOMA Labs Hyderabad)"
+                      className="bg-[#121316] border-[#27272a] text-white text-xs h-9 mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-xs text-zinc-300">Email Address</Label>
+                    <Input
+                      value={leadEmail}
+                      onChange={(e) => setLeadEmail(e.target.value)}
+                      placeholder="arjun@oomalabs.com"
+                      className="bg-[#121316] border-[#27272a] text-white text-xs h-9 mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-zinc-300">WhatsApp Hotline / Phone</Label>
+                    <Input
+                      value={leadPhone}
+                      onChange={(e) => setLeadPhone(e.target.value)}
+                      placeholder="+91 8006662364"
+                      className="bg-[#121316] border-[#27272a] text-white text-xs h-9 mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-zinc-300">Avatar Image URL</Label>
+                    <Input
+                      value={leadAvatar}
+                      onChange={(e) => setLeadAvatar(e.target.value)}
+                      placeholder="https://..."
+                      className="bg-[#121316] border-[#27272a] text-white text-xs h-9 mt-1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex items-center justify-between pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    if (window.confirm(`Are you sure you want to permanently delete "${currentProject.title}" (${currentProject.company})? This action cannot be undone.`)) {
+                      handleDeleteCurrentProject();
+                    }
+                  }}
+                  className="bg-red-950/20 hover:bg-red-950/50 text-red-400 border border-red-800/40 text-xs font-bold h-9 gap-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Project...</span>
+                </Button>
+
+                <Button
+                  type="submit"
+                  className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold h-9 px-6 gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>Save Project & Architect Settings</span>
+                </Button>
+              </div>
+            </form>
+          </div>
+        )}
+        </main>
+      </div>
 
       {/* ========================================================= */}
       {/* MODAL: ONBOARD NEW CLIENT & PROJECT */}
       {/* ========================================================= */}
       <Dialog open={isNewProjectModalOpen} onOpenChange={setIsNewProjectModalOpen}>
-        <DialogContent className="max-w-xl bg-[#18181b] border border-[#27272a] text-white rounded-xl p-6 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-xl bg-[#18181b] border border-[#27272a] text-white rounded-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-white">
+            <DialogTitle className="text-lg sm:text-xl font-bold text-white">
               Onboard New Client & Create Project
             </DialogTitle>
             <DialogDescription className="text-zinc-400 text-xs">
-              When a new client signs up, create their workspace project here. They will immediately see this when logging in.
+              When a new client signs up, create their project here. They will immediately see this when logging in.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleCreateProject} className="space-y-4 pt-2">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-zinc-300">Client Contact Person Name *</Label>
                 <Input
@@ -1813,7 +3591,7 @@ export const PortalAdminManager: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-zinc-300">Company / Organization *</Label>
                 <Input
@@ -1858,7 +3636,7 @@ export const PortalAdminManager: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-zinc-300">Target Launch Date</Label>
                 <Input
@@ -1904,9 +3682,9 @@ export const PortalAdminManager: React.FC = () => {
       {/* MODAL: ADD PIPELINE PHASE */}
       {/* ========================================================= */}
       <Dialog open={isAddMilestoneOpen} onOpenChange={setIsAddMilestoneOpen}>
-        <DialogContent className="max-w-md bg-[#18181b] border border-[#27272a] text-white rounded-xl p-6">
+        <DialogContent className="w-[95vw] sm:max-w-md bg-[#18181b] border border-[#27272a] text-white rounded-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white">Add New Pipeline Phase</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg font-bold text-white">Add New Pipeline Phase</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleAddMilestoneSubmit} className="space-y-3 pt-2">
@@ -1962,9 +3740,9 @@ export const PortalAdminManager: React.FC = () => {
       {/* MODAL: ADD MILESTONE INVOICE (INR) */}
       {/* ========================================================= */}
       <Dialog open={isAddInvoiceOpen} onOpenChange={setIsAddInvoiceOpen}>
-        <DialogContent className="max-w-md bg-[#18181b] border border-[#27272a] text-white rounded-xl p-6">
+        <DialogContent className="w-[95vw] sm:max-w-md bg-[#18181b] border border-[#27272a] text-white rounded-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white">Issue Milestone Invoice (INR)</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg font-bold text-white">Issue Milestone Invoice (INR)</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleAddInvoiceSubmit} className="space-y-3 pt-2">
@@ -2020,9 +3798,9 @@ export const PortalAdminManager: React.FC = () => {
       {/* MODAL: ADD LIVE URL */}
       {/* ========================================================= */}
       <Dialog open={isAddUrlOpen} onOpenChange={setIsAddUrlOpen}>
-        <DialogContent className="max-w-md bg-[#18181b] border border-[#27272a] text-white rounded-xl p-6">
+        <DialogContent className="w-[95vw] sm:max-w-md bg-[#18181b] border border-[#27272a] text-white rounded-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white">Add Live Deployment URL</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg font-bold text-white">Add Live Deployment URL</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleAddUrlSubmit} className="space-y-3 pt-2">
@@ -2083,9 +3861,9 @@ export const PortalAdminManager: React.FC = () => {
       {/* MODAL: SPREADSHEET CSV IMPORT */}
       {/* ========================================================= */}
       <Dialog open={isImportCsvOpen} onOpenChange={setIsImportCsvOpen}>
-        <DialogContent className="max-w-lg bg-[#18181b] border border-[#27272a] text-white rounded-xl p-6">
+        <DialogContent className="w-[95vw] sm:max-w-lg bg-[#18181b] border border-[#27272a] text-white rounded-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white">
+            <DialogTitle className="text-base sm:text-lg font-bold text-white">
               Import from Spreadsheet CSV
             </DialogTitle>
             <DialogDescription className="text-zinc-400 text-xs">
@@ -2133,6 +3911,43 @@ export const PortalAdminManager: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ========================================================= */}
+      {/* MODAL: DELETE PROJECT CONFIRMATION */}
+      {/* ========================================================= */}
+      <Dialog open={isDeleteProjectOpen} onOpenChange={setIsDeleteProjectOpen}>
+        <DialogContent className="w-[95vw] sm:max-w-md bg-[#18181b] border border-[#27272a] text-white rounded-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+              <span>Delete Client Project</span>
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400 text-xs pt-1">
+              Are you sure you want to permanently delete <strong>"{currentProject?.title}"</strong>?
+              This will remove all associated milestones, invoices, and live URLs from the production database.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex gap-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeleteProjectOpen(false)}
+              className="flex-1 bg-[#27272a] text-white text-xs h-9 border-[#3f3f46]"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleDeleteCurrentProject}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-bold h-9"
+            >
+              Confirm Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };

@@ -85,10 +85,12 @@ export const PortalTicketModal: React.FC<PortalTicketModalProps> = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#18181b] border-[#27272a] text-white">
+                  <SelectItem value="general_inquiry">General Inquiry</SelectItem>
                   <SelectItem value="bug">Bug / Issue</SelectItem>
                   <SelectItem value="change_request">Change Request</SelectItem>
                   <SelectItem value="feature">New Feature</SelectItem>
                   <SelectItem value="billing">Invoicing Question</SelectItem>
+                  <SelectItem value="security">Security</SelectItem>
                 </SelectContent>
               </Select>
             </div>
