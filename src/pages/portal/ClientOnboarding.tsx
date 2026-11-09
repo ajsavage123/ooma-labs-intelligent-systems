@@ -211,7 +211,7 @@ export const ClientOnboarding: React.FC = () => {
                   </h1>
                   <p className="text-[10px] text-purple-200/70 leading-snug mt-0.5 max-w-[190px]">
                     {step === 1
-                      ? "Share your details to set up your workspace."
+                      ? "Share your details to set up your account."
                       : "Tell us what you want our engineering team to build."}
                   </p>
                 </div>
@@ -233,7 +233,7 @@ export const ClientOnboarding: React.FC = () => {
                 </h1>
                 <p className="text-xs sm:text-sm text-purple-200/70 max-w-sm mx-auto leading-relaxed font-normal">
                   {step === 1
-                    ? "Share your details to set up your client workspace and project request."
+                    ? "Share your details to set up your account."
                     : "Tell us what you want our engineering team to build so we can prepare your project dashboard."}
                 </p>
               </div>
