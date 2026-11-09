@@ -100,6 +100,22 @@ export const ClientPortalLogin: React.FC = () => {
   // Notice: Do not force-redirect away from the authentication page so the user can freely view/use sign-in and sign-up
   // Instead, if already logged in, offer a quick banner to go to portal or sign out
 
+  // Preload both auth characters so mode switching animates smoothly on first interaction
+  useEffect(() => {
+    const urls = ["/auth-signin-character.png", "/auth-signup-character.png"];
+    const imgs = urls.map((url) => {
+      const img = new Image();
+      img.decoding = "async";
+      img.src = url;
+      return img;
+    });
+    return () => {
+      imgs.forEach((img) => {
+        img.src = "";
+      });
+    };
+  }, []);
+
   // Load remembered email if present
   useEffect(() => {
     try {
