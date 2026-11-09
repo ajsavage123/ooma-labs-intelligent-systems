@@ -5,7 +5,7 @@
  * @param data - The form key-value pairs to submit
  * @returns Promise<boolean> - True if the submission request is sent successfully or skipped (if not configured), false on failure
  */
-export async function submitToGoogleSheets(formType: string, data: Record<string, any>): Promise<boolean> {
+export async function submitToGoogleSheets(formType: string, data: Record<string, unknown>): Promise<boolean> {
   const scriptUrl = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
   if (!scriptUrl) {
     console.warn(`[Google Sheets] Warning: VITE_GOOGLE_SCRIPT_URL is not configured. Submission for "${formType}" skipped.`, data);

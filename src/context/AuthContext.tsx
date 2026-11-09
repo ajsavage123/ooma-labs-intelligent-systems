@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useReducer } from "react";
 import { User, PartnershipApplication, Project, Product, Stage } from "../types";
 import { v4 as uuidv4 } from "uuid";

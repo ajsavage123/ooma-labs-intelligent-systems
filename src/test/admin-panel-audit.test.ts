@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 describe("Admin Panel Audit 2026-10-23 Remediations", () => {
   it("M2: computes honest metrics when 0 ratings exist (no fake 5.0 / 100% NPS)", () => {
-    const ratings: any[] = [];
+    const ratings: { score?: number }[] = [];
 
     const totalEvals = ratings.length;
     const avgScore = totalEvals > 0

@@ -41,7 +41,7 @@ interface InputFieldProps {
   refVar: React.RefObject<HTMLInputElement>;
   type?: string;
   placeholder: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   error?: boolean;
 }
 
@@ -70,7 +70,7 @@ interface CustomSelectProps {
   onChange: (v: string) => void;
   options: string[];
   placeholder: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   error?: boolean;
 }
 
@@ -293,10 +293,6 @@ const QuoteChatWidget: React.FC = () => {
   const location = useLocation();
   const isPortalRoute = location.pathname.startsWith("/portal");
 
-  if (isPortalRoute) {
-    return null;
-  }
-
   const [widgetState, setWidgetState] = useState<WidgetState>("idle");
   const [mood, setMood] = useState<"happy" | "sad">("happy");
   const [hasUnread, setHasUnread] = useState(false);
@@ -324,7 +320,7 @@ const QuoteChatWidget: React.FC = () => {
   const [service, setService] = useState("");
   const [errs, setErrs]       = useState<Record<string, string>>({});
   const [showBubble, setShowBubble] = useState(true);
-  const sadTimeoutRef = useRef<any>(null);
+  const sadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
@@ -499,6 +495,10 @@ const QuoteChatWidget: React.FC = () => {
 
   /* Check if the quotation chat panel is currently open */
   const isFormOpen = widgetState === "chat";
+
+  if (isPortalRoute) {
+    return null;
+  }
 
   return (
     <>

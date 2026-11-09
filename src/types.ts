@@ -165,6 +165,23 @@ export interface ClientPayment {
 export type TicketPriority = "urgent" | "high" | "medium" | "low";
 export type TicketStatus = "open" | "in_progress" | "resolved";
 
+export interface TicketAttachment {
+  id: string;
+  name: string;
+  size: number;
+  url: string;
+  type: string;
+}
+
+export interface SupportTicketUpdate {
+  id: string;
+  sender: string;
+  senderRole?: "client" | "engineer" | "admin";
+  message: string;
+  time: string;
+  attachments?: TicketAttachment[];
+}
+
 export interface SupportTicket {
   id: string;
   ticketNumber: string;
@@ -176,12 +193,14 @@ export interface SupportTicket {
   createdAt: string;
   updatedAt: string;
   assignedEngineer: string;
-  updates: {
-    id: string;
-    sender: string;
-    message: string;
-    time: string;
-  }[];
+  attachments?: TicketAttachment[];
+  deviceInfo?: {
+    os?: string;
+    browser?: string;
+    screen?: string;
+    pageUrl?: string;
+  };
+  updates: SupportTicketUpdate[];
 }
 
 export type ReferralVettingStatus = 

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useClientPortal } from "../../context/ClientPortalContext";
-import { SupportTicket, TicketPriority } from "../../types";
+import { SupportTicket, TicketPriority, TicketAttachment } from "../../types";
 import {
   Headphones,
   Plus,
@@ -10,11 +10,13 @@ import {
   ChevronUp,
   User,
   PhoneCall,
+  FileImage,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { PortalTicketModal } from "./PortalTicketModal";
+import { PortalImageLightbox } from "./PortalImageLightbox";
 
 export const PortalSupport: React.FC = () => {
   const { activeProject, createSupportTicket, addTicketReply } = useClientPortal();
@@ -23,6 +25,7 @@ export const PortalSupport: React.FC = () => {
     activeProject.supportTickets[0]?.id || null
   );
   const [replyText, setReplyText] = useState<{ [key: string]: string }>({});
+  const [previewAttachment, setPreviewAttachment] = useState<TicketAttachment | null>(null);
 
   const handleSendReply = (ticketId: string) => {
     const text = replyText[ticketId];
@@ -179,6 +182,28 @@ export const PortalSupport: React.FC = () => {
                       {ticket.description}
                     </p>
 
+                    {/* Attached Screenshots */}
+                    {ticket.attachments && ticket.attachments.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] uppercase font-semibold text-zinc-400 tracking-wider">
+                          Attached Screenshots ({ticket.attachments.length})
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {ticket.attachments.map((att) => (
+                            <button
+                              key={att.id}
+                              type="button"
+                              onClick={() => setPreviewAttachment(att)}
+                              className="flex items-center gap-2 p-1.5 rounded-lg bg-[#18181b] border border-[#27272a] hover:border-blue-500 text-xs text-zinc-300 transition-colors"
+                            >
+                              <img src={att.url} alt={att.name} className="w-8 h-8 rounded object-cover" />
+                              <span className="max-w-[120px] truncate">{att.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Updates */}
                     <div className="space-y-2 pt-1">
                       <h5 className="text-xs uppercase font-semibold text-zinc-400 tracking-wider">
@@ -232,6 +257,12 @@ export const PortalSupport: React.FC = () => {
         isOpen={isTicketModalOpen}
         onClose={() => setIsTicketModalOpen(false)}
         onSubmitTicket={createSupportTicket}
+      />
+
+      {/* Image Lightbox */}
+      <PortalImageLightbox
+        attachment={previewAttachment}
+        onClose={() => setPreviewAttachment(null)}
       />
     </div>
   );

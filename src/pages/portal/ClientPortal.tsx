@@ -3,8 +3,9 @@ import { useNavigate, useSearchParams, Link, Navigate } from "react-router-dom";
 import { useClientPortal } from "../../context/ClientPortalContext";
 import { PortalPayModal } from "../../components/portal/PortalPayModal";
 import { PortalRatingModal } from "../../components/portal/PortalRatingModal";
-import { PortalTicketModal } from "../../components/portal/PortalTicketModal";
+import { PortalSupportDeskModal } from "../../components/portal/PortalSupportDeskModal";
 import { PortalMobileView, MobileTabKey } from "../../components/portal/PortalMobileView";
+import { OomaLogo, OomaLogoGlyph } from "../../components/OomaLogo";
 import { Button } from "@/components/ui/button";
 import { ClientPayment } from "../../types";
 import { Cpu, Code2, ArrowRight, LogOut, ShieldCheck, Mail, Phone, ExternalLink, Layers, Plus } from "lucide-react";
@@ -34,22 +35,25 @@ export const ClientPortal: React.FC = () => {
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
 
-  // 1. Loading State
-  if (authLoading) {
+  // 1. Loading State (only display full-screen blocker if no cached user session exists to render immediately)
+  if (authLoading && !clientUser) {
     return (
       <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center p-4 text-white">
-        <div className="w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center font-bold text-blue-400 mb-4 animate-pulse">
-          OL
-        </div>
-        <div className="w-5 h-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-3" />
+        <OomaLogoGlyph sizeClass="w-16 h-16" strokeColor="#FFD700" className="mb-4 animate-pulse" />
+        <div className="w-5 h-5 border-2 border-amber-500/30 border-t-[#FFD700] rounded-full animate-spin mb-3" />
         <p className="text-xs text-zinc-400 font-medium">Connecting to OOMA LABS real-time database...</p>
       </div>
     );
   }
 
-  // 2. Authentication Required - Auto-redirect directly to login
-  if (!clientUser) {
+  // 2. Authentication Required - Auto-redirect directly to login once auth verification finishes
+  if (!clientUser && !authLoading) {
     return <Navigate to="/portal/login" replace />;
+  }
+
+  // 2b. Authenticated but No Active Projects & hasn't onboarded
+  if (clientUser && clientUser.portalRole !== "admin" && clientUser.onboarded === false && !activeProject) {
+    return <Navigate to="/portal/onboarding" replace />;
   }
 
   // 3. Authenticated but No Active Projects Yet (New Project Dashboard)
@@ -58,11 +62,10 @@ export const ClientPortal: React.FC = () => {
       <div className="min-h-screen bg-[#09090b] text-white flex flex-col justify-between">
         {/* Header */}
         <header className="p-4 sm:p-6 border-b border-[#27272a] max-w-6xl mx-auto w-full flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-500/20 flex items-center justify-center font-bold text-blue-400 text-xs">
-              OL
-            </div>
-            <div>
+          <div className="flex items-center gap-4">
+            <OomaLogo linkTo="/" variant="dark" size="sm" subtitle="CLIENT PORTAL" />
+            <div className="hidden sm:block h-6 w-px bg-zinc-800" />
+            <div className="hidden sm:block">
               <div className="text-xs font-bold text-white">{clientUser.name}</div>
               <div className="text-[11px] text-zinc-400">{clientUser.company}</div>
             </div>
@@ -200,26 +203,31 @@ export const ClientPortal: React.FC = () => {
         onOpenTicketModal={() => setIsTicketModalOpen(true)}
       />
 
-      {/* Global Shared Modals */}
-      <PortalPayModal
-        payment={payModalPayment}
-        isOpen={isPayModalOpen}
-        initialMethod={payModalMethod}
-        onClose={() => setIsPayModalOpen(false)}
-        onConfirmPay={(id, appliedCoupon, discount) => payInvoice(id, appliedCoupon, discount)}
-      />
+      {/* Global Shared Modals (conditionally mounted to eliminate upfront DOM nodes and layout cost) */}
+      {isPayModalOpen && (
+        <PortalPayModal
+          payment={payModalPayment}
+          isOpen={isPayModalOpen}
+          initialMethod={payModalMethod}
+          onClose={() => setIsPayModalOpen(false)}
+          onConfirmPay={(id, appliedCoupon, discount) => payInvoice(id, appliedCoupon, discount)}
+        />
+      )}
 
-      <PortalRatingModal
-        isOpen={isRatingModalOpen}
-        onClose={() => setIsRatingModalOpen(false)}
-        onSubmitRating={submitRating}
-      />
+      {isRatingModalOpen && (
+        <PortalRatingModal
+          isOpen={isRatingModalOpen}
+          onClose={() => setIsRatingModalOpen(false)}
+          onSubmitRating={submitRating}
+        />
+      )}
 
-      <PortalTicketModal
-        isOpen={isTicketModalOpen}
-        onClose={() => setIsTicketModalOpen(false)}
-        onSubmitTicket={createSupportTicket}
-      />
+      {isTicketModalOpen && (
+        <PortalSupportDeskModal
+          isOpen={isTicketModalOpen}
+          onClose={() => setIsTicketModalOpen(false)}
+        />
+      )}
     </div>
   );
 };

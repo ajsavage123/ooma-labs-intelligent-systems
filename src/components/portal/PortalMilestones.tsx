@@ -15,7 +15,7 @@ export const PortalMilestones: React.FC = () => {
             6-Stage Project Timeline & Engineering Logs
           </h2>
           <p className="text-xs sm:text-sm text-zinc-400 mt-0.5 sm:mt-1">
-            Real-time status tracking across all 6 phases. Engineering log notes are updated live by the OOMA LABS pod team.
+            Real-time status tracking across all 6 phases. Engineering log notes are updated live by the OOMA LABS engineering team.
           </p>
         </div>
 

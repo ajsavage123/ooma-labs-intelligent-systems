@@ -52,39 +52,54 @@ export const AuthRedirectHandler: React.FC = () => {
     if (accessToken) {
       console.log("[Supabase Auth] Received valid access token in redirect of type:", type);
 
-      // Clean the hash from browser URL
-      try {
-        window.history.replaceState(null, "", window.location.pathname + window.location.search);
-      } catch (e) {
-        console.error(e);
-      }
+      const refreshToken = params.get("refresh_token") || "";
+      const supabase = getSupabaseClient();
 
-      const pendingRef = localStorage.getItem("ooma_pending_ref_code") || "";
-      const onboardingTarget = pendingRef
-        ? `/portal/onboarding?ref=${encodeURIComponent(pendingRef)}`
-        : "/portal/onboarding";
+      const establishSession = async () => {
+        if (supabase && refreshToken) {
+          try {
+            await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+          } catch (err) {
+            console.error("[Supabase Auth] Error establishing session:", err);
+          }
+        }
 
-      if (type === "signup" || type === "invite") {
-        toast.success("Email verified successfully! Let's set up your project dashboard.", {
-          duration: 5000,
-        });
-        navigate(onboardingTarget);
-      } else if (type === "magiclink") {
-        toast.success("Signed in successfully via email magic link!", { duration: 4000 });
-        if (location.pathname === "/" || location.pathname === "/portal/login") {
+        // Clean the hash from browser URL after session is established
+        try {
+          window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        } catch (e) {
+          console.error(e);
+        }
+
+        const pendingRef = localStorage.getItem("ooma_pending_ref_code") || "";
+        const onboardingTarget = pendingRef
+          ? `/portal/onboarding?ref=${encodeURIComponent(pendingRef)}`
+          : "/portal/onboarding";
+
+        if (type === "signup" || type === "invite") {
+          toast.success("Email verified successfully! Let's set up your project dashboard.", {
+            duration: 5000,
+          });
+          navigate(onboardingTarget);
+        } else if (type === "magiclink") {
+          toast.success("Signed in successfully via email magic link!", { duration: 4000 });
+          navigate("/portal");
+        } else if (type === "recovery") {
+          toast.info("Password reset verified. You may now enter your new password in Settings.", {
+            duration: 5000,
+          });
+          navigate("/portal");
+        } else {
+          // Generic authenticated redirect (e.g. Google OAuth)
+          toast.success("Signed in successfully with Google!", { duration: 4000 });
           navigate("/portal");
         }
-      } else if (type === "recovery") {
-        toast.info("Password reset verified. You may now enter your new password in Settings.", {
-          duration: 5000,
-        });
-        navigate("/portal");
-      } else {
-        // Generic authenticated redirect
-        if (location.pathname === "/" || location.pathname === "/portal/login") {
-          navigate(onboardingTarget);
-        }
-      }
+      };
+
+      establishSession();
     }
   }, [navigate, location]);
 

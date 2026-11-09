@@ -59,6 +59,7 @@ import {
   Activity,
   BarChart3,
 } from "lucide-react";
+import { WhatsAppAvatar, WHATSAPP_DEFAULT_AVATAR, sanitizeAvatarUrl } from "../../components/portal/WhatsAppAvatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -67,7 +68,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
-import { ProjectLiveUrl, SupportTicket, TicketPriority, TicketStatus, ProjectComment, ClientRating, ClientProject } from "../../types";
+import { ProjectLiveUrl, SupportTicket, TicketPriority, TicketStatus, ProjectComment, ClientRating, ClientProject, TicketAttachment } from "../../types";
+import { PortalImageLightbox } from "../../components/portal/PortalImageLightbox";
+import { OomaLogo } from "../../components/OomaLogo";
 import { getSupabaseConfig, saveSupabaseConfig, testSupabaseConnection } from "../../lib/supabase";
 
 const SUPABASE_SCHEMA_SQL = `-- ==============================================================================
@@ -105,7 +108,7 @@ CREATE TABLE IF NOT EXISTS public.projects (
   lead_name TEXT DEFAULT 'Arjun Mehta',
   lead_role TEXT DEFAULT 'Lead Systems Architect (OOMA Labs Hyderabad)',
   lead_email TEXT DEFAULT 'arjun@oomalabs.com',
-  lead_avatar TEXT DEFAULT 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+  lead_avatar TEXT DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
@@ -266,6 +269,33 @@ const getDefaultFutureDate = (days: number): string => {
   return d.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" });
 };
 
+type AdminTab =
+  | "stages"
+  | "billing"
+  | "referrals"
+  | "urls"
+  | "tickets"
+  | "messages"
+  | "reviews"
+  | "quotations"
+  | "settings"
+  | "spreadsheet"
+  | "supabase";
+
+interface QuotationLead {
+  id: string;
+  contactName: string;
+  companyName: string;
+  email: string;
+  phone: string;
+  projectCategory: string;
+  requirementScope: string;
+  budgetRange: string;
+  timeline: string;
+  submittedAt: string;
+  status: string;
+}
+
 export const PortalAdminManager: React.FC = () => {
   const {
     projects,
@@ -307,9 +337,7 @@ export const PortalAdminManager: React.FC = () => {
 
   const navigate = useNavigate();
   const [selectedProjectId, setSelectedProjectId] = useState<string>(activeProject?.id || (projects[0]?.id ?? ""));
-  const [activeAdminTab, setActiveAdminTab] = useState<
-    "stages" | "billing" | "referrals" | "urls" | "tickets" | "messages" | "reviews" | "quotations" | "settings" | "spreadsheet" | "supabase"
-  >("stages");
+  const [activeAdminTab, setActiveAdminTab] = useState<AdminTab>("stages");
 
   // Enterprise Layout State (Sidebar & Navigation)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -357,6 +385,7 @@ export const PortalAdminManager: React.FC = () => {
   // Auto-sync projects and clients from Supabase database on mount
   useEffect(() => {
     syncSupabase().catch((e) => console.warn("[PortalAdminManager] Initial sync failed:", e));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAdminPinSubmit = (e: React.FormEvent) => {
@@ -427,8 +456,9 @@ export const PortalAdminManager: React.FC = () => {
     try {
       const res = await purgeAllDemoData();
       toast.success(`Purged demo data successfully! ${res.count} demo record(s) cleaned.`);
-    } catch (e: any) {
-      toast.error(e.message || "Failed to purge demo data.");
+    } catch (e: unknown) {
+      const err = e as Error;
+      toast.error(err.message || "Failed to purge demo data.");
     } finally {
       setIsPurgingDemo(false);
     }
@@ -465,7 +495,7 @@ export const PortalAdminManager: React.FC = () => {
       notesMap[m.id] = m.notes || m.description || "";
     });
     setStageNotes(notesMap);
-  }, [currentProject?.id, currentProject?.milestones]);
+  }, [currentProject]);
 
   const activeMilestoneIndex = (currentProject?.milestones || []).findIndex((m) => m.status === "in_progress");
   const currentActiveStageIdx = activeMilestoneIndex !== -1 ? activeMilestoneIndex : 0;
@@ -693,6 +723,7 @@ export const PortalAdminManager: React.FC = () => {
   const [ticketFilterPriority, setTicketFilterPriority] = useState<"all" | "urgent" | "high" | "medium" | "low">("all");
   const [ticketReplyText, setTicketReplyText] = useState<{ [ticketId: string]: string }>({});
   const [ticketAssignee, setTicketAssignee] = useState<{ [ticketId: string]: string }>({});
+  const [adminPreviewAttachment, setAdminPreviewAttachment] = useState<TicketAttachment | null>(null);
 
   const handleUpdateTicketStatus = (ticketId: string, status: TicketStatus, engineerName?: string) => {
     if (!currentProject) return;
@@ -747,11 +778,13 @@ export const PortalAdminManager: React.FC = () => {
   // ----------------------------------------------------
   // ADMIN TAB STATE: QUOTATIONS & LEADS PIPELINE
   // ----------------------------------------------------
-  const [quotationLeads, setQuotationLeads] = useState<any[]>(() => {
+  const [quotationLeads, setQuotationLeads] = useState<QuotationLead[]>(() => {
     try {
       const stored = localStorage.getItem("ooma_quotations_list");
       if (stored) return JSON.parse(stored);
-    } catch (e) {}
+    } catch (e) {
+      console.warn("Could not load quotation leads from storage:", e);
+    }
     return [
       {
         id: "lead-sample-01",
@@ -782,7 +815,7 @@ export const PortalAdminManager: React.FC = () => {
     ];
   });
 
-  const handleConvertQuotation = (lead: any) => {
+  const handleConvertQuotation = (lead: QuotationLead) => {
     setNewClientName(lead.contactName || "");
     setNewClientEmail(lead.email || "");
     setNewClientCompany(lead.companyName || "");
@@ -798,7 +831,9 @@ export const PortalAdminManager: React.FC = () => {
       const updated = prev.filter((l) => l.id !== leadId);
       try {
         localStorage.setItem("ooma_quotations_list", JSON.stringify(updated));
-      } catch (e) {}
+      } catch (e) {
+        console.warn("Could not save quotation leads:", e);
+      }
       return updated;
     });
     toast.success("Quotation lead removed.");
@@ -809,7 +844,9 @@ export const PortalAdminManager: React.FC = () => {
       const updated = prev.map((l) => (l.id === leadId ? { ...l, status } : l));
       try {
         localStorage.setItem("ooma_quotations_list", JSON.stringify(updated));
-      } catch (e) {}
+      } catch (e) {
+        console.warn("Could not save quotation leads:", e);
+      }
       return updated;
     });
     toast.success(`Quotation lead marked as ${status.replace(/_/g, " ")}`);
@@ -846,11 +883,11 @@ export const PortalAdminManager: React.FC = () => {
       setLeadRole(currentProject.dedicatedLead?.role || "Lead Systems Architect (OOMA Labs Hyderabad)");
       setLeadEmail(currentProject.dedicatedLead?.email || "arjun@oomalabs.com");
       const rawLeadPhone = currentProject.dedicatedLead?.phone || currentProject.dedicatedLead?.status || "";
-      const isActualPhone = /^[\+\d\s-]+$/.test(rawLeadPhone.trim()) && rawLeadPhone.trim().length >= 7;
+      const isActualPhone = /^[+\d\s-]+$/.test(rawLeadPhone.trim()) && rawLeadPhone.trim().length >= 7;
       setLeadPhone(isActualPhone ? rawLeadPhone.trim() : "+91 80066 62364");
-      setLeadAvatar(currentProject.dedicatedLead?.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80");
+      setLeadAvatar(sanitizeAvatarUrl(currentProject.dedicatedLead?.avatar));
     }
-  }, [currentProject?.id]);
+  }, [currentProject]);
 
   const handleSaveProjectSettings = (e: React.FormEvent) => {
     e.preventDefault();
@@ -873,7 +910,7 @@ export const PortalAdminManager: React.FC = () => {
       dedicatedLead: {
         name: leadName,
         role: leadRole,
-        avatar: leadAvatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+        avatar: sanitizeAvatarUrl(leadAvatar),
         email: leadEmail,
         status: "Available",
         phone: leadPhone || "+91 80066 62364",
@@ -1002,20 +1039,8 @@ export const PortalAdminManager: React.FC = () => {
             {isSidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
           </button>
 
-          {/* Brand Logo & Cluster Badge */}
-          <Link to="/portal" className="flex items-center gap-2 shrink-0 group">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-xs shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              Ω
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-black tracking-wider text-white uppercase flex items-center gap-1.5">
-                OOMA LABS
-                <span className="px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[9px] font-mono font-bold">
-                  ADMIN POD
-                </span>
-              </span>
-            </div>
-          </Link>
+          {/* Brand Logo */}
+          <OomaLogo linkTo="/portal" variant="dark" size="sm" subtitle="ADMIN CONSOLE" />
 
           <div className="h-4 w-px bg-[#272835] hidden sm:block shrink-0" />
 
@@ -1221,7 +1246,7 @@ export const PortalAdminManager: React.FC = () => {
                     <button
                       key={id}
                       onClick={() => {
-                        setActiveAdminTab(id as any);
+                        setActiveAdminTab(id as AdminTab);
                         setIsMobileSidebarOpen(false);
                       }}
                       title={label}
@@ -1515,7 +1540,7 @@ export const PortalAdminManager: React.FC = () => {
 
             {/* Stages List (Clean, No Sliders or Checklist Matter) */}
             <div className="space-y-3.5">
-              {currentProject.milestones.map((milestone, idx) => {
+              {(currentProject.milestones || []).map((milestone, idx) => {
                 const cleanName = milestone.title
                   .replace(/^(Phase|Sprint|Stage)\s*\d+[:\s-]*/i, "")
                   .replace(/^\d+\.\s*/, "");
@@ -1697,7 +1722,7 @@ export const PortalAdminManager: React.FC = () => {
             </div>
 
             <div className="bg-[#18181b] border border-[#27272a] rounded-xl overflow-hidden divide-y divide-[#27272a]">
-              {currentProject.payments.map((invoice) => {
+              {(currentProject.payments || []).map((invoice) => {
                 const isPaid = invoice.status === "paid";
 
                 return (
@@ -1786,21 +1811,21 @@ export const PortalAdminManager: React.FC = () => {
                   Referral Vetting & 4-Client Milestone Control
                 </h3>
                 <p className="text-xs text-zinc-400 mt-1">
-                  Manage incoming client introductions for <strong className="text-white">{currentProject.company}</strong>. Once 4 referred clients have their requirements vetted and pay their project advance, the 20% discount coupon (<code className="text-amber-400">{currentProject.referrals.unlockedCouponCode || "OOMA-VERIFIED-4X"}</code>) unlocks automatically for them.
+                  Manage incoming client introductions for <strong className="text-white">{currentProject.company}</strong>. Once 4 referred clients have their requirements vetted and pay their project advance, the 20% discount coupon (<code className="text-amber-400">{currentProject.referrals?.unlockedCouponCode || "OOMA-VERIFIED-4X"}</code>) unlocks automatically for them.
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
                 <span
                   className={`text-xs font-bold px-3 py-1.5 rounded-lg border ${
-                    (currentProject.referrals.verifiedClientsCount || 0) >= 4
+                    (currentProject.referrals?.verifiedClientsCount || 0) >= 4
                       ? "bg-emerald-950 text-emerald-300 border-emerald-800"
                       : "bg-[#27272a] text-amber-300 border-[#3f3f46]"
                   }`}
                 >
-                  {(currentProject.referrals.verifiedClientsCount || 0) >= 4
+                  {(currentProject.referrals?.verifiedClientsCount || 0) >= 4
                     ? "20% VIP Coupon UNLOCKED"
-                    : `${4 - (currentProject.referrals.verifiedClientsCount || 0)} More Needed for 20% Unlock`}
+                    : `${4 - (currentProject.referrals?.verifiedClientsCount || 0)} More Needed for 20% Unlock`}
                 </span>
               </div>
             </div>
@@ -1812,7 +1837,7 @@ export const PortalAdminManager: React.FC = () => {
                   Verified Clients Count
                 </span>
                 <div className="text-2xl font-bold text-emerald-400">
-                  {currentProject.referrals.verifiedClientsCount || 0} / 4
+                  {currentProject.referrals?.verifiedClientsCount || 0} / 4
                 </div>
                 <span className="text-[11px] text-zinc-500 mt-1 block">Paid project advance</span>
               </div>
@@ -1822,7 +1847,7 @@ export const PortalAdminManager: React.FC = () => {
                   Total Leads Submitted
                 </span>
                 <div className="text-2xl font-bold text-white">
-                  {currentProject.referrals.history.length}
+                  {(currentProject.referrals?.history || []).length}
                 </div>
                 <span className="text-[11px] text-zinc-500 mt-1 block">Introductions logged</span>
               </div>
@@ -1832,7 +1857,7 @@ export const PortalAdminManager: React.FC = () => {
                   VIP Coupon Code
                 </span>
                 <div className="text-base font-mono font-bold text-amber-400 mt-1">
-                  {currentProject.referrals.unlockedCouponCode || "OOMA-VERIFIED-4X"}
+                  {currentProject.referrals?.unlockedCouponCode || "OOMA-VERIFIED-4X"}
                 </div>
                 <span className="text-[11px] text-zinc-500 mt-1 block">20% Milestone Invoice Waiver</span>
               </div>
@@ -1842,7 +1867,7 @@ export const PortalAdminManager: React.FC = () => {
                   Credits Credited (INR)
                 </span>
                 <div className="text-xl font-bold text-white">
-                  {formatINR(currentProject.referrals.totalEarnings || 0)}
+                  {formatINR(currentProject.referrals?.totalEarnings || 0)}
                 </div>
                 <span className="text-[11px] text-zinc-500 mt-1 block">Total referral rewards</span>
               </div>
@@ -1860,17 +1885,17 @@ export const PortalAdminManager: React.FC = () => {
                   </p>
                 </div>
                 <span className="text-xs text-zinc-400 font-semibold">
-                  {currentProject.referrals.history.length} Leads
+                  {(currentProject.referrals?.history || []).length} Leads
                 </span>
               </div>
 
-              {currentProject.referrals.history.length === 0 ? (
+              {(currentProject.referrals?.history || []).length === 0 ? (
                 <div className="p-8 text-center text-xs text-zinc-400">
                   No referrals submitted yet by this client.
                 </div>
               ) : (
                 <div className="divide-y divide-[#27272a]">
-                  {currentProject.referrals.history.map((lead) => {
+                  {(currentProject.referrals?.history || []).map((lead) => {
                     const isVerified = lead.status === "verified_client" || lead.status === "advance_paid";
                     const isVetted = lead.status === "requirement_verified";
 
@@ -1995,7 +2020,7 @@ export const PortalAdminManager: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              {currentProject.liveUrls.map((url) => (
+              {(currentProject.liveUrls || []).map((url) => (
                 <div
                   key={url.id}
                   className="bg-[#18181b] border border-[#27272a] rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
@@ -2633,6 +2658,37 @@ export const PortalAdminManager: React.FC = () => {
                               <p className="text-xs text-zinc-300 mt-1.5 p-3 rounded-lg bg-[#121316] border border-[#27272a]/60 leading-relaxed whitespace-pre-wrap">
                                 {ticket.description}
                               </p>
+
+                              {/* Attached Client Screenshots & Environment Telemetry */}
+                              {ticket.attachments && ticket.attachments.length > 0 && (
+                                <div className="mt-2.5 space-y-1.5">
+                                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                                    Client Screenshots ({ticket.attachments.length})
+                                  </span>
+                                  <div className="flex flex-wrap gap-2">
+                                    {ticket.attachments.map((att) => (
+                                      <button
+                                        key={att.id}
+                                        type="button"
+                                        onClick={() => setAdminPreviewAttachment(att)}
+                                        className="group rounded-lg border border-[#27272a] hover:border-blue-500 overflow-hidden bg-[#121316] p-1 flex items-center gap-2 text-left transition-colors"
+                                      >
+                                        <img src={att.url} alt={att.name} className="w-10 h-10 rounded object-cover" />
+                                        <div className="pr-2 text-[11px]">
+                                          <div className="text-zinc-200 font-medium truncate max-w-[130px]">{att.name}</div>
+                                          <div className="text-blue-400 text-[10px] group-hover:underline">Click to view ↗</div>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {ticket.deviceInfo && (
+                                <div className="mt-2 text-[11px] text-zinc-400 font-mono">
+                                  Client Telemetry: {ticket.deviceInfo.os} • {ticket.deviceInfo.browser} • {ticket.deviceInfo.screen}
+                                </div>
+                              )}
                             </div>
 
                             {/* Assignee & Status Quick Actions */}
@@ -2806,10 +2862,11 @@ export const PortalAdminManager: React.FC = () => {
                   className="bg-[#18181b] border border-[#27272a] rounded-xl p-4 sm:p-5 space-y-3"
                 >
                   <div className="flex items-center gap-2.5">
-                    <img
-                      src={currentProject.dedicatedLead?.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80"}
+                    <WhatsAppAvatar
+                      src={currentProject.dedicatedLead?.avatar}
                       alt={currentProject.dedicatedLead?.name || "Arjun Mehta"}
-                      className="w-8 h-8 rounded-full border border-blue-500/40 object-cover"
+                      sizeClassName="w-8 h-8"
+                      className="border border-blue-500/40"
                     />
                     <div>
                       <h4 className="text-xs font-bold text-white">
@@ -2880,17 +2937,12 @@ export const PortalAdminManager: React.FC = () => {
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-center gap-2.5">
-                              {comment.authorAvatar ? (
-                                <img
-                                  src={comment.authorAvatar}
-                                  alt={comment.authorName}
-                                  className="w-8 h-8 rounded-full border border-zinc-700 object-cover shrink-0"
-                                />
-                              ) : (
-                                <div className="w-8 h-8 rounded-full bg-[#27272a] text-zinc-300 flex items-center justify-center font-bold text-xs shrink-0">
-                                  {comment.authorName.charAt(0)}
-                                </div>
-                              )}
+                              <WhatsAppAvatar
+                                src={comment.authorAvatar}
+                                alt={comment.authorName}
+                                sizeClassName="w-8 h-8"
+                                className="border border-zinc-700 shrink-0"
+                              />
                               <div>
                                 <div className="flex items-center gap-2">
                                   <h5 className="text-xs font-bold text-white">{comment.authorName}</h5>
@@ -3138,7 +3190,7 @@ export const PortalAdminManager: React.FC = () => {
 
                             <div className="flex items-center gap-2">
                               <div className="flex items-center gap-0.5 text-amber-400">
-                                {[...Array(rating.overallScore || 5)].map((_, i) => (
+                                {[1, 2, 3, 4, 5].slice(0, Math.max(1, Math.min(5, Math.round(Number(rating.overallScore) || 5)))).map((_, i) => (
                                   <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                                 ))}
                               </div>
@@ -3391,7 +3443,7 @@ export const PortalAdminManager: React.FC = () => {
                     <Label className="text-xs text-zinc-300">Engineering Tier</Label>
                     <Select
                       value={settingsTier}
-                      onValueChange={(val: any) => setSettingsTier(val)}
+                      onValueChange={(val) => setSettingsTier(val as ClientProject["tier"])}
                     >
                       <SelectTrigger className="bg-[#121316] border-[#27272a] text-white text-xs h-9 mt-1">
                         <SelectValue />
@@ -3408,7 +3460,7 @@ export const PortalAdminManager: React.FC = () => {
                     <Label className="text-xs text-zinc-300">Lifecycle Status</Label>
                     <Select
                       value={settingsStatus}
-                      onValueChange={(val: any) => setSettingsStatus(val)}
+                      onValueChange={(val) => setSettingsStatus(val as ClientProject["status"])}
                     >
                       <SelectTrigger className="bg-[#121316] border-[#27272a] text-white text-xs h-9 mt-1">
                         <SelectValue />
@@ -3827,7 +3879,7 @@ export const PortalAdminManager: React.FC = () => {
 
             <div>
               <Label className="text-xs text-zinc-300">Environment Type</Label>
-              <Select value={newUrlType} onValueChange={(val: any) => setNewUrlType(val)}>
+              <Select value={newUrlType} onValueChange={(val: "production" | "staging" | "design" | "api_docs") => setNewUrlType(val)}>
                 <SelectTrigger className="bg-[#121316] border-[#27272a] text-xs h-9 mt-1">
                   <SelectValue />
                 </SelectTrigger>
@@ -3947,6 +3999,12 @@ export const PortalAdminManager: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Lightbox for inspecting client ticket screenshots */}
+      <PortalImageLightbox
+        attachment={adminPreviewAttachment}
+        onClose={() => setAdminPreviewAttachment(null)}
+      />
 
     </div>
   );

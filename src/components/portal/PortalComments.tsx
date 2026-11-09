@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useClientPortal } from "../../context/ClientPortalContext";
+import { WhatsAppAvatar } from "./WhatsAppAvatar";
 import { MessageSquare, Send, Paperclip, Pin, User, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -103,15 +104,12 @@ export const PortalComments: React.FC = () => {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5 sm:gap-3">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden bg-[#27272a] border border-[#3f3f46] shrink-0">
-                  {comment.authorAvatar ? (
-                    <img src={comment.authorAvatar} alt={comment.authorName} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">
-                      {comment.authorName.charAt(0)}
-                    </div>
-                  )}
-                </div>
+                <WhatsAppAvatar
+                  src={comment.authorAvatar}
+                  alt={comment.authorName}
+                  sizeClassName="w-7 h-7 sm:w-8 sm:h-8"
+                  className="border border-[#3f3f46]"
+                />
 
                 <div>
                   <div className="flex items-center gap-1.5 sm:gap-2">

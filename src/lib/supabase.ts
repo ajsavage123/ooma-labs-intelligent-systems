@@ -110,10 +110,11 @@ export const testSupabaseConnection = async (): Promise<{ success: boolean; mess
       success: true,
       message: "Supabase connection active! PostgreSQL database and tables are verified.",
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const error = err as Error;
     return {
       success: false,
-      message: err.message || "Failed to reach Supabase server. Check your network and URL.",
+      message: error.message || "Failed to reach Supabase server. Check your network and URL.",
     };
   }
 };

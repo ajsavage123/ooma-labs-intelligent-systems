@@ -15,6 +15,7 @@ import {
   Copy,
   Check,
   CheckCircle2,
+  CheckCheck,
   Globe,
   MessageSquare,
   Share2,
@@ -30,8 +31,13 @@ import {
   LogOut,
   ArrowRight,
   Sparkles,
+  ExternalLink,
+  PhoneCall,
+  Star,
 } from "lucide-react";
 import { toast } from "sonner";
+import { OomaLogo } from "../OomaLogo";
+import { WhatsAppAvatar } from "./WhatsAppAvatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -64,12 +70,20 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
     clientUser,
     activeProject,
     projects,
+    userProjects,
     selectProject,
     logoutClient,
     payInvoice,
     supabaseStatus,
     addProjectComment,
   } = useClientPortal();
+
+  // Client-isolated projects: never show other companies' projects to this client
+  const clientRelatedProjects = useMemo(() => {
+    if (clientUser?.portalRole === "admin") return projects;
+    if (userProjects && userProjects.length > 0) return userProjects;
+    return activeProject ? [activeProject] : [];
+  }, [clientUser, projects, userProjects, activeProject]);
 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -87,10 +101,10 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
     }
   }, [searchParams, activeTab]);
 
-  const setActiveTab = (tab: MobileTabKey) => {
+  const setActiveTab = React.useCallback((tab: MobileTabKey) => {
     setActiveTabState(tab);
     setSearchParams({ tab });
-  };
+  }, [setSearchParams]);
 
   const [billingSubTab, setBillingSubTab] = useState<"invoices" | "payments" | "documents">("invoices");
 
@@ -166,7 +180,7 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
   const currentStageTarget = currentStage?.dueDate || activeProject.targetLaunchDate || "Apr 20, 2025";
 
   // Financial calculations from activeProject.payments dynamically
-  const payments = activeProject.payments || [];
+  const payments = useMemo(() => activeProject.payments || [], [activeProject.payments]);
   const totalContract = useMemo(
     () => payments.reduce((acc, p) => acc + (p.amount || 0), 0) || 1850000,
     [payments]
@@ -226,7 +240,7 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
     setChatInput("");
 
     setTimeout(() => {
-      let botReply = `Our engineering pod has logged your message. Lead architect Arjun Mehta will follow up on ${projectDisplayTitle}!`;
+      let botReply = `Our engineering team has logged your message. Lead architect Arjun Mehta will follow up on ${projectDisplayTitle}!`;
       const lower = userText.toLowerCase();
       if (lower.includes("invoice") || lower.includes("pay") || lower.includes("bill")) {
         botReply = `You currently have ${pendingPayments.length} pending invoice(s) totaling ${formatINR(totalPending)}. You can settle via UPI, NetBanking, or Cards in the Billing tab.`;
@@ -286,6 +300,175 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
     }
   };
 
+  // =========================================================================
+  // NATIVE INTERACTIVE NOTIFICATIONS (ACTIONABLE HYPERLINKS)
+  // =========================================================================
+  const notificationsList = useMemo(() => {
+    const list: Array<{
+      id: string;
+      type: "billing" | "stage" | "message" | "support" | "reward";
+      title: string;
+      description: string;
+      time: string;
+      badge: string;
+      badgeColor: string;
+      icon: React.ComponentType<{ className?: string }>;
+      onNavigate: () => void;
+    }> = [];
+
+    // 1. Pending Invoices (High-Priority Actionable Link)
+    if (pendingPayments.length > 0) {
+      pendingPayments.forEach((p) => {
+        list.push({
+          id: `notif-inv-${p.id}`,
+          type: "billing",
+          title: `Milestone Invoice ${p.invoiceNumber} Due`,
+          description: `Amount ${formatINR(p.amount)} awaiting settlement for ${p.milestoneTitle || "milestone"}. Click to view & pay.`,
+          time: p.dueDate ? `Due ${p.dueDate}` : "Action Required",
+          badge: "Billing Action",
+          badgeColor: "text-amber-700 bg-amber-50 border-amber-200",
+          icon: CreditCard,
+          onNavigate: () => {
+            setActiveTab("billing");
+            if (onOpenPayModal) {
+              onOpenPayModal(p);
+            }
+          },
+        });
+      });
+    }
+
+    // 2. Active Development Stage & Next Milestone
+    if (currentStage) {
+      list.push({
+        id: `notif-stage-${currentStage.id || currentStageIdx}`,
+        type: "stage",
+        title: `Stage ${currentStageIdx + 1}: ${currentStageName}`,
+        description: `Current sprint is ${currentStageProgress}% complete. Target delivery: ${currentStageTarget}. Click to review deliverables.`,
+        time: "Live Development",
+        badge: "Milestone Update",
+        badgeColor: "text-blue-700 bg-blue-50 border-blue-200",
+        icon: Layers,
+        onNavigate: () => {
+          setActiveTab("stages");
+        },
+      });
+    }
+
+    // 3. Latest Team Discussion Thread Message
+    if (activeProject.comments && activeProject.comments.length > 0) {
+      const latestComment = activeProject.comments[activeProject.comments.length - 1];
+      list.push({
+        id: `notif-comment-${latestComment.id}`,
+        type: "message",
+        title: `Message from ${latestComment.authorName}`,
+        description: latestComment.message || "New message posted in project thread.",
+        time: latestComment.timestamp || "Recent update",
+        badge: "Team Chat",
+        badgeColor: "text-purple-700 bg-purple-50 border-purple-200",
+        icon: MessageSquare,
+        onNavigate: () => {
+          setTeamDiscussionOpen(true);
+        },
+      });
+    }
+
+    // 4. Support Tickets
+    if (activeProject.supportTickets && activeProject.supportTickets.length > 0) {
+      const latestTicket = activeProject.supportTickets[0];
+      list.push({
+        id: `notif-ticket-${latestTicket.id}`,
+        type: "support",
+        title: `Ticket ${latestTicket.ticketNumber}: ${latestTicket.title}`,
+        description: latestTicket.description || `Ticket is currently in ${latestTicket.status}. Assigned engineer: ${latestTicket.assignedEngineer || "Arjun Mehta"}.`,
+        time: latestTicket.updatedAt || latestTicket.createdAt || "Active",
+        badge: "Support Ticket",
+        badgeColor: "text-indigo-700 bg-indigo-50 border-indigo-200",
+        icon: Headphones,
+        onNavigate: () => {
+          setActiveTab("hub");
+          if (onOpenTicketModal) {
+            onOpenTicketModal();
+          }
+        },
+      });
+    }
+
+    // 5. VIP Partner Referral Reward Status
+    if (referrals) {
+      list.push({
+        id: `notif-reward-${activeProject.id}`,
+        type: "reward",
+        title: isCardUnlocked ? "VIP Partner Card Unlocked! ✨" : "VIP Partner Program Active",
+        description: isCardUnlocked
+          ? `Congratulations! 4/4 clients verified. Your ${formatINR(creditAmountINR)} credit and 20% lifetime discount are ready to apply.`
+          : `You have ${verifiedReferrals} of ${requiredReferrals} peer clients verified. Share your invite link to unlock your ${formatINR(creditAmountINR)} card!`,
+        time: "Rewards Perk",
+        badge: isCardUnlocked ? "Reward Unlocked" : "Partner Credit",
+        badgeColor: "text-emerald-700 bg-emerald-50 border-emerald-200",
+        icon: Gift,
+        onNavigate: () => {
+          setActiveTab("rewards");
+        },
+      });
+    }
+
+    return list;
+  }, [
+    pendingPayments,
+    currentStage,
+    currentStageIdx,
+    currentStageName,
+    currentStageProgress,
+    currentStageTarget,
+    activeProject,
+    referrals,
+    isCardUnlocked,
+    creditAmountINR,
+    verifiedReferrals,
+    requiredReferrals,
+    onOpenPayModal,
+    onOpenTicketModal,
+    setActiveTab,
+  ]);
+
+  const [readNotificationIds, setReadNotificationIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(`ooma_read_notifs_${activeProject.id}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const markNotificationAsRead = (id: string) => {
+    setReadNotificationIds((prev) => {
+      if (prev.includes(id)) return prev;
+      const updated = [...prev, id];
+      try {
+        localStorage.setItem(`ooma_read_notifs_${activeProject.id}`, JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+  };
+
+  const markAllNotificationsAsRead = () => {
+    const allIds = notificationsList.map((n) => n.id);
+    setReadNotificationIds(allIds);
+    try {
+      localStorage.setItem(`ooma_read_notifs_${activeProject.id}`, JSON.stringify(allIds));
+    } catch (e) {
+      console.error(e);
+    }
+    toast.success("All notifications marked as read");
+  };
+
+  const unreadCount = useMemo(() => {
+    return notificationsList.filter((n) => !readNotificationIds.includes(n.id)).length;
+  }, [notificationsList, readNotificationIds]);
+
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] text-slate-900 font-sans flex flex-col pb-24 select-none">
       {/* =========================================================================
@@ -298,50 +481,42 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           {/* Brand Logo & Client Workspace + (Desktop Project Switcher) */}
           <div className="flex items-center gap-4 sm:gap-6">
-            <Link to="/" className="flex items-center gap-2.5">
-              <div className="w-7 h-7 flex items-center justify-center shrink-0">
-                <svg viewBox="0 0 100 100" className="w-full h-full fill-none stroke-slate-900 stroke-[7]">
-                  <circle cx="50" cy="50" r="40" strokeDasharray="215 45" strokeLinecap="round" transform="rotate(-30 50 50)" />
-                </svg>
-              </div>
-              <div className="flex flex-col leading-none">
-                <span className="text-[13px] font-black tracking-tight text-slate-900 uppercase">
-                  OOMA LABS
-                </span>
-                <span className="text-[9px] font-semibold tracking-wider text-slate-400 uppercase mt-0.5">
-                  CLIENT WORKSPACE
-                </span>
-              </div>
-            </Link>
+            <OomaLogo linkTo="/" variant="light" size="md" subtitle="CLIENT WORKSPACE" />
 
-            {/* Desktop Project Selector */}
+            {/* Desktop Project Selector - strictly client-related projects only */}
             <div className="hidden lg:block">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-800 transition-colors">
-                    <Building className="w-3.5 h-3.5 text-blue-600" />
-                    <span className="max-w-[200px] truncate">{activeProject.title}</span>
-                    <ChevronDown className="w-3 h-3 text-slate-400" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-white border-slate-200 text-slate-900 min-w-[260px] shadow-lg">
-                  <DropdownMenuLabel className="text-xs text-slate-400 uppercase">
-                    Your Active SOW Projects
-                  </DropdownMenuLabel>
-                  {projects.map((proj) => (
-                    <DropdownMenuItem
-                      key={proj.id}
-                      onClick={() => selectProject(proj.id)}
-                      className={`text-xs cursor-pointer flex items-center justify-between ${
-                        proj.id === activeProject.id ? "bg-blue-50 text-blue-700 font-bold" : ""
-                      }`}
-                    >
-                      <span className="truncate">{proj.title}</span>
-                      <span className="text-xs text-slate-400">{proj.overallProgress}%</span>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {clientRelatedProjects.length > 1 ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-800 transition-colors">
+                      <Building className="w-3.5 h-3.5 text-blue-600" />
+                      <span className="max-w-[200px] truncate">{activeProject.title}</span>
+                      <ChevronDown className="w-3 h-3 text-slate-400" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-white border-slate-200 text-slate-900 min-w-[260px] shadow-lg">
+                    <DropdownMenuLabel className="text-xs text-slate-400 uppercase">
+                      Your Projects
+                    </DropdownMenuLabel>
+                    {clientRelatedProjects.map((proj) => (
+                      <DropdownMenuItem
+                        key={proj.id}
+                        onClick={() => selectProject(proj.id)}
+                        className={`text-xs cursor-pointer flex items-center justify-between ${proj.id === activeProject.id ? "bg-blue-50 text-blue-700 font-bold" : ""
+                          }`}
+                      >
+                        <span className="truncate">{proj.title}</span>
+                        <span className="text-xs text-slate-400">{proj.overallProgress}%</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800">
+                  <Building className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="max-w-[200px] truncate">{activeProject.title}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -352,30 +527,28 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
               { key: "stages" as MobileTabKey, label: "Stages", icon: Layers, badge: `${completedMilestones}/${totalMilestones}` },
               { key: "billing" as MobileTabKey, label: "Billing", icon: CreditCard, badge: pendingPayments.length > 0 ? "Due" : undefined },
               { key: "rewards" as MobileTabKey, label: "Rewards", icon: Gift, badge: "₹4,000" },
-              { key: "hub" as MobileTabKey, label: "Hub", icon: LayoutGrid },
+              { key: "hub" as MobileTabKey, label: "Team & Support", icon: Headphones },
             ].map(({ key, label, icon: TabIcon, badge }) => {
               const isActive = activeTab === key;
               return (
                 <button
                   key={key}
                   onClick={() => setActiveTab(key)}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    isActive
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${isActive
                       ? "bg-white text-blue-600 shadow-sm font-bold border border-slate-200"
                       : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
-                  }`}
+                    }`}
                 >
                   <TabIcon className={`w-3.5 h-3.5 ${isActive ? "stroke-[2.5]" : "stroke-[2]"}`} />
                   <span>{label}</span>
                   {badge && (
                     <span
-                      className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
-                        isActive
+                      className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${isActive
                           ? "bg-blue-100 text-blue-700"
                           : badge === "Due"
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-slate-200 text-slate-700"
-                      }`}
+                            ? "bg-amber-100 text-amber-800"
+                            : "bg-slate-200 text-slate-700"
+                        }`}
                     >
                       {badge}
                     </span>
@@ -397,14 +570,19 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
               </Link>
             )}
 
-            {/* Bell with red notification badge */}
+            {/* Bell with actionable notification badge */}
             <button
               onClick={() => setNotificationsOpen(true)}
               className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors relative"
-              title="Notifications"
+              title={`Notifications (${unreadCount} unread)`}
+              aria-label="Open notifications"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-red-600 text-white font-black text-[9px] flex items-center justify-center ring-2 ring-white shadow-xs animate-in zoom-in-50 duration-150">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </button>
 
             {/* User Profile Avatar: P1-3 shows name AND business name */}
@@ -414,13 +592,10 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                   className="flex items-center gap-2 p-1 rounded-full border border-slate-200 hover:border-slate-300 transition-colors shrink-0"
                   title={clientUser?.name || "Client Profile"}
                 >
-                  <img
-                    src={
-                      clientUser?.avatar ||
-                      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80"
-                    }
+                  <WhatsAppAvatar
+                    src={clientUser?.avatar}
                     alt={clientUser?.name || "User"}
-                    className="w-8 h-8 rounded-full object-cover"
+                    sizeClassName="w-8 h-8"
                   />
                   <div className="hidden lg:flex flex-col text-left pr-2 leading-tight">
                     <span className="text-xs font-bold text-slate-800">
@@ -432,18 +607,82 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-white border-slate-200 text-slate-900 min-w-[200px] shadow-lg">
-                <DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="bg-white border-slate-200 text-slate-900 min-w-[220px] shadow-xl p-1.5 rounded-2xl">
+                <DropdownMenuLabel className="p-2">
                   <div className="text-xs font-bold text-slate-900">{clientUser?.name}</div>
-                  <div className="text-[11px] text-slate-500">{clientUser?.company}</div>
+                  <div className="text-[11px] text-slate-500 font-medium truncate">{clientUser?.email}</div>
+                  <div className="text-[10px] text-blue-600 font-semibold">{clientUser?.company || activeProject.company}</div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-slate-100" />
+
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (onOpenTicketModal) onOpenTicketModal();
+                  }}
+                  className="text-xs text-slate-700 hover:text-slate-900 cursor-pointer flex items-center gap-2 p-2 rounded-xl"
+                >
+                  <Headphones className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Support Desk & Tickets</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => setTeamDiscussionOpen(true)}
+                  className="text-xs text-slate-700 hover:text-slate-900 cursor-pointer flex items-center gap-2 p-2 rounded-xl"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Chat with Team</span>
+                </DropdownMenuItem>
+
+                {primaryLiveUrl && (
+                  <DropdownMenuItem
+                    onClick={() => window.open(primaryLiveUrl, "_blank")}
+                    className="text-xs text-slate-700 hover:text-slate-900 cursor-pointer flex items-center gap-2 p-2 rounded-xl"
+                  >
+                    <Globe className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Launch Live App ↗</span>
+                  </DropdownMenuItem>
+                )}
+
+                <DropdownMenuItem
+                  onClick={() => window.open("https://wa.me/919849021345?text=Hi%20Arjun,%20checking%20in%20from%20OOMA%20LABS.", "_blank")}
+                  className="text-xs text-slate-700 hover:text-slate-900 cursor-pointer flex items-center gap-2 p-2 rounded-xl"
+                >
+                  <PhoneCall className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>WhatsApp Lead Architect</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator className="bg-slate-100" />
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/free-quotation"
+                    className="text-xs text-slate-700 hover:text-slate-900 cursor-pointer flex items-center gap-2 p-2 rounded-xl"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Request New Scope / SOW</span>
+                  </Link>
+                </DropdownMenuItem>
+
+                {clientUser?.portalRole === "admin" && (
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/portal/admin"
+                      className="text-xs text-purple-700 font-semibold cursor-pointer flex items-center gap-2 p-2 rounded-xl"
+                    >
+                      <Building className="w-3.5 h-3.5 text-purple-600" />
+                      <span>Admin Manager</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+
+                <DropdownMenuSeparator className="bg-slate-100" />
+
                 <DropdownMenuItem
                   onClick={() => {
                     logoutClient();
                     navigate("/portal/login");
                   }}
-                  className="text-xs text-red-600 hover:text-red-700 cursor-pointer flex items-center gap-2"
+                  className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer flex items-center gap-2 p-2 rounded-xl font-semibold"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Sign Out</span>
@@ -672,10 +911,14 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                 </div>
               </div>
 
-              {/* Card 4: Environments */}
+              {/* Card 4: Live App Links */}
               <div
                 onClick={() => {
-                  toast.info(`${liveUrls.length || 4} Environments live: Prod & Staging clusters.`);
+                  if (primaryLiveUrl) {
+                    window.open(primaryLiveUrl, "_blank");
+                  } else {
+                    setActiveTab("hub");
+                  }
                 }}
                 className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/90 shadow-sm hover:border-slate-300 cursor-pointer active:scale-[0.98] transition-all flex flex-col justify-between"
               >
@@ -687,13 +930,13 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                 </div>
                 <div className="mt-2.5">
                   <span className="text-[11px] font-medium text-slate-500 block">
-                    Environments
+                    Live app links
                   </span>
                   <div className="text-base sm:text-lg font-black text-slate-900 tracking-tight mt-0.5">
-                    {liveUrls.length || 4} live
+                    {liveUrls.length || 2} active
                   </div>
-                  <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
-                    Prod & Staging
+                  <span className="text-[10px] font-semibold text-blue-600 block mt-0.5">
+                    Open preview ↗
                   </span>
                 </div>
               </div>
@@ -877,13 +1120,12 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                   <div key={milestone.id || idx} className="relative group cursor-pointer">
                     {/* Timeline Node Circle on the stem */}
                     <div
-                      className={`absolute -left-7 top-4 w-6 h-6 rounded-full flex items-center justify-center ring-4 ring-[#F8FAFC] z-10 shrink-0 ${
-                        isCompleted
+                      className={`absolute -left-7 top-4 w-6 h-6 rounded-full flex items-center justify-center ring-4 ring-[#F8FAFC] z-10 shrink-0 ${isCompleted
                           ? "bg-emerald-500 text-white"
                           : isInProgress
-                          ? "bg-blue-600 text-white ring-blue-100"
-                          : "bg-white border-2 border-slate-300 text-slate-400"
-                      }`}
+                            ? "bg-blue-600 text-white ring-blue-100"
+                            : "bg-white border-2 border-slate-300 text-slate-400"
+                        }`}
                     >
                       {isCompleted ? (
                         <Check className="w-3.5 h-3.5 stroke-[3]" />
@@ -898,13 +1140,12 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                     <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/90 shadow-sm hover:border-slate-300 flex items-start gap-3 transition-all">
                       {/* Number badge */}
                       <div
-                        className={`w-7 h-7 rounded-xl font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ${
-                          isCompleted
+                        className={`w-7 h-7 rounded-xl font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ${isCompleted
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
                             : isInProgress
-                            ? "bg-blue-50 text-blue-700 border border-blue-200/50"
-                            : "bg-slate-100 text-slate-500 border border-slate-200/50"
-                        }`}
+                              ? "bg-blue-50 text-blue-700 border border-blue-200/50"
+                              : "bg-slate-100 text-slate-500 border border-slate-200/50"
+                          }`}
                       >
                         {idx + 1}
                       </div>
@@ -915,13 +1156,12 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                             {stageCleanTitle}
                           </h4>
                           <span
-                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                              isCompleted
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${isCompleted
                                 ? "text-emerald-700 bg-emerald-50"
                                 : isInProgress
-                                ? "text-blue-700 bg-blue-50"
-                                : "text-slate-500 bg-slate-100"
-                            }`}
+                                  ? "text-blue-700 bg-blue-50"
+                                  : "text-slate-500 bg-slate-100"
+                              }`}
                           >
                             {isCompleted ? "Completed" : isInProgress ? "In Progress" : "Upcoming"}
                           </span>
@@ -1081,31 +1321,28 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
             <div className="flex border-b border-slate-200">
               <button
                 onClick={() => setBillingSubTab("invoices")}
-                className={`flex-1 pb-2 text-xs font-bold transition-colors relative ${
-                  billingSubTab === "invoices"
+                className={`flex-1 pb-2 text-xs font-bold transition-colors relative ${billingSubTab === "invoices"
                     ? "text-blue-600 border-b-2 border-blue-600"
                     : "text-slate-400 hover:text-slate-600"
-                }`}
+                  }`}
               >
                 Invoices ({payments.length})
               </button>
               <button
                 onClick={() => setBillingSubTab("payments")}
-                className={`flex-1 pb-2 text-xs font-bold transition-colors relative ${
-                  billingSubTab === "payments"
+                className={`flex-1 pb-2 text-xs font-bold transition-colors relative ${billingSubTab === "payments"
                     ? "text-blue-600 border-b-2 border-blue-600"
                     : "text-slate-400 hover:text-slate-600"
-                }`}
+                  }`}
               >
                 Payments
               </button>
               <button
                 onClick={() => setBillingSubTab("documents")}
-                className={`flex-1 pb-2 text-xs font-bold transition-colors relative ${
-                  billingSubTab === "documents"
+                className={`flex-1 pb-2 text-xs font-bold transition-colors relative ${billingSubTab === "documents"
                     ? "text-blue-600 border-b-2 border-blue-600"
                     : "text-slate-400 hover:text-slate-600"
-                }`}
+                  }`}
               >
                 Documents
               </button>
@@ -1123,9 +1360,8 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                            isPaid ? "bg-emerald-50 text-emerald-600 border border-emerald-200/50" : "bg-red-50 text-red-500 border border-red-200/50"
-                          }`}
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isPaid ? "bg-emerald-50 text-emerald-600 border border-emerald-200/50" : "bg-red-50 text-red-500 border border-red-200/50"
+                            }`}
                         >
                           <FileText className="w-4 h-4" />
                         </div>
@@ -1352,9 +1588,8 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                   return (
                     <div key={step} className="relative z-10 flex flex-col items-center text-center">
                       <div
-                        className={`w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center ring-4 ring-white shadow-sm ${
-                          isReached ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600"
-                        }`}
+                        className={`w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center ring-4 ring-white shadow-sm ${isReached ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600"
+                          }`}
                       >
                         {isReached ? "✓" : step}
                       </div>
@@ -1461,10 +1696,10 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
             {/* Title & Subtitle */}
             <div>
               <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">
-                Project Hub
+                Team & Support
               </h1>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Quick actions, team access, and 24/7 dedicated support.
+                Direct team access, project actions, and dedicated support.
               </p>
             </div>
 
@@ -1588,7 +1823,7 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                       Team Discussion
                     </span>
                     <span className="text-[10px] text-slate-500 block mt-0.5">
-                      Human Pod Thread
+                      Chat with Team
                     </span>
                   </div>
                 </div>
@@ -1620,7 +1855,7 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
               {/* Project Team */}
               <div
                 onClick={() =>
-                  toast.info("Pod Assigned: Arjun Mehta (Lead Architect), Sneha Rao (Fullstack), Vikram Joshi (DevOps)")
+                  toast.info("Engineering Team: Arjun Mehta (Lead Architect), Sneha Rao (Fullstack), Vikram Joshi (DevOps)")
                 }
                 className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm hover:border-slate-300 flex items-center justify-between cursor-pointer active:scale-[0.99] transition-all"
               >
@@ -1635,21 +1870,9 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex -space-x-2 overflow-hidden">
-                    <img
-                      className="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover"
-                      src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80"
-                      alt="Team 1"
-                    />
-                    <img
-                      className="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover"
-                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80"
-                      alt="Team 2"
-                    />
-                    <img
-                      className="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover"
-                      src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80"
-                      alt="Team 3"
-                    />
+                    <WhatsAppAvatar sizeClassName="inline-block h-6 w-6" className="ring-2 ring-white shrink-0" alt="Lead Architect" />
+                    <WhatsAppAvatar sizeClassName="inline-block h-6 w-6" className="ring-2 ring-white shrink-0" alt="Fullstack Engineer" />
+                    <WhatsAppAvatar sizeClassName="inline-block h-6 w-6" className="ring-2 ring-white shrink-0" alt="DevOps Specialist" />
                   </div>
                   <ChevronRight className="w-4 h-4 text-slate-400" />
                 </div>
@@ -1705,7 +1928,7 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                 <ChevronRight className="w-4 h-4 text-slate-400" />
               </div>
 
-              {/* Rate Engineering Pod & Feedback */}
+              {/* Rate Engineering Team & Feedback */}
               <div
                 onClick={() => {
                   if (onOpenRatingModal) {
@@ -1721,8 +1944,8 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900">Rate Engineering Pod & Quality</h4>
-                    <p className="text-[10px] text-slate-500">Submit official CSAT rating for Lead Architect & Pod</p>
+                    <h4 className="text-xs font-bold text-slate-900">Rate Engineering Team & Quality</h4>
+                    <p className="text-[10px] text-slate-500">Submit official CSAT rating for Lead Architect & Team</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -1737,7 +1960,7 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
               <div
                 onClick={() =>
                   toast.info(
-                    `${activeProject.title}: Dedicated SOW tier "${activeProject.tier || "Strategic"}". Built by OOMA LABS pod team.`
+                    `${activeProject.title}: Dedicated SOW tier "${activeProject.tier || "Strategic"}". Built by OOMA LABS engineering team.`
                   )
                 }
                 className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm hover:border-slate-300 flex items-center justify-between cursor-pointer active:scale-[0.99] transition-all"
@@ -1780,9 +2003,8 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
         {/* Tab 1: Home */}
         <button
           onClick={() => setActiveTab("home")}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all duration-150 active:scale-95 ${
-            activeTab === "home" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-800 font-medium"
-          }`}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all duration-150 active:scale-95 ${activeTab === "home" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-800 font-medium"
+            }`}
         >
           <Home className={`w-5 h-5 ${activeTab === "home" ? "stroke-[2.5]" : "stroke-[1.8]"}`} />
           <span className="text-[10px] mt-0.5 tracking-tight">Home</span>
@@ -1792,9 +2014,8 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
         {/* Tab 2: Stages */}
         <button
           onClick={() => setActiveTab("stages")}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all duration-150 active:scale-95 ${
-            activeTab === "stages" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-800 font-medium"
-          }`}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all duration-150 active:scale-95 ${activeTab === "stages" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-800 font-medium"
+            }`}
         >
           <Layers className={`w-5 h-5 ${activeTab === "stages" ? "stroke-[2.5]" : "stroke-[1.8]"}`} />
           <span className="text-[10px] mt-0.5 tracking-tight">Stages</span>
@@ -1804,9 +2025,8 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
         {/* Tab 3: Billing */}
         <button
           onClick={() => setActiveTab("billing")}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all duration-150 active:scale-95 ${
-            activeTab === "billing" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-800 font-medium"
-          }`}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all duration-150 active:scale-95 ${activeTab === "billing" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-800 font-medium"
+            }`}
         >
           <div className="relative">
             <CreditCard className={`w-5 h-5 ${activeTab === "billing" ? "stroke-[2.5]" : "stroke-[1.8]"}`} />
@@ -1821,24 +2041,22 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
         {/* Tab 4: Rewards */}
         <button
           onClick={() => setActiveTab("rewards")}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all duration-150 active:scale-95 ${
-            activeTab === "rewards" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-800 font-medium"
-          }`}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all duration-150 active:scale-95 ${activeTab === "rewards" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-800 font-medium"
+            }`}
         >
           <Gift className={`w-5 h-5 ${activeTab === "rewards" ? "stroke-[2.5]" : "stroke-[1.8]"}`} />
           <span className="text-[10px] mt-0.5 tracking-tight">Rewards</span>
           {activeTab === "rewards" && <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-0.5" />}
         </button>
 
-        {/* Tab 5: Hub */}
+        {/* Tab 5: Support */}
         <button
           onClick={() => setActiveTab("hub")}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all duration-150 active:scale-95 ${
-            activeTab === "hub" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-800 font-medium"
-          }`}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all duration-150 active:scale-95 ${activeTab === "hub" ? "text-blue-600 font-bold" : "text-slate-500 hover:text-slate-800 font-medium"
+            }`}
         >
-          <LayoutGrid className={`w-5 h-5 ${activeTab === "hub" ? "stroke-[2.5]" : "stroke-[1.8]"}`} />
-          <span className="text-[10px] mt-0.5 tracking-tight">Hub</span>
+          <Headphones className={`w-5 h-5 ${activeTab === "hub" ? "stroke-[2.5]" : "stroke-[1.8]"}`} />
+          <span className="text-[10px] mt-0.5 tracking-tight">Support</span>
           {activeTab === "hub" && <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-0.5" />}
         </button>
       </nav>
@@ -1847,73 +2065,244 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
           HAMBURGER / CLIENT DRAWER MODAL
          ========================================================================= */}
       <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
-        <DialogContent className="max-w-xs sm:max-w-sm rounded-3xl p-5 bg-white text-slate-900 border border-slate-200 shadow-xl">
-          <DialogHeader className="text-left space-y-1">
+        <DialogContent className="max-w-xs sm:max-w-sm rounded-3xl p-5 bg-white text-slate-900 border border-slate-200 shadow-2xl max-h-[92vh] flex flex-col">
+          {/* Header */}
+          <DialogHeader className="text-left space-y-1 pb-2 border-b border-slate-100 shrink-0">
+            <div className="flex items-center justify-between">
+              <OomaLogo variant="light" size="sm" subtitle="CLIENT WORKSPACE" />
+            </div>
             <DialogTitle className="text-base font-black text-slate-900">
-              Client Workspace Menu
+              Workspace & Navigation
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              {clientUser?.name} · {clientUser?.company}
+              {clientUser?.name} · {clientUser?.company || activeProject.company}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 pt-2">
-            <div className="bg-slate-50 p-3 rounded-2xl flex items-center gap-3 border border-slate-200/60">
-              <img
-                src={clientUser?.avatar || "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80"}
+          <div className="flex-1 overflow-y-auto space-y-4 pt-2 pr-1">
+            {/* 1. Client Identity Card */}
+            <div className="bg-slate-50 p-3 rounded-2xl flex items-center gap-3 border border-slate-200/80 shadow-2xs">
+              <WhatsAppAvatar
+                src={clientUser?.avatar}
                 alt="Client"
-                className="w-10 h-10 rounded-full object-cover"
+                sizeClassName="w-10 h-10"
               />
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-slate-900">{clientUser?.name}</div>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-bold text-slate-900 truncate">{clientUser?.name}</div>
                 <div className="text-[11px] text-slate-500 truncate">{clientUser?.email}</div>
-                <div className="text-[10px] text-blue-600 font-semibold">{clientUser?.title}</div>
+                <div className="text-[10px] text-blue-600 font-semibold truncate">{clientUser?.company || activeProject.company}</div>
               </div>
             </div>
 
+            {/* 2. Active Project Status & Switcher */}
             <div className="space-y-1.5">
-              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Active Projects
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                {clientRelatedProjects.length > 1 ? "Your Projects" : "Current Project"}
               </div>
-              {projects.map((proj) => (
-                <button
-                  key={proj.id}
-                  onClick={() => {
-                    selectProject(proj.id);
-                    setMenuOpen(false);
-                    toast.success(`Switched to ${proj.title}`);
-                  }}
-                  className={`w-full p-2.5 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-colors ${
-                    proj.id === activeProject.id
-                      ? "bg-blue-600 text-white font-bold"
-                      : "bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200/60"
-                  }`}
-                >
-                  <span className="truncate">{proj.title}</span>
-                  <span className="text-[10px] opacity-80">{proj.overallProgress}%</span>
-                </button>
-              ))}
+
+              {clientRelatedProjects.length > 1 ? (
+                <div className="space-y-1">
+                  {clientRelatedProjects.map((proj) => {
+                    const isSelected = proj.id === activeProject.id;
+                    return (
+                      <button
+                        key={proj.id}
+                        onClick={() => {
+                          selectProject(proj.id);
+                          setMenuOpen(false);
+                          toast.success(`Switched to ${proj.title}`);
+                        }}
+                        className={`w-full p-2.5 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-colors ${isSelected
+                            ? "bg-blue-600 text-white font-bold shadow-xs"
+                            : "bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200/60"
+                          }`}
+                      >
+                        <span className="truncate">{proj.title}</span>
+                        <span className="text-[10px] opacity-80 font-mono">{proj.overallProgress}%</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="p-3 rounded-2xl bg-blue-50/70 border border-blue-200/70 text-left space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-blue-950 truncate max-w-[180px]">{activeProject.title}</span>
+                    <span className="text-[10px] font-mono font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded-full">{activeProject.overallProgress}%</span>
+                  </div>
+                  <div className="w-full bg-blue-200/60 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-blue-600 h-full rounded-full transition-all duration-500" style={{ width: `${overallProgress}%` }} />
+                  </div>
+                  <span className="text-[10px] text-blue-700 font-medium block">
+                    Stage {currentStageIdx + 1}: {currentStageName}
+                  </span>
+                </div>
+              )}
             </div>
 
-            <div className="space-y-1 pt-1 border-t border-slate-200">
+            {/* 3. Main Portal Navigation Jump Links */}
+            <div className="space-y-1">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                Portal Sections
+              </div>
+              {[
+                { key: "home" as MobileTabKey, label: "Overview & Metrics", icon: Home },
+                { key: "stages" as MobileTabKey, label: "Sprint Stages", icon: Layers, badge: `${completedMilestones}/${totalMilestones}` },
+                { key: "billing" as MobileTabKey, label: "Billing & Invoices", icon: CreditCard, badge: pendingPayments.length > 0 ? "Due" : undefined },
+                { key: "rewards" as MobileTabKey, label: "VIP Partner Rewards", icon: Gift, badge: "₹4,000" },
+                { key: "hub" as MobileTabKey, label: "Team & Support", icon: Headphones },
+              ].map(({ key, label, icon: ItemIcon, badge }) => {
+                const isActive = activeTab === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setActiveTab(key);
+                      setMenuOpen(false);
+                    }}
+                    className={`w-full p-2 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-colors ${isActive
+                        ? "bg-slate-100 text-blue-700 font-bold"
+                        : "text-slate-700 hover:bg-slate-50"
+                      }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <ItemIcon className={`w-4 h-4 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
+                      <span>{label}</span>
+                    </div>
+                    {badge && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700">
+                        {badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 4. Quick Actions */}
+            <div className="space-y-1 pt-1 border-t border-slate-100">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                Quick Actions
+              </div>
+
+              {primaryLiveUrl && (
+                <button
+                  onClick={() => {
+                    window.open(primaryLiveUrl, "_blank");
+                    setMenuOpen(false);
+                  }}
+                  className="w-full p-2 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-between transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Globe className="w-4 h-4 text-emerald-600" />
+                    <span>Launch Live App</span>
+                  </div>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  if (onOpenTicketModal) onOpenTicketModal();
+                }}
+                className="w-full p-2 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-between transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Headphones className="w-4 h-4 text-blue-600" />
+                  <span>Support Desk & Tickets</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  setTeamDiscussionOpen(true);
+                }}
+                className="w-full p-2 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-between transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <MessageSquare className="w-4 h-4 text-purple-600" />
+                  <span>Chat with Engineering</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+
+              <a
+                href="https://wa.me/919849021345?text=Hi%20Arjun,%20checking%20in%20from%20OOMA%20LABS."
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMenuOpen(false)}
+                className="w-full p-2 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-between transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <PhoneCall className="w-4 h-4 text-emerald-600" />
+                  <span>WhatsApp Lead Architect</span>
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+              </a>
+
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  if (onOpenRatingModal) onOpenRatingModal();
+                }}
+                className="w-full p-2 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-between transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Star className="w-4 h-4 text-amber-500" />
+                  <span>Rate Team & Quality</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+            </div>
+
+            {/* 5. Agency Scope & Admin */}
+            <div className="space-y-1 pt-1 border-t border-slate-100">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                Workspace & Scope
+              </div>
+
+              <Link
+                to="/free-quotation"
+                onClick={() => setMenuOpen(false)}
+                className="w-full p-2 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-between transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Sparkles className="w-4 h-4 text-blue-600" />
+                  <span>Request New Scope / AI SOW</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              </Link>
+
               {clientUser?.portalRole === "admin" && (
                 <Link
                   to="/portal/admin"
-                  className="w-full p-2.5 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-between"
+                  onClick={() => setMenuOpen(false)}
+                  className="w-full p-2 rounded-xl text-left text-xs font-semibold text-purple-700 hover:bg-purple-50 flex items-center justify-between transition-colors"
                 >
-                  <span>Admin Manager & Live Sync</span>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                  <div className="flex items-center gap-2.5">
+                    <Building className="w-4 h-4 text-purple-600" />
+                    <span>Admin Manager & Live Sync</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-purple-400" />
                 </Link>
               )}
+
               <Link
-                to="/free-quotation"
-                className="w-full p-2.5 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-between"
+                to="/"
+                onClick={() => setMenuOpen(false)}
+                className="w-full p-2 rounded-xl text-left text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center justify-between transition-colors"
               >
-                <span>Request New Scope / AI SOW</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <div className="flex items-center gap-2.5">
+                  <Globe className="w-4 h-4 text-slate-400" />
+                  <span>Visit OOMA LABS Site</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               </Link>
             </div>
 
+            {/* 6. Sign Out Button */}
             <button
               onClick={() => {
                 logoutClient();
@@ -1921,7 +2310,7 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                 toast.info("Signed out of client workspace");
                 navigate("/portal/login");
               }}
-              className="w-full py-2.5 px-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-red-100"
+              className="w-full py-2.5 px-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 font-bold text-xs flex items-center justify-center gap-2 transition-colors border border-red-100 mt-2 shrink-0 cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               <span>Sign Out</span>
@@ -1931,49 +2320,123 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
       </Dialog>
 
       {/* =========================================================================
-          NOTIFICATIONS SHEET MODAL
+          NATIVE ACTIONABLE NOTIFICATIONS MODAL (HYPERLINK NAVIGATION)
          ========================================================================= */}
       <Dialog open={notificationsOpen} onOpenChange={setNotificationsOpen}>
-        <DialogContent className="max-w-xs sm:max-w-sm rounded-3xl p-5 bg-white text-slate-900 border border-slate-200 shadow-xl">
-          <DialogHeader className="text-left space-y-1">
-            <DialogTitle className="text-base font-black text-slate-900 flex items-center gap-2">
-              <Bell className="w-4 h-4 text-blue-600" />
-              Project Notifications
-            </DialogTitle>
+        <DialogContent className="max-w-xs sm:max-w-md rounded-3xl p-5 bg-white text-slate-900 border border-slate-200 shadow-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader className="text-left space-y-1 pb-3 border-b border-slate-100 shrink-0">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-base font-black text-slate-900 flex items-center gap-2">
+                <Bell className="w-4 h-4 text-blue-600" />
+                <span>Notifications</span>
+                {unreadCount > 0 && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
+                    {unreadCount} new
+                  </span>
+                )}
+              </DialogTitle>
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllNotificationsAsRead}
+                  className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline transition-colors cursor-pointer"
+                >
+                  <CheckCheck className="w-3.5 h-3.5" />
+                  <span>Mark all read</span>
+                </button>
+              )}
+            </div>
             <DialogDescription className="text-xs text-slate-500">
-              Real-time engineering alerts & billing updates
+              Click any notification to navigate directly to that section.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3 pt-2 max-h-[60vh] overflow-y-auto pr-1">
-            {pendingPayments.length > 0 && (
-              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-amber-700 uppercase">Billing Notice</span>
-                  <span className="text-[10px] text-slate-400">Action Required</span>
+          {/* Actionable Notification Feed */}
+          <div className="space-y-2 pt-2 flex-1 overflow-y-auto pr-1">
+            {notificationsList.length === 0 ? (
+              <div className="py-12 flex flex-col items-center justify-center text-center space-y-2 text-slate-400">
+                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                  <Check className="w-6 h-6 stroke-[2.5]" />
                 </div>
-                <p className="text-xs font-bold text-slate-900">{pendingPayments[0]?.invoiceNumber} is pending</p>
-                <p className="text-[11px] text-slate-600">Amount {formatINR(pendingPayments[0]?.amount || 0)} awaiting payment.</p>
+                <p className="text-xs font-semibold text-slate-700">All caught up!</p>
+                <p className="text-[11px] text-slate-400">You don't have any pending alerts right now.</p>
               </div>
+            ) : (
+              notificationsList.map((notif) => {
+                const isRead = readNotificationIds.includes(notif.id);
+                const IconComponent = notif.icon;
+                return (
+                  <div
+                    key={notif.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      markNotificationAsRead(notif.id);
+                      setNotificationsOpen(false);
+                      notif.onNavigate();
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        markNotificationAsRead(notif.id);
+                        setNotificationsOpen(false);
+                        notif.onNavigate();
+                      }
+                    }}
+                    className={`group w-full p-3 sm:p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3 relative select-none ${isRead
+                        ? "bg-slate-50/70 hover:bg-slate-100/80 border-slate-200/80 text-slate-700 opacity-90"
+                        : "bg-blue-50/40 hover:bg-blue-50/80 border-blue-200 text-slate-900 shadow-xs"
+                      }`}
+                  >
+                    {/* Unread blue dot */}
+                    {!isRead && (
+                      <span
+                        className="absolute top-3 right-3 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white"
+                        title="Unread"
+                      />
+                    )}
+
+                    {/* Icon container */}
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border mt-0.5 ${notif.type === "billing"
+                          ? "bg-amber-100/80 text-amber-700 border-amber-200"
+                          : notif.type === "stage"
+                            ? "bg-blue-100/80 text-blue-700 border-blue-200"
+                            : notif.type === "message"
+                              ? "bg-purple-100/80 text-purple-700 border-purple-200"
+                              : notif.type === "reward"
+                                ? "bg-emerald-100/80 text-emerald-700 border-emerald-200"
+                                : "bg-sky-100/80 text-sky-700 border-sky-200"
+                        }`}
+                    >
+                      <IconComponent className="w-4 h-4" />
+                    </div>
+
+                    {/* Notification content */}
+                    <div className="flex-1 min-w-0 pr-4">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span
+                          className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${notif.badgeColor}`}
+                        >
+                          {notif.badge}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          {notif.time}
+                        </span>
+                      </div>
+                      <h4
+                        className={`text-xs font-bold truncate group-hover:text-blue-600 transition-colors flex items-center gap-1 ${isRead ? "text-slate-800" : "text-slate-950 font-black"
+                          }`}
+                      >
+                        <span>{notif.title}</span>
+                        <ChevronRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-blue-600 inline" />
+                      </h4>
+                      <p className="text-[11px] text-slate-500 leading-snug mt-0.5 line-clamp-2">
+                        {notif.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
             )}
-
-            <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-blue-700 uppercase">Stage Progress</span>
-                <span className="text-[10px] text-slate-400">Live Status</span>
-              </div>
-              <p className="text-xs font-bold text-slate-900">Stage {currentStageIdx + 1}: {currentStageName} ({currentStageProgress}%)</p>
-              <p className="text-[11px] text-slate-600">{currentStageNote}</p>
-            </div>
-
-            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-emerald-700 uppercase">Previous Stages</span>
-                <span className="text-[10px] text-slate-400">Verified</span>
-              </div>
-              <p className="text-xs font-bold text-slate-900">{completedMilestones} of {totalMilestones} phases marked completed</p>
-              <p className="text-[11px] text-slate-600">All deliverables verified by OOMA LABS pod team.</p>
-            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -1986,10 +2449,10 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
           <DialogHeader className="text-left space-y-1">
             <DialogTitle className="text-base font-black text-slate-900 flex items-center gap-2">
               <FileText className="w-4 h-4 text-blue-600" />
-              Engineering Pod Activity Log
+              Engineering Team Activity Log
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Direct telemetry from OOMA LABS pod team
+              Direct telemetry from OOMA LABS engineering team
             </DialogDescription>
           </DialogHeader>
 
@@ -2001,7 +2464,7 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                   <span className="text-[10px] text-slate-400">{m.completedDate || m.dueDate || "In progress"}</span>
                 </div>
                 <p className="text-slate-600 text-[11px]">
-                  {m.notes || m.description || "Engineering pod tasks executed according to SOW specification."}
+                  {m.notes || m.description || "Engineering tasks executed according to SOW specification."}
                 </p>
                 <div className="text-[10px] text-blue-600 font-semibold">
                   Status: {m.status === "completed" ? "Completed ✓" : m.status === "in_progress" ? `In Progress (${m.progress}%)` : "Upcoming"}
@@ -2086,7 +2549,7 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                     Team Discussion
                   </DialogTitle>
                   <DialogDescription className="text-[11px] text-slate-500 line-clamp-1">
-                    Direct human thread with Arjun Mehta and OOMA engineering pod
+                    Direct messaging with Arjun Mehta and OOMA engineering team
                   </DialogDescription>
                 </div>
               </div>
@@ -2104,7 +2567,7 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                 <p className="text-xs">No comments posted yet. Start the conversation with your engineering team below!</p>
               </div>
             ) : (
-              activeProject.comments.map((comment) => {
+              (activeProject.comments || []).map((comment) => {
                 const isClient = comment.authorRole === "client" || comment.authorName === clientUser?.name;
                 return (
                   <div
@@ -2114,17 +2577,16 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                     <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
                       <span className="font-bold text-slate-700">{comment.authorName}</span>
                       <span className="px-1.5 py-0.2 rounded text-[9px] bg-slate-100 text-slate-600 border border-slate-200/60 uppercase font-semibold">
-                        {comment.authorRole === "lead_architect" ? "Lead Architect" : comment.authorRole === "client" ? "Client" : "Engineering Pod"}
+                        {comment.authorRole === "lead_architect" ? "Lead Architect" : comment.authorRole === "client" ? "Client" : "Engineering Team"}
                       </span>
                       <span>•</span>
                       <span>{comment.timestamp || "Just now"}</span>
                     </div>
                     <div
-                      className={`max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed shadow-xs ${
-                        isClient
+                      className={`max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed shadow-xs ${isClient
                           ? "bg-blue-600 text-white rounded-tr-xs"
                           : "bg-slate-100 text-slate-900 rounded-tl-xs border border-slate-200/60"
-                      }`}
+                        }`}
                     >
                       {comment.message}
                     </div>
@@ -2177,11 +2639,10 @@ export const PortalMobileView: React.FC<PortalMobileViewProps> = ({
                 className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl p-3 leading-relaxed ${
-                    msg.sender === "user"
+                  className={`max-w-[85%] rounded-2xl p-3 leading-relaxed ${msg.sender === "user"
                       ? "bg-blue-600 text-white font-medium rounded-tr-sm"
                       : "bg-slate-100 text-slate-900 rounded-tl-sm"
-                  }`}
+                    }`}
                 >
                   {msg.text}
                 </div>

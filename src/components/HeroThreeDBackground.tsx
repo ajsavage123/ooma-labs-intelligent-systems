@@ -30,7 +30,7 @@ const NeuralGrid = () => {
       }
     }
     return [pos, initial];
-  }, []);
+  }, [count]);
 
   // Line segments for the grid
   const linePositions = useMemo(() => {

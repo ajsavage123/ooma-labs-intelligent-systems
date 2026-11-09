@@ -1,5 +1,7 @@
 import React from "react";
 import { useClientPortal, formatINR, CANONICAL_6_STAGES } from "../../context/ClientPortalContext";
+import { ClientPayment } from "../../types";
+import { WhatsAppAvatar } from "./WhatsAppAvatar";
 import {
   ArrowUpRight,
   CheckCircle2,
@@ -21,7 +23,7 @@ import {
 
 interface PortalOverviewProps {
   onNavigateTab: (tab: string) => void;
-  onOpenPayModal: (payment: any) => void;
+  onOpenPayModal: (payment: ClientPayment) => void;
   onOpenRatingModal: () => void;
 }
 
@@ -205,20 +207,20 @@ export const PortalOverview: React.FC<PortalOverviewProps> = ({
           </div>
         </button>
 
-        {/* Environments Tile */}
+        {/* Live App Links Tile */}
         <button
           onClick={() => onNavigateTab("live_urls")}
           className="bg-[#18181b] hover:bg-[#202024] border border-[#27272a] hover:border-[#3f3f46] p-3.5 rounded-2xl text-left transition-all active:scale-[0.98] space-y-1.5 group"
         >
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Environments</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Live App Links</span>
             <Globe className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl sm:text-2xl font-bold text-white">
             {activeProject.liveUrls.length} <span className="text-xs font-normal text-zinc-400">Live</span>
           </div>
           <div className="text-[11px] text-zinc-400 flex items-center justify-between">
-            <span>Prod & Staging</span>
+            <span>Production & Demo</span>
             <span className="text-cyan-400 font-semibold">→</span>
           </div>
         </button>
@@ -298,10 +300,11 @@ export const PortalOverview: React.FC<PortalOverviewProps> = ({
       {/* 5. ENGINEERING LEAD & WHATSAPP CARD */}
       <div className="bg-[#18181b] border border-[#27272a] rounded-2xl p-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <img
+          <WhatsAppAvatar
             src={activeProject.dedicatedLead.avatar}
             alt={activeProject.dedicatedLead.name}
-            className="w-10 h-10 rounded-full object-cover border border-[#3f3f46]"
+            sizeClassName="w-10 h-10"
+            className="border border-[#3f3f46]"
           />
           <div>
             <h3 className="text-xs sm:text-sm font-bold text-white">{activeProject.dedicatedLead.name}</h3>

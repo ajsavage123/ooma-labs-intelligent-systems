@@ -23,12 +23,47 @@
     <meta name="keywords" content="best website makers in hyderabad, web development company in hyderabad, website developers in hyderabad, best web developers hyderabad, mobile app development hyderabad, custom software development hyderabad, software agency hyderabad, AI automation developers hyderabad, Ooma Labs, website makers hyderabad, custom software hyderabad" />
     <meta name="robots" content="index, follow" />
 
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-S4F4KR5CXQ"></script>
+    <!-- Preconnect & DNS-Prefetch for Supabase PostgreSQL API to eliminate network waterfall -->
+    <link rel="preconnect" href="https://kopoxlalsumwxtedvucn.supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://kopoxlalsumwxtedvucn.supabase.co" />
+
+    <!-- Google Analytics (GA4) with Beacon Transport, requestIdleCallback & Dev Guard -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-S4F4KR5CXQ');
+
+      // Check if running on localhost / dev environment
+      const isDevHost = Boolean(
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname === '[::1]'
+      );
+
+      // Configure GA4 with beacon transport so SPA tab/route navigation survives page lifecycle
+      gtag('config', 'G-S4F4KR5CXQ', {
+        transport_type: 'beacon',
+        send_page_view: !isDevHost,
+        debug_mode: isDevHost,
+      });
+
+      // Defer external GTM script download to idle time to unblock critical path & React hydration
+      if (!isDevHost) {
+        const loadGtagScript = () => {
+          if (document.getElementById('gtag-script')) return;
+          const script = document.createElement('script');
+          script.id = 'gtag-script';
+          script.async = true;
+          script.src = 'https://www.googletagmanager.com/gtag/js?id=G-S4F4KR5CXQ';
+          document.head.appendChild(script);
+        };
+
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(loadGtagScript, { timeout: 3000 });
+        } else {
+          window.addEventListener('load', () => setTimeout(loadGtagScript, 1000));
+        }
+      }
     </script>
 
     <script type="application/ld+json">

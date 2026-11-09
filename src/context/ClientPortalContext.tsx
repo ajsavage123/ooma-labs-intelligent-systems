@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 import {
   ClientUser,
@@ -8,10 +9,13 @@ import {
   ProjectComment,
   ClientPayment,
   SupportTicket,
+  SupportTicketUpdate,
+  TicketAttachment,
   ClientReferralData,
 } from "../types";
 import { isSupabaseConfigured, getSupabaseClient } from "../lib/supabase";
 import { supabaseService } from "../lib/supabaseService";
+import { WHATSAPP_DEFAULT_AVATAR, sanitizeAvatarUrl } from "../components/portal/WhatsAppAvatar";
 
 // Helper for formatting Indian currency (INR / ₹)
 export const formatINR = (amount: number): string => {
@@ -159,10 +163,11 @@ export const MOCK_CLIENTS: ClientUser[] = [
     email: "rajesh.sharma@bharatlogistics.in",
     company: "BharatLogistics Tech Pvt Ltd",
     title: "Chief Operating Officer",
-    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80",
+    avatar: WHATSAPP_DEFAULT_AVATAR,
     phone: "+91 98490 21345",
     joinedDate: "January 2025",
     portalRole: "client_admin",
+    onboarded: true,
   },
   {
     id: "client-swasthyacare",
@@ -170,10 +175,11 @@ export const MOCK_CLIENTS: ClientUser[] = [
     email: "priya.nair@swasthyacare.com",
     company: "SwasthyaCare Digital Health",
     title: "VP of Product Engineering",
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80",
+    avatar: WHATSAPP_DEFAULT_AVATAR,
     phone: "+91 98201 55432",
     joinedDate: "November 2024",
     portalRole: "client_admin",
+    onboarded: true,
   },
 ];
 
@@ -194,7 +200,7 @@ export const INITIAL_PROJECTS: ClientProject[] = [
     dedicatedLead: {
       name: "Arjun Mehta",
       role: "Lead Systems Architect (OOMA Labs Hyderabad)",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+      avatar: WHATSAPP_DEFAULT_AVATAR,
       email: "arjun@oomalabs.com",
       status: "Available at Hyderabad Tech Center",
     },
@@ -321,7 +327,7 @@ export const INITIAL_PROJECTS: ClientProject[] = [
         id: "c-1",
         authorName: "Arjun Mehta",
         authorRole: "lead_architect",
-        authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+        authorAvatar: WHATSAPP_DEFAULT_AVATAR,
         message:
           "Namaste Rajesh ji, we deployed build #192 to the staging environment. The FASTag toll auto-deduction reconciliation with ICICI NETC API is now verified for all 24 toll plazas on the Mumbai-Pune expressway.",
         timestamp: "Yesterday at 16:30 IST",
@@ -331,7 +337,7 @@ export const INITIAL_PROJECTS: ClientProject[] = [
         id: "c-2",
         authorName: "Rajesh Sharma",
         authorRole: "client",
-        authorAvatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80",
+        authorAvatar: WHATSAPP_DEFAULT_AVATAR,
         message:
           "Excellent work Arjun! Tested with our Bhiwandi transport manager. Can we also ensure the driver gets an instant WhatsApp alert when the trip destination is reached?",
         timestamp: "Today at 09:30 IST",
@@ -340,7 +346,7 @@ export const INITIAL_PROJECTS: ClientProject[] = [
         id: "c-3",
         authorName: "Arjun Mehta",
         authorRole: "lead_architect",
-        authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+        authorAvatar: WHATSAPP_DEFAULT_AVATAR,
         message:
           "Yes, we have integrated the WhatsApp Business API webhook. It will trigger automatically as soon as the consignee signature is submitted.",
         timestamp: "Today at 10:45 IST",
@@ -501,7 +507,7 @@ export const INITIAL_PROJECTS: ClientProject[] = [
     dedicatedLead: {
       name: "Sneha Kulkarni",
       role: "Lead Healthcare Systems Engineer",
-      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80",
+      avatar: WHATSAPP_DEFAULT_AVATAR,
       email: "sneha@oomalabs.com",
       status: "Available at Hyderabad Tech Center",
     },
@@ -755,8 +761,10 @@ interface ClientPortalContextType {
     description: string;
     category: SupportTicket["category"];
     priority: SupportTicket["priority"];
+    attachments?: TicketAttachment[];
+    deviceInfo?: SupportTicket["deviceInfo"];
   }) => void;
-  addTicketReply: (ticketId: string, message: string) => void;
+  addTicketReply: (ticketId: string, message: string, attachments?: TicketAttachment[]) => void;
 
   // --- ADMIN & SPREADSHEET PORTAL CONTROLS ---
   updateTicketStatus: (projectId: string, ticketId: string, status: SupportTicket["status"], assignedEngineer?: string) => void;
@@ -838,7 +846,13 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [clients, setClients] = useState<ClientUser[]>(() => {
     try {
       const saved = localStorage.getItem("ooma_all_clients_inr");
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed: ClientUser[] = JSON.parse(saved);
+        return parsed.map((c) => ({
+          ...c,
+          avatar: sanitizeAvatarUrl(c.avatar),
+        }));
+      }
     } catch (e) {
       console.error(e);
     }
@@ -846,15 +860,23 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
   });
 
   const [clientUser, setClientUser] = useState<ClientUser | null>(() => {
-    // P1-1: In Supabase mode, do NOT assume mock user or untrusted localStorage before session verification
-    if (isSupabaseConfigured()) {
-      return null;
-    }
     try {
-      const savedUser = localStorage.getItem("ooma_client_user_inr");
-      if (savedUser) return JSON.parse(savedUser);
+      const savedUser = localStorage.getItem("ooma_client_user_inr") || localStorage.getItem("ooma_real_client_user");
+      if (savedUser) {
+        const parsed: ClientUser = JSON.parse(savedUser);
+        const isMock = parsed.id?.startsWith("client-");
+        return {
+          ...parsed,
+          avatar: sanitizeAvatarUrl(parsed.avatar),
+          onboarded: parsed.onboarded !== undefined ? parsed.onboarded : Boolean(isMock),
+        };
+      }
     } catch (e) {
       console.error(e);
+    }
+    // In Supabase mode with no cached user session, return null until verifySession completes
+    if (isSupabaseConfigured()) {
+      return null;
     }
     return MOCK_CLIENTS[0];
   });
@@ -864,12 +886,23 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const saved = localStorage.getItem("ooma_client_projects_inr");
       if (saved) {
         const parsed: ClientProject[] = JSON.parse(saved);
-        let hasChanges = false;
         const upgraded = parsed.map((p) => {
-          const verifiedCount = p.referrals?.verifiedClientsCount ?? (p.referrals?.history?.filter((h: any) => h.status === "verified_client" || h.status === "paid_out").length || 0);
+          const verifiedCount = p.referrals?.verifiedClientsCount ?? (p.referrals?.history?.filter((h: { status?: string }) => h.status === "verified_client" || h.status === "paid_out").length || 0);
           const milestones = ensure6PhaseMilestones(p);
+          const sanitizedLead = p.dedicatedLead
+            ? {
+                ...p.dedicatedLead,
+                avatar: sanitizeAvatarUrl(p.dedicatedLead.avatar),
+              }
+            : p.dedicatedLead;
+          const sanitizedComments = (p.comments || []).map((c: ProjectComment) => ({
+            ...c,
+            authorAvatar: sanitizeAvatarUrl(c.authorAvatar),
+          }));
           return {
             ...p,
+            dedicatedLead: sanitizedLead,
+            comments: sanitizedComments,
             milestones,
             referrals: {
               ...p.referrals,
@@ -881,7 +914,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
               cardholderName: p.referrals?.cardholderName || (p.id === "proj-bharatlogistics-01" ? "Rajesh Sharma" : "Priya Nair"),
               unlockedCouponCode: p.referrals?.unlockedCouponCode || "OOMA-VERIFIED-4X",
               discountPercentage: p.referrals?.discountPercentage || 20,
-              history: (p.referrals?.history || []).map((h: any) => ({
+              history: (p.referrals?.history || []).map((h: { status?: string; advancePaidINR?: number }) => ({
                 ...h,
                 status: (h.status === "paid_out" ? "verified_client" : h.status === "in_contract" ? "requirement_verified" : h.status) || "under_vetting",
                 advancePaidINR: h.advancePaidINR ?? (h.status === "verified_client" || h.status === "paid_out" ? 100000 : 0),
@@ -971,9 +1004,10 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
         success: true,
         message: `Connected to Supabase! Loaded ${remoteProjects.length} projects and ${remoteClients.length} clients from PostgreSQL.`,
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       setSupabaseStatus("error");
-      return { success: false, message: err.message || "Failed to sync from Supabase." };
+      const error = err as Error;
+      return { success: false, message: error.message || "Failed to sync from Supabase." };
     }
   };
 
@@ -1045,7 +1079,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
             email: profile.email || session.user.email || "",
             company: profile.company_name || profile.company || "Enterprise Client",
             title: profile.title || "Project Director",
-            avatar: profile.avatar_url || profile.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+            avatar: sanitizeAvatarUrl(profile.avatar_url || profile.avatar),
             joinedDate: profile.created_at ? new Date(profile.created_at).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
             portalRole: profile.role || "client_admin",
           } : {
@@ -1054,7 +1088,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
             email: session.user.email || "",
             company: session.user.user_metadata?.company || "Enterprise Client",
             title: "Project Director",
-            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+            avatar: WHATSAPP_DEFAULT_AVATAR,
             joinedDate: new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
             portalRole: "client_admin",
           };
@@ -1105,18 +1139,20 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
               email: profile.email || session.user.email || "",
               company: profile.company_name || profile.company || "Enterprise Client",
               title: profile.title || "Project Director",
-              avatar: profile.avatar_url || profile.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+              avatar: sanitizeAvatarUrl(profile.avatar_url || profile.avatar),
               joinedDate: profile.created_at ? new Date(profile.created_at).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
               portalRole: profile.role || "client_admin",
+              onboarded: profile.onboarded ?? false,
             } : {
               id: session.user.id,
               name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "Client",
               email: session.user.email || "",
-              company: session.user.user_metadata?.company || "Enterprise Client",
+              company: session.user.user_metadata?.company || "",
               title: "Project Director",
-              avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+              avatar: WHATSAPP_DEFAULT_AVATAR,
               joinedDate: new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
               portalRole: "client_admin",
+              onboarded: false,
             };
 
             setClientUser(updatedUser);
@@ -1174,11 +1210,27 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
 
-  const userProjects = projects.filter((p) => p.clientId === (clientUser?.id || "client-bharatlogistics"));
+  // Client-isolated projects: strictly return only the logged in client's own projects
+  const userProjects = useMemo(() => {
+    if (!clientUser) return [];
+    if (clientUser.portalRole === "admin") return projects;
+    return projects.filter(
+      (p) =>
+        p.clientId === clientUser.id ||
+        (p.company && clientUser.company && p.company.trim().toLowerCase() === clientUser.company.trim().toLowerCase())
+    );
+  }, [projects, clientUser]);
+
   const rawActiveProject =
-    projects.find((p) => p.id === activeProjectId && p.clientId === clientUser?.id) ||
+    projects.find(
+      (p) =>
+        p.id === activeProjectId &&
+        (clientUser?.portalRole === "admin" ||
+          p.clientId === clientUser?.id ||
+          p.company?.toLowerCase() === clientUser?.company?.toLowerCase())
+    ) ||
     userProjects[0] ||
-    projects[0] ||
+    (clientUser?.portalRole === "admin" ? projects[0] : null) ||
     INITIAL_PROJECTS[0];
 
   const activeProject: ClientProject = useMemo(() => {
@@ -1219,7 +1271,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       email: cleanEmail,
       company: `${companyPart.charAt(0).toUpperCase() + companyPart.slice(1)} India Pvt Ltd`,
       title: "Managing Director",
-      avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80",
+      avatar: WHATSAPP_DEFAULT_AVATAR,
       joinedDate: new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
       portalRole: "client_admin",
     };
@@ -1299,7 +1351,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       email: profile.email || cleanEmail,
       company: profile.company_name || profile.company || "Enterprise Client",
       title: profile.title || "Project Director",
-      avatar: profile.avatar_url || profile.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+      avatar: sanitizeAvatarUrl(profile.avatar_url || profile.avatar),
       joinedDate: profile.created_at ? new Date(profile.created_at).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
       portalRole: profile.role || "client_admin",
     } : {
@@ -1308,7 +1360,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       email: cleanEmail,
       company: data.user.user_metadata?.company || "Enterprise Client",
       title: "Project Director",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+      avatar: WHATSAPP_DEFAULT_AVATAR,
       joinedDate: new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
       portalRole: "client_admin",
     };
@@ -1384,9 +1436,10 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       email: cleanEmail,
       company: params.company,
       title: "Project Director",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+      avatar: WHATSAPP_DEFAULT_AVATAR,
       joinedDate: new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
       portalRole: "client_admin",
+      onboarded: false,
     };
 
     try {
@@ -1397,6 +1450,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
         company_name: params.company,
         phone: params.phone || null,
         role: "client_admin",
+        onboarded: false,
         updated_at: new Date().toISOString(),
       });
     } catch (err) {
@@ -1424,8 +1478,9 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       });
       if (error) return { success: false, error: error.message };
       return { success: true };
-    } catch (e: any) {
-      return { success: false, error: e.message };
+    } catch (e: unknown) {
+      const err = e as Error;
+      return { success: false, error: err.message };
     }
   };
 
@@ -1441,8 +1496,9 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       });
       if (error) return { success: false, error: error.message };
       return { success: true };
-    } catch (e: any) {
-      return { success: false, error: e.message };
+    } catch (e: unknown) {
+      const err = e as Error;
+      return { success: false, error: err.message };
     }
   };
 
@@ -1461,8 +1517,9 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return { success: false, error: error.message, isProviderDisabled };
       }
       return { success: true };
-    } catch (e: any) {
-      return { success: false, error: e.message };
+    } catch (e: unknown) {
+      const err = e as Error;
+      return { success: false, error: err.message };
     }
   };
 
@@ -1485,7 +1542,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       company: data.company,
       title: data.title,
       phone: data.phone,
-      avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80",
+      avatar: WHATSAPP_DEFAULT_AVATAR,
       joinedDate: new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
       portalRole: "client_admin" as const,
     };
@@ -1537,7 +1594,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
           id: `c-init-${Date.now()}`,
           authorName: "Arjun Mehta",
           authorRole: "lead_architect",
-          authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+          authorAvatar: WHATSAPP_DEFAULT_AVATAR,
           message: `Welcome ${data.name}! We have provisioned your architecture dashboard for ${data.projectTitle}. Feel free to drop comments or questions here directly.`,
           timestamp: "Just now",
           isPinned: true,
@@ -1563,13 +1620,40 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       },
     };
 
-    setClients((prev) => [...prev.filter((c) => c.id !== client.id), client]);
-    setClientUser(client);
+    const updatedClient: ClientUser = {
+      ...client,
+      name: data.name,
+      company: data.company,
+      title: data.title,
+      phone: data.phone,
+      onboarded: true,
+    };
+
+    setClients((prev) => [...prev.filter((c) => c.id !== client.id), updatedClient]);
+    setClientUser(updatedClient);
+    localStorage.setItem("ooma_client_user_inr", JSON.stringify(updatedClient));
+    localStorage.setItem("ooma_real_client_user", JSON.stringify(updatedClient));
     setProjects((prev) => [newProject, ...prev]);
     setActiveProjectId(newProjectId);
 
     if (isSupabaseConfigured()) {
-      supabaseService.createClientAndProject(client, newProject).catch(console.error);
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        supabase
+          .from("profiles")
+          .update({
+            full_name: data.name,
+            company_name: data.company,
+            title: data.title,
+            phone: data.phone,
+            onboarded: true,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", client.id)
+          .then(() => {})
+          .catch(console.error);
+      }
+      supabaseService.createClientAndProject(updatedClient, newProject).catch(console.error);
     }
   };
 
@@ -1606,7 +1690,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       id: `c-${Date.now()}`,
       authorName: clientUser?.name || "Client",
       authorRole: "client",
-      authorAvatar: clientUser?.avatar || "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80",
+      authorAvatar: sanitizeAvatarUrl(clientUser?.avatar),
       message: message.trim(),
       timestamp: "Just now",
       isPinned: false,
@@ -1899,8 +1983,19 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
     description: string;
     category: SupportTicket["category"];
     priority: SupportTicket["priority"];
+    attachments?: TicketAttachment[];
+    deviceInfo?: SupportTicket["deviceInfo"];
   }) => {
     if (!clientUser) return;
+    const initialUpdate: SupportTicketUpdate = {
+      id: `up-${Date.now()}`,
+      sender: clientUser.name,
+      senderRole: "client",
+      message: data.description,
+      time: "Just now",
+      attachments: data.attachments || [],
+    };
+
     const newTicket: SupportTicket = {
       id: `tick-${Date.now()}`,
       ticketNumber: `TCK-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -1912,14 +2007,9 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       createdAt: new Date().toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }),
       updatedAt: "Just now",
       assignedEngineer: "Arjun Mehta (Lead Systems Architect)",
-      updates: [
-        {
-          id: `up-${Date.now()}`,
-          sender: clientUser.name,
-          message: data.description,
-          time: "Just now",
-        },
-      ],
+      attachments: data.attachments || [],
+      deviceInfo: data.deviceInfo,
+      updates: [initialUpdate],
     };
 
     setProjects((prev) =>
@@ -1927,7 +2017,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (proj.id === activeProject.id) {
           return {
             ...proj,
-            supportTickets: [newTicket, ...proj.supportTickets],
+            supportTickets: [newTicket, ...(proj.supportTickets || [])],
           };
         }
         return proj;
@@ -1939,13 +2029,15 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
-  const addTicketReply = (ticketId: string, message: string) => {
+  const addTicketReply = (ticketId: string, message: string, attachments?: TicketAttachment[]) => {
     if (!clientUser) return;
-    const newUpdate = {
+    const newUpdate: SupportTicketUpdate = {
       id: `up-${Date.now()}`,
       sender: clientUser.name,
+      senderRole: "client",
       message,
       time: "Just now",
+      attachments: attachments && attachments.length > 0 ? attachments : undefined,
     };
 
     setProjects((prev) =>
@@ -2062,7 +2154,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       id: `c-${Date.now()}`,
       authorName: "Arjun Mehta",
       authorRole: "lead_architect",
-      authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+      authorAvatar: WHATSAPP_DEFAULT_AVATAR,
       message,
       timestamp: "Just now",
       isPinned: Boolean(isPinned),
@@ -2537,7 +2629,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       phone: clientData.phone || "+91 98000 00000",
       joinedDate: new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
       portalRole: "client_admin",
-      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80",
+      avatar: WHATSAPP_DEFAULT_AVATAR,
     };
 
     const newMilestones: ProjectMilestone[] = CANONICAL_6_PHASES.map((phase, idx) => {
@@ -2591,7 +2683,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       dedicatedLead: {
         name: "Arjun Mehta",
         role: "Lead Systems Architect (OOMA Labs Hyderabad)",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+        avatar: WHATSAPP_DEFAULT_AVATAR,
         email: "arjun@oomalabs.com",
         status: "Assigned Lead",
       },
@@ -2603,7 +2695,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
           id: `c-${Date.now()}`,
           authorName: "Arjun Mehta",
           authorRole: "lead_architect",
-          authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+          authorAvatar: WHATSAPP_DEFAULT_AVATAR,
           message: `Namaste ${clientData.name}! Welcome to your dedicated OOMA LABS Client Portal for ${projectData.title}. We have initialized your 6-phase engineering lifecycle and project timeline below.`,
           timestamp: "Just now",
           isPinned: true,
@@ -2841,7 +2933,7 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
                         ...m,
                         status: (stStatus === "completed" || stStatus === "in_progress" || stStatus === "pending"
                           ? stStatus
-                          : m.status) as any,
+                          : m.status) as ProjectMilestone["status"],
                         progress: Number(stProg) >= 0 ? Number(stProg) : m.progress,
                         dueDate: stDue || m.dueDate,
                       };
@@ -2867,8 +2959,9 @@ export const ClientPortalProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       return { success: true, message: `Successfully updated ${updatedCount} milestone stage records from CSV!`, rowsCount: updatedCount };
-    } catch (e: any) {
-      return { success: false, message: e.message || "Failed to parse CSV spreadsheet." };
+    } catch (e: unknown) {
+      const err = e as Error;
+      return { success: false, message: err.message || "Failed to parse CSV spreadsheet." };
     }
   };
 

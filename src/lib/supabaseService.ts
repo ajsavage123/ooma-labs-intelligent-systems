@@ -1,4 +1,5 @@
 import { getSupabaseClient, isSupabaseConfigured } from "./supabase";
+import { WHATSAPP_DEFAULT_AVATAR, sanitizeAvatarUrl } from "../components/portal/WhatsAppAvatar";
 import {
   ClientUser,
   ClientProject,
@@ -77,7 +78,7 @@ export const supabaseService = {
         company: row.company,
         title: row.title || "Client Partner",
         phone: row.phone || "+91 98000 00000",
-        avatar: row.avatar_url || "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80",
+        avatar: sanitizeAvatarUrl(row.avatar_url),
         joinedDate: row.created_at ? new Date(row.created_at).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : "Recently",
         portalRole: "client_admin",
       }));
@@ -239,6 +240,8 @@ export const supabaseService = {
             assignedEngineer: t.assigned_engineer || "Arjun Mehta (Lead Systems Architect)",
             createdAt: t.created_at ? new Date(t.created_at).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "Recently",
             updatedAt: "Recently",
+            attachments: t.attachments || (t.updates?.[0]?.attachments) || [],
+            deviceInfo: t.device_info || (t.updates?.[0]?.deviceInfo) || undefined,
             updates: t.updates || [],
           }));
 
@@ -280,7 +283,7 @@ export const supabaseService = {
           dedicatedLead: {
             name: p.lead_name || "Arjun Mehta",
             role: p.lead_role || "Lead Systems Architect (OOMA Labs Hyderabad)",
-            avatar: p.lead_avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+            avatar: sanitizeAvatarUrl(p.lead_avatar),
             email: p.lead_email || "arjun@oomalabs.com",
             status: "Available at Hyderabad Tech Center",
           },
@@ -307,7 +310,7 @@ export const supabaseService = {
     if (!supabase) return false;
 
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
       };
       if (updates.overallProgress !== undefined) payload.overall_progress = updates.overallProgress;
@@ -502,7 +505,7 @@ export const supabaseService = {
     if (!supabase) return false;
 
     try {
-      const payload: any = {};
+      const payload: Record<string, unknown> = {};
       if (updates.title !== undefined) payload.title = updates.title;
       if (updates.notes !== undefined || updates.description !== undefined) {
         payload.description = updates.notes || updates.description;
@@ -583,7 +586,7 @@ export const supabaseService = {
     if (!supabase) return false;
 
     try {
-      const payload: any = {};
+      const payload: Record<string, unknown> = {};
       if (updates.status !== undefined) payload.status = updates.status;
       if (updates.paidDate !== undefined) payload.paid_date = updates.paidDate;
       if (updates.amount !== undefined) payload.amount = updates.amount;
@@ -657,7 +660,7 @@ export const supabaseService = {
     if (!supabase) return false;
 
     try {
-      const payload: any = {};
+      const payload: Record<string, unknown> = {};
       if (updates.label !== undefined) payload.label = updates.label;
       if (updates.url !== undefined) payload.url = updates.url;
       if (updates.type !== undefined) payload.type = updates.type;
@@ -723,7 +726,7 @@ export const supabaseService = {
     if (!supabase) return false;
 
     try {
-      const payload: any = {};
+      const payload: Record<string, unknown> = {};
       if (updates.isPinned !== undefined) payload.is_pinned = updates.isPinned;
       if (updates.message !== undefined) payload.message = updates.message;
 
@@ -786,7 +789,7 @@ export const supabaseService = {
     if (!supabase) return false;
 
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
       };
       if (updates.status !== undefined) payload.status = updates.status;
@@ -852,8 +855,9 @@ export const supabaseService = {
         success: true,
         message: `Successfully synchronized ${clients.length} clients and ${migratedCount} projects to Supabase PostgreSQL!`,
       };
-    } catch (err: any) {
-      return { success: false, message: err.message || "Failed to upload to Supabase." };
+    } catch (err: unknown) {
+      const error = err as Error;
+      return { success: false, message: error.message || "Failed to upload to Supabase." };
     }
   },
 };

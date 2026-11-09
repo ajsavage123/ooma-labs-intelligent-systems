@@ -327,3 +327,246 @@
 .animate-marquee:hover {
   animation-play-state: paused;
 }
+
+/* =========================================================================
+   CLAYMORPHISM 3D TACTILE UI UTILITIES
+   ========================================================================= */
+@layer utilities {
+  /* Claymorphic 3D Button - Signature Purple / Lilac (#975BC7) */
+  .clay-btn-purple {
+    background: linear-gradient(135deg, #a86bdc 0%, #975bc7 60%, #7d42ab 100%);
+    border-radius: 16px;
+    box-shadow: 
+      6px 8px 20px rgba(151, 91, 199, 0.45),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.45),
+      inset -3px -3px 6px rgba(0, 0, 0, 0.35);
+    border: none;
+    color: #ffffff;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .clay-btn-purple:hover {
+    box-shadow: 
+      8px 12px 24px rgba(151, 91, 199, 0.55),
+      inset 2px 2px 5px rgba(255, 255, 255, 0.55),
+      inset -3px -3px 6px rgba(0, 0, 0, 0.35);
+    transform: translateY(-1px);
+  }
+  .clay-btn-purple:active {
+    box-shadow: 
+      2px 4px 10px rgba(151, 91, 199, 0.4),
+      inset 3px 3px 6px rgba(0, 0, 0, 0.35),
+      inset -2px -2px 4px rgba(255, 255, 255, 0.25);
+    transform: translateY(1px) scale(0.985);
+  }
+
+  /* Claymorphic Deep Dark Recessed Input (#020204 / #050711) */
+  .clay-input-dark {
+    background: #03040a;
+    border-radius: 16px;
+    box-shadow: 
+      inset 2px 3px 6px rgba(0, 0, 0, 0.75),
+      inset -1px -1px 3px rgba(255, 255, 255, 0.05),
+      0 2px 4px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .clay-input-dark:focus {
+    box-shadow: 
+      inset 2px 3px 6px rgba(0, 0, 0, 0.85),
+      inset -1px -1px 3px rgba(255, 255, 255, 0.08),
+      0 0 0 3px rgba(151, 91, 199, 0.4);
+    border-color: rgba(151, 91, 199, 0.6) !important;
+  }
+
+  /* Claymorphic 3D Card */
+  .clay-card {
+    background: #171d3e;
+    border-radius: 28px;
+    box-shadow: 
+      14px 18px 36px rgba(0, 0, 0, 0.45),
+      -6px -6px 20px rgba(255, 255, 255, 0.04),
+      inset 3px 3px 6px rgba(255, 255, 255, 0.16),
+      inset -4px -4px 8px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Claymorphic 3D Input (Crisp White Tactile Pill) */
+  .clay-input {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 
+      4px 6px 14px rgba(0, 0, 0, 0.22),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.9),
+      inset -2px -2px 4px rgba(0, 0, 0, 0.1);
+    border: none !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .clay-input:focus {
+    box-shadow: 
+      6px 8px 18px rgba(0, 0, 0, 0.28),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.95),
+      inset -2px -2px 4px rgba(0, 0, 0, 0.08),
+      0 0 0 3px rgba(189, 43, 116, 0.35);
+  }
+
+  /* Claymorphic 3D Button - Magenta / Berry */
+  .clay-btn-magenta {
+    background: linear-gradient(135deg, #d83a8b 0%, #bd2b74 60%, #991d5c 100%);
+    border-radius: 16px;
+    box-shadow: 
+      6px 8px 20px rgba(189, 43, 116, 0.45),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.5),
+      inset -3px -3px 6px rgba(0, 0, 0, 0.35);
+    border: none;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .clay-btn-magenta:hover {
+    box-shadow: 
+      8px 12px 24px rgba(189, 43, 116, 0.55),
+      inset 2px 2px 5px rgba(255, 255, 255, 0.6),
+      inset -3px -3px 6px rgba(0, 0, 0, 0.35);
+    transform: translateY(-1px);
+  }
+  .clay-btn-magenta:active {
+    box-shadow: 
+      2px 4px 10px rgba(189, 43, 116, 0.4),
+      inset 3px 3px 6px rgba(0, 0, 0, 0.3),
+      inset -2px -2px 4px rgba(255, 255, 255, 0.3);
+    transform: translateY(1px) scale(0.985);
+  }
+
+  /* Claymorphic 3D Button - Blue */
+  .clay-btn-blue {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 60%, #1d4ed8 100%);
+    border-radius: 16px;
+    box-shadow: 
+      6px 8px 20px rgba(37, 99, 235, 0.4),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.45),
+      inset -3px -3px 6px rgba(0, 0, 0, 0.35);
+    border: none;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .clay-btn-blue:hover {
+    box-shadow: 
+      8px 12px 24px rgba(37, 99, 235, 0.5),
+      inset 2px 2px 5px rgba(255, 255, 255, 0.55),
+      inset -3px -3px 6px rgba(0, 0, 0, 0.35);
+    transform: translateY(-1px);
+  }
+  .clay-btn-blue:active {
+    box-shadow: 
+      2px 4px 10px rgba(37, 99, 235, 0.35),
+      inset 3px 3px 6px rgba(0, 0, 0, 0.3),
+      inset -2px -2px 4px rgba(255, 255, 255, 0.3);
+    transform: translateY(1px) scale(0.985);
+  }
+
+  /* Claymorphic 3D Button - Ghost / Secondary */
+  .clay-btn-ghost {
+    background: #1b2148;
+    border-radius: 16px;
+    box-shadow: 
+      4px 6px 14px rgba(0, 0, 0, 0.3),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.15),
+      inset -2px -2px 4px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.15s ease;
+  }
+  .clay-btn-ghost:hover {
+    background: #232b5e;
+    box-shadow: 
+      6px 8px 18px rgba(0, 0, 0, 0.35),
+      inset 2px 2px 5px rgba(255, 255, 255, 0.22),
+      inset -2px -2px 4px rgba(0, 0, 0, 0.35);
+    transform: translateY(-1px);
+  }
+  .clay-btn-ghost:active {
+    transform: translateY(1px) scale(0.985);
+  }
+
+  /* Claymorphic 3D Pill / Badge */
+  .clay-pill {
+    background: #181f44;
+    border-radius: 9999px;
+    box-shadow: 
+      3px 4px 10px rgba(0, 0, 0, 0.25),
+      inset 1.5px 1.5px 3px rgba(255, 255, 255, 0.15),
+      inset -2px -2px 4px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Claymorphic Recessed Inset (for tabs & sunken stage boxes) */
+  .clay-inset {
+    background: #0d122e;
+    border-radius: 18px;
+    box-shadow: 
+      inset 3px 4px 8px rgba(0, 0, 0, 0.5),
+      inset -2px -2px 5px rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  /* Neon Glass Card from User Reference */
+  /* Neon Glass Card - Sampled Exact from Reference Image */
+  .neon-glass-card {
+    background: linear-gradient(180deg, rgba(21, 13, 36, 0.85) 0%, rgba(14, 10, 27, 0.94) 100%);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border-radius: 32px;
+    border: 1.5px solid rgba(123, 33, 209, 0.55);
+    box-shadow: 
+      0 0 28px rgba(123, 33, 209, 0.4),
+      0 20px 45px -10px rgba(0, 0, 0, 0.85),
+      inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.25);
+    position: relative;
+  }
+
+  /* Neon Input Field - Sampled Exact from Reference Image (#3D2D5A) */
+  .neon-input {
+    background: rgba(61, 45, 90, 0.55) !important;
+    border: 1px solid rgba(105, 85, 144, 0.5) !important;
+    border-radius: 16px !important;
+    color: #ffffff !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    transition: all 0.2s ease;
+  }
+  .neon-input:focus {
+    border-color: #DC33CE !important;
+    box-shadow: 0 0 16px rgba(220, 51, 206, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    outline: none;
+  }
+  .neon-input::placeholder {
+    color: #8E8A9F !important;
+  }
+
+  /* Neon Pill Button - Sampled Exact Gradient: #AA34F8 -> #C32CF7 -> #DC33CE -> #F333A2 -> #F8477E */
+  .neon-btn-pill {
+    background: linear-gradient(90deg, #AA34F8 0%, #C32CF7 25%, #DC33CE 50%, #F333A2 75%, #F8477E 100%) !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 8px 25px rgba(220, 51, 206, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .neon-btn-pill:hover {
+    box-shadow: 0 12px 30px rgba(220, 51, 206, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+  }
+  .neon-btn-pill:active {
+    transform: translateY(1px) scale(0.99);
+  }
+
+  /* Neon Social OAuth Tile - Sampled Exact from Reference Image (#3F3569) */
+  .neon-oauth-tile {
+    background: rgba(63, 53, 105, 0.45) !important;
+    border: 1px solid rgba(130, 105, 175, 0.45) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+    transition: all 0.2s ease;
+  }
+  .neon-oauth-tile:hover {
+    background: rgba(75, 63, 122, 0.6) !important;
+    border-color: rgba(220, 51, 206, 0.6) !important;
+    box-shadow: 0 0 15px rgba(220, 51, 206, 0.3) !important;
+    transform: translateY(-1px);
+  }
+}
