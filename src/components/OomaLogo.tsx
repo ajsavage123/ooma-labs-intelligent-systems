@@ -87,15 +87,15 @@ export const OomaLogo: React.FC<OomaLogoProps> = ({
           >
             OOMA LABS
           </span>
-          {showSubtitle && (
-            <span
-              className={`font-bold uppercase mt-1 ${sizeConfig.sub} ${
-                isLight ? "text-amber-600" : "text-[#FFD700]"
-              }`}
-            >
-              {subtitle}
-            </span>
-          )}
+            {showSubtitle && (
+              <span
+                className={`font-semibold uppercase mt-1 font-display ${sizeConfig.sub} tracking-[0.4em] ${
+                  isLight ? "text-slate-500" : "text-white/80"
+                }`}
+              >
+                {subtitle}
+              </span>
+            )}
         </div>
       )}
     </div>
