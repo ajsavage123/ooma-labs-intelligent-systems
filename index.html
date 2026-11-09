@@ -4,7 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#050505" />
-    <style>html,body{margin:0;padding:0;background:#050505;color-scheme:dark}#root{min-height:100%}</style>
+    <style>
+      html,body{margin:0;padding:0;background:#050505;color-scheme:dark}
+      #root{min-height:100%}
+      .boot-loader{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#050505;gap:14px}
+      .apple-boot-spinner{width:22px;height:22px;position:relative}
+      .apple-boot-spinner i{position:absolute;left:46%;top:0;width:8.5%;height:28%;margin-left:-4.25%;border-radius:999px;background:rgba(255,255,255,.88);transform-origin:center 178%;opacity:.12;animation:apple-boot-fade 1s linear infinite}
+      @keyframes apple-boot-fade{0%{opacity:1}100%{opacity:.12}}
+      @media (prefers-reduced-motion:reduce){.apple-boot-spinner i{animation:none;opacity:.5}}
+      .boot-text{font:500 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:rgba(255,255,255,.45);letter-spacing:.01em}
+    </style>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <title>Ooma Labs | Websites & Web Apps Development in Hyderabad</title>
@@ -132,7 +141,23 @@
 
   <body>
     <div id="root">
-      <div style="min-height: 100vh; background-color: #050505;"></div>
+      <div class="boot-loader" aria-label="Loading">
+        <div class="apple-boot-spinner" aria-hidden="true">
+          <i style="transform:rotate(0deg);animation-delay:-0.9167s"></i>
+          <i style="transform:rotate(30deg);animation-delay:-0.8333s"></i>
+          <i style="transform:rotate(60deg);animation-delay:-0.75s"></i>
+          <i style="transform:rotate(90deg);animation-delay:-0.6667s"></i>
+          <i style="transform:rotate(120deg);animation-delay:-0.5833s"></i>
+          <i style="transform:rotate(150deg);animation-delay:-0.5s"></i>
+          <i style="transform:rotate(180deg);animation-delay:-0.4167s"></i>
+          <i style="transform:rotate(210deg);animation-delay:-0.3333s"></i>
+          <i style="transform:rotate(240deg);animation-delay:-0.25s"></i>
+          <i style="transform:rotate(270deg);animation-delay:-0.1667s"></i>
+          <i style="transform:rotate(300deg);animation-delay:-0.0833s"></i>
+          <i style="transform:rotate(330deg);animation-delay:0s"></i>
+        </div>
+        <div class="boot-text">Loading</div>
+      </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

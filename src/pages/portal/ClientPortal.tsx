@@ -6,6 +6,7 @@ import { PortalRatingModal } from "../../components/portal/PortalRatingModal";
 import { PortalSupportDeskModal } from "../../components/portal/PortalSupportDeskModal";
 import { PortalMobileView, MobileTabKey } from "../../components/portal/PortalMobileView";
 import { OomaLogo, OomaLogoGlyph } from "../../components/OomaLogo";
+import { AppleSpinner } from "../../components/AppleSpinner";
 import { Button } from "@/components/ui/button";
 import { ClientPayment } from "../../types";
 import { Cpu, Code2, ArrowRight, LogOut, ShieldCheck, Mail, Phone, ExternalLink, Layers, Plus } from "lucide-react";

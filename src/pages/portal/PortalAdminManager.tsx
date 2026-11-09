@@ -929,7 +929,7 @@ export const PortalAdminManager: React.FC = () => {
         <div className="w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center font-bold text-blue-400 mb-4 animate-pulse">
           OL
         </div>
-        <div className="w-5 h-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-3" />
+        <AppleSpinner size={22} className="mb-3" label="Verifying access" />
         <p className="text-xs text-zinc-400 font-medium">Verifying admin credentials...</p>
       </div>
     );

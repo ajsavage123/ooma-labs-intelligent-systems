@@ -1,29 +1,22 @@
 import React from "react";
 import { OomaLogoGlyph } from "./OomaLogo";
+import { AppleSpinner } from "./AppleSpinner";
 
 export const PageLoadingFallback: React.FC = () => {
   return (
-    <div className="min-h-screen w-full bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden select-none">
-      {/* Ambient background glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-[100dvh] w-full bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden select-none">
+      {/* Subtle ambient glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] bg-white/[0.03] rounded-full blur-[100px] pointer-events-none" />
 
-      {/* Center Spinner & Logo */}
-      <div className="relative z-10 flex flex-col items-center gap-4">
+      <div className="relative z-10 flex flex-col items-center gap-5">
         <div className="relative flex items-center justify-center">
-          {/* Exact Logo - No background */}
-          <OomaLogoGlyph sizeClass="w-12 h-12" strokeColor="#FFD700" className="animate-pulse" />
-          {/* Subtle Outer spinner */}
-          <div className="absolute -inset-2 rounded-full border-2 border-transparent border-t-[#FFD700] border-r-amber-500/40 animate-spin" />
+          <OomaLogoGlyph sizeClass="w-11 h-11 sm:w-12 sm:h-12" strokeColor="#FFFFFF" className="opacity-95" />
         </div>
 
-        {/* Text indicators */}
-        <div className="flex flex-col items-center gap-1 text-center">
-          <div className="text-xs font-semibold tracking-widest text-zinc-300 uppercase">
-            OOMA LABS
-          </div>
-          <div className="text-[11px] text-zinc-500 tracking-wider">
-            Loading client portal...
-          </div>
+        <AppleSpinner size={22} color="rgba(255,255,255,0.88)" label="Loading page" />
+
+        <div className="text-[11px] sm:text-xs text-white/45 tracking-[0.02em] font-medium">
+          Loading…
         </div>
       </div>
     </div>
