@@ -83,6 +83,10 @@ export const ClientOnboarding: React.FC = () => {
       toast.error("Please enter your company or business name.");
       return;
     }
+    if (!phone.trim()) {
+      toast.error("Please enter your phone or WhatsApp number.");
+      return;
+    }
     setStep(2);
   };
 
@@ -122,7 +126,7 @@ export const ClientOnboarding: React.FC = () => {
         name: name.trim(),
         company: company.trim(),
         title: "Project Lead",
-        phone: phone.trim() || "+91 98000 00000",
+        phone: phone.trim(),
         projectTitle: projectTitle.trim(),
         projectCategory,
         requirementScope: requirementScope.trim(),
@@ -292,7 +296,7 @@ export const ClientOnboarding: React.FC = () => {
                 {/* Phone / WhatsApp */}
                 <div>
                   <Label className="text-xs font-semibold text-white mb-1.5 block">
-                    Phone / WhatsApp (Optional)
+                    Phone / WhatsApp Number <span className="text-[#DC33CE]">*</span>
                   </Label>
                   <div className="relative">
                     <Phone className="w-4 h-4 text-purple-300/60 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -302,6 +306,7 @@ export const ClientOnboarding: React.FC = () => {
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+91 98765 43210"
                       className="neon-input h-12 pl-10 pr-4 text-sm font-medium placeholder:text-purple-300/40 placeholder:text-xs placeholder:tracking-wider"
+                      required
                     />
                   </div>
                 </div>
