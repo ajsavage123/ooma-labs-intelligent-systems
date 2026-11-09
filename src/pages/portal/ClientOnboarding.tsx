@@ -173,8 +173,8 @@ export const ClientOnboarding: React.FC = () => {
       </header>
 
       {/* Main Content Area - Centered Claymorphic Experience */}
-      <main className="flex-1 flex items-center justify-center px-4 py-4 sm:py-8 w-full">
-        <div className="w-full max-w-xl flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10">
+      <main className="flex-1 flex items-center justify-center px-4 py-3 sm:py-8 w-full">
+        <div className="w-full max-w-xl flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-10">
           
           {/* 3D Character Illustration - Desktop Centered */}
           {step !== 3 && (
@@ -188,23 +188,23 @@ export const ClientOnboarding: React.FC = () => {
           )}
 
           {/* Form Card Container - Claymorphic 3D Card */}
-          <div className="w-full max-w-sm sm:max-w-md flex flex-col items-center text-center space-y-3">
+          <div className="w-full max-w-sm sm:max-w-md flex flex-col items-center text-center space-y-2 sm:space-y-3">
             
-            {/* Mobile Header: character lying beside/over the "Join us" words (no container) */}
+            {/* Mobile Header: character lying beside/over the "Get started with Ooma Labs" words (no container) */}
             {step !== 3 && (
-              <div className="sm:hidden flex items-center justify-center w-full gap-1 -mb-1">
+              <div className="sm:hidden flex items-center justify-center w-full gap-0.5 -mb-0.5">
                 <img
                   src="/onboarding-character.png"
                   alt="Welcome"
-                  className="w-[72px] shrink-0 h-auto object-contain select-none pointer-events-none drop-shadow-xl -mr-1 z-10"
+                  className="w-[54px] shrink-0 h-auto object-contain select-none pointer-events-none drop-shadow-xl -mr-0.5 z-10"
                 />
                 <div className="text-left min-w-0">
-                  <h1 className="text-[1.65rem] font-extrabold text-[#EBDBFF] tracking-tight leading-[1.05]">
-                    {step === 1 ? "Join us" : "Project Setup"}
+                  <h1 className="text-[1.35rem] font-extrabold text-[#EBDBFF] tracking-tight leading-[1.05]">
+                    {step === 1 ? "Get started with Ooma Labs" : "Project Setup"}
                   </h1>
-                  <p className="text-[11px] text-purple-200/70 leading-snug mt-1 max-w-[190px]">
+                  <p className="text-[10px] text-purple-200/70 leading-snug mt-0.5 max-w-[200px]">
                     {step === 1
-                      ? "Enter your details to create your workspace."
+                      ? "Share your details to set up your client workspace and project request."
                       : "Tell us what you want our engineering team to build."}
                   </p>
                 </div>
@@ -215,11 +215,11 @@ export const ClientOnboarding: React.FC = () => {
             {step !== 3 && (
               <div className="hidden sm:block space-y-1.5">
                 <h1 className="text-3xl sm:text-4xl font-extrabold text-[#EBDBFF] tracking-tight">
-                  {step === 1 ? "Join us" : "Project Setup"}
+                  {step === 1 ? "Get started with Ooma Labs" : "Project Setup"}
                 </h1>
                 <p className="text-xs sm:text-sm text-purple-200/70 max-w-sm mx-auto leading-relaxed font-normal">
                   {step === 1
-                    ? "Enter your details below to set up your project workspace. We're looking forward to your participation!"
+                    ? "Share your details to set up your client workspace and project request."
                     : "Tell us what you want our engineering team to build so we can prepare your project dashboard."}
                 </p>
               </div>
