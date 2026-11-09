@@ -190,21 +190,28 @@ export const ClientOnboarding: React.FC = () => {
           {/* Form Card Container - Claymorphic 3D Card */}
           <div className="w-full max-w-sm sm:max-w-md flex flex-col items-center text-center space-y-2 sm:space-y-3">
             
-            {/* Mobile Header: character lying beside/over the "Get started with Ooma Labs" words (no container) */}
+            {/* Mobile Header: character lying beside the title (no container) */}
             {step !== 3 && (
-              <div className="sm:hidden flex items-center justify-center w-full gap-0.5 -mb-0.5">
+              <div className="sm:hidden flex items-center justify-center w-full gap-1 -mb-0.5">
                 <img
                   src="/onboarding-character.png"
                   alt="Welcome"
-                  className="w-[54px] shrink-0 h-auto object-contain select-none pointer-events-none drop-shadow-xl -mr-0.5 z-10"
+                  className="w-[52px] shrink-0 h-auto object-contain select-none pointer-events-none drop-shadow-xl -mr-0.5 z-10"
                 />
                 <div className="text-left min-w-0">
-                  <h1 className="text-[1.35rem] font-extrabold text-[#EBDBFF] tracking-tight leading-[1.05]">
-                    {step === 1 ? "Get started with Ooma Labs" : "Project Setup"}
+                  <h1 className="text-[1.25rem] font-extrabold text-[#EBDBFF] tracking-tight leading-[1.08]">
+                    {step === 1 ? (
+                      <>
+                        Get started
+                        <span className="block text-[1.05rem] text-[#D8B4FE]">with Ooma Labs</span>
+                      </>
+                    ) : (
+                      "Project Setup"
+                    )}
                   </h1>
-                  <p className="text-[10px] text-purple-200/70 leading-snug mt-0.5 max-w-[200px]">
+                  <p className="text-[10px] text-purple-200/70 leading-snug mt-0.5 max-w-[190px]">
                     {step === 1
-                      ? "Share your details to set up your client workspace and project request."
+                      ? "Share your details to set up your workspace."
                       : "Tell us what you want our engineering team to build."}
                   </p>
                 </div>
@@ -214,8 +221,15 @@ export const ClientOnboarding: React.FC = () => {
             {/* Desktop Title & Friendly Text for Steps 1 & 2 */}
             {step !== 3 && (
               <div className="hidden sm:block space-y-1.5">
-                <h1 className="text-3xl sm:text-4xl font-extrabold text-[#EBDBFF] tracking-tight">
-                  {step === 1 ? "Get started with Ooma Labs" : "Project Setup"}
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-[#EBDBFF] tracking-tight leading-tight">
+                  {step === 1 ? (
+                    <>
+                      Get started
+                      <span className="block">with Ooma Labs</span>
+                    </>
+                  ) : (
+                    "Project Setup"
+                  )}
                 </h1>
                 <p className="text-xs sm:text-sm text-purple-200/70 max-w-sm mx-auto leading-relaxed font-normal">
                   {step === 1
