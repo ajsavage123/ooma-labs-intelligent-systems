@@ -190,21 +190,19 @@ export const ClientOnboarding: React.FC = () => {
           {/* Form Card Container - Claymorphic 3D Card */}
           <div className="w-full max-w-sm sm:max-w-md flex flex-col items-center text-center space-y-3">
             
-            {/* Mobile Header: Compact Side-by-Side with Scaled Character */}
+            {/* Mobile Header: character + Join us (no container) */}
             {step !== 3 && (
-              <div className="sm:hidden flex items-center gap-3 w-full text-left neon-glass-card p-3">
-                <div className="w-11 shrink-0">
-                  <img
-                    src="/onboarding-character.png"
-                    alt="Welcome"
-                    className="w-11 h-auto object-contain select-none pointer-events-none drop-shadow-md"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-xl font-extrabold text-[#EBDBFF] tracking-tight leading-tight">
+              <div className="sm:hidden flex flex-col items-center w-full text-center gap-1">
+                <img
+                  src="/onboarding-character.png"
+                  alt="Welcome"
+                  className="w-16 h-auto object-contain select-none pointer-events-none drop-shadow-xl"
+                />
+                <div>
+                  <h1 className="text-2xl font-extrabold text-[#EBDBFF] tracking-tight leading-tight">
                     {step === 1 ? "Join us" : "Project Setup"}
                   </h1>
-                  <p className="text-[11px] text-purple-200/70 leading-tight mt-0.5">
+                  <p className="text-[11px] text-purple-200/70 leading-snug mt-1 max-w-[280px] mx-auto">
                     {step === 1
                       ? "Enter your details to create your workspace."
                       : "Tell us what you want our engineering team to build."}
