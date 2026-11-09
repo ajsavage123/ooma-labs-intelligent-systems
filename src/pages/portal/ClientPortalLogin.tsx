@@ -361,16 +361,16 @@ export const ClientPortalLogin: React.FC = () => {
         </Link>
       </header>
 
-      {/* Main Container */}
-      <main className="flex-1 flex flex-col items-center justify-center px-3 py-2 sm:p-4 sm:my-6 relative z-10 w-full min-w-0 min-h-0">
+      {/* Main Container - scrollable so tall Get Started form fits with full-size character */}
+      <main className="flex-1 flex flex-col items-center px-3 py-2 sm:p-4 sm:my-6 relative z-10 w-full min-w-0 min-h-0 overflow-y-auto">
         {/* Card Container */}
-        <div className="w-full max-w-[calc(100vw-1.5rem)] sm:max-w-md relative my-auto">
+        <div className="w-full max-w-[calc(100vw-1.5rem)] sm:max-w-md relative my-auto shrink-0 pb-2">
           
-          {/* 3D Character Sitting on Top - smooth swap on mode change */}
+          {/* 3D Character Sitting on Top - smooth swap; same size across modes */}
           <motion.div
             layout
             transition={{ layout: { type: "spring", stiffness: 380, damping: 32 } }}
-            className="relative z-30 flex justify-center pointer-events-none -mb-1 sm:-mb-3 px-1 sm:px-2 min-h-[56px] sm:min-h-[120px]"
+            className="relative z-30 flex justify-center pointer-events-none -mb-1 sm:-mb-3 px-1 sm:px-2 shrink-0"
           >
             <AnimatePresence mode="wait" initial={false}>
               {(() => {
@@ -388,11 +388,7 @@ export const ClientPortalLogin: React.FC = () => {
                       duration: 0.28,
                       ease: [0.22, 1, 0.36, 1],
                     }}
-                    className={`w-auto drop-shadow-[0_16px_32px_rgba(170,52,248,0.4)] object-contain select-none will-change-transform ${
-                      authMode === "signup"
-                        ? "h-[56px] min-[380px]:h-[68px] sm:h-auto sm:max-w-[380px]"
-                        : "h-[96px] min-[380px]:h-[116px] sm:h-auto sm:max-w-[380px]"
-                    }`}
+                    className="w-auto h-[96px] min-[380px]:h-[116px] sm:h-auto sm:max-w-[380px] drop-shadow-[0_16px_32px_rgba(170,52,248,0.4)] object-contain select-none will-change-transform"
                   />
                 );
               })()}
@@ -446,13 +442,13 @@ export const ClientPortalLogin: React.FC = () => {
               )}
               {authMode === "signup" && (
                 <>
-                  <h1 className={`text-xl min-[380px]:text-2xl sm:text-3xl font-extrabold text-white tracking-tight ${authMode === "signup" ? "text-lg min-[380px]:text-xl sm:text-3xl" : ""}`}>
+                  <h1 className="text-xl min-[380px]:text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                     Get Started{" "}
                     <span className="bg-gradient-to-r from-[#AA34F8] via-[#DC33CE] to-[#F8477E] bg-clip-text text-transparent">
                       Free
                     </span>
                   </h1>
-                  <p className="text-[11px] sm:text-xs text-purple-200/70 mt-0.5 sm:mt-1 leading-snug hidden min-[380px]:block">
+                  <p className="text-xs text-purple-200/70 mt-1 leading-snug">
                     Free Forever. No Credit Card Needed.
                   </p>
                 </>
