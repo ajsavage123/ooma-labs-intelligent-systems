@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { useClientPortal } from "../../context/ClientPortalContext";
 import { getSupabaseClient } from "../../lib/supabase";
 import { Input } from "@/components/ui/input";
@@ -365,18 +366,38 @@ export const ClientPortalLogin: React.FC = () => {
         {/* Card Container */}
         <div className="w-full max-w-[calc(100vw-1.5rem)] sm:max-w-md relative my-auto">
           
-          {/* 3D Character Sitting on Top - visible on all modes; compact on Get Started mobile to fit form */}
-          <div className="relative z-30 flex justify-center pointer-events-none -mb-1 sm:-mb-3 px-1 sm:px-2">
-            <img
-              src={authMode === "signin" ? "/auth-signin-character.png" : "/auth-signup-character.png"}
-              alt={authMode === "signin" ? "Welcome Back" : "Get Started Free"}
-              className={`w-auto drop-shadow-[0_16px_32px_rgba(170,52,248,0.4)] object-contain select-none ${
-                authMode === "signup"
-                  ? "h-[56px] min-[380px]:h-[68px] sm:h-auto sm:max-w-[380px]"
-                  : "h-[96px] min-[380px]:h-[116px] sm:h-auto sm:max-w-[380px]"
-              }`}
-            />
-          </div>
+          {/* 3D Character Sitting on Top - smooth swap on mode change */}
+          <motion.div
+            layout
+            transition={{ layout: { type: "spring", stiffness: 380, damping: 32 } }}
+            className="relative z-30 flex justify-center pointer-events-none -mb-1 sm:-mb-3 px-1 sm:px-2 min-h-[56px] sm:min-h-[120px]"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {(() => {
+                const isSignin = authMode === "signin";
+                const charKey = isSignin ? "signin" : "signup";
+                return (
+                  <motion.img
+                    key={charKey}
+                    src={isSignin ? "/auth-signin-character.png" : "/auth-signup-character.png"}
+                    alt={isSignin ? "Welcome Back" : "Get Started Free"}
+                    initial={{ opacity: 0, y: 14, scale: 0.94, filter: "blur(4px)" }}
+                    animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, y: -10, scale: 1.03, filter: "blur(3px)" }}
+                    transition={{
+                      duration: 0.28,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className={`w-auto drop-shadow-[0_16px_32px_rgba(170,52,248,0.4)] object-contain select-none will-change-transform ${
+                      authMode === "signup"
+                        ? "h-[56px] min-[380px]:h-[68px] sm:h-auto sm:max-w-[380px]"
+                        : "h-[96px] min-[380px]:h-[116px] sm:h-auto sm:max-w-[380px]"
+                    }`}
+                  />
+                );
+              })()}
+            </AnimatePresence>
+          </motion.div>
 
           {/* Main Glowing Neon Glass Card */}
           <div className="neon-glass-card p-4 min-[380px]:p-5 sm:p-7 space-y-3 sm:space-y-4 relative z-20">
