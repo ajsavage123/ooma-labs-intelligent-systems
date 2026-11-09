@@ -192,13 +192,13 @@ export const ClientOnboarding: React.FC = () => {
             
             {/* Mobile Header: character lying beside/over the "Join us" words (no container) */}
             {step !== 3 && (
-              <div className="sm:hidden flex items-end justify-center w-full gap-1 -mb-1">
+              <div className="sm:hidden flex items-center justify-center w-full gap-1 -mb-1">
                 <img
                   src="/onboarding-character.png"
                   alt="Welcome"
-                  className="w-[72px] shrink-0 h-auto object-contain object-bottom select-none pointer-events-none drop-shadow-xl -mr-2 translate-y-1 z-10"
+                  className="w-[72px] shrink-0 h-auto object-contain select-none pointer-events-none drop-shadow-xl -mr-1 z-10"
                 />
-                <div className="text-left pb-1 min-w-0">
+                <div className="text-left min-w-0">
                   <h1 className="text-[1.65rem] font-extrabold text-[#EBDBFF] tracking-tight leading-[1.05]">
                     {step === 1 ? "Join us" : "Project Setup"}
                   </h1>
