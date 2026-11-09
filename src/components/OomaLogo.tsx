@@ -81,11 +81,11 @@ export const OomaLogo: React.FC<OomaLogoProps> = ({
       {!glyphOnly && (
         <div className="flex flex-col leading-none">
           <span
-            className={`font-black uppercase font-display ${sizeConfig.title} ${
+            className={`font-semibold tracking-[0.14em] font-display ${sizeConfig.title} ${
               isLight ? "text-slate-900" : "text-white"
             } transition-colors group-hover:text-blue-600`}
           >
-            OOMA LABS
+            OOMA Labs
           </span>
             {showSubtitle && (
               <span
