@@ -66,13 +66,13 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
           {/* Logo */}
           <a href="/" className="flex items-center gap-2 group shrink-0 relative z-[70]">
             <div className="relative w-6 h-6 sm:w-8 md:w-7 sm:h-8 md:h-7 flex items-center justify-center">
-              <svg viewBox="0 0 100 100" className="w-full h-full group-hover:scale-110 transition-transform duration-300 fill-none stroke-white stroke-[4] md:stroke-[5] opacity-90" style={{ strokeLinecap: 'round' }}>
+              <svg viewBox="0 0 100 100" className="w-full h-full group-hover:scale-110 transition-transform duration-300 fill-none stroke-[#FFD700] stroke-[4] md:stroke-[5]" style={{ strokeLinecap: 'round' }}>
                 <path d="M 35 15 A 40 40 0 1 1 20 35" />
               </svg>
             </div>
             <div className="flex flex-col">
               <span className="text-xs sm:text-base md:text-sm font-display tracking-[0.2em] sm:tracking-[0.3em] font-black text-white uppercase leading-none">OOMA LABS</span>
-              <span className="text-[7px] tracking-[0.4em] text-white/55 font-semibold mt-1 hidden sm:block">INTELLIGENT SYSTEMS</span>
+              <span className="text-[7px] tracking-[0.4em] text-[#FFD700] font-bold mt-1 hidden sm:block">INTELLIGENT SYSTEMS</span>
             </div>
           </a>
 
