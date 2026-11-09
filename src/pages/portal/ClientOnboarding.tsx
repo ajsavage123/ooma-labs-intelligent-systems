@@ -192,7 +192,7 @@ export const ClientOnboarding: React.FC = () => {
             
             {/* Mobile Header: character lying beside the title (no container) */}
             {step !== 3 && (
-              <div className="sm:hidden flex items-center justify-center w-full gap-1.5 -mb-1 pt-0.5">
+              <div className="sm:hidden flex items-center justify-center w-full gap-1.5 mb-2 pt-0.5">
                 <img
                   src="/onboarding-character.png"
                   alt="Welcome"
