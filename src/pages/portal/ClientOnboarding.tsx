@@ -173,8 +173,8 @@ export const ClientOnboarding: React.FC = () => {
       </header>
 
       {/* Main Content Area - Centered Claymorphic Experience */}
-      <main className="flex-1 flex items-center justify-center px-4 py-3 sm:py-8 w-full">
-        <div className="w-full max-w-xl flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-10">
+      <main className="flex-1 flex items-start justify-center px-4 pt-1 pb-3 sm:items-center sm:py-8 w-full">
+        <div className="w-full max-w-xl flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-10">
           
           {/* 3D Character Illustration - Desktop Centered */}
           {step !== 3 && (
@@ -188,28 +188,28 @@ export const ClientOnboarding: React.FC = () => {
           )}
 
           {/* Form Card Container - Claymorphic 3D Card */}
-          <div className="w-full max-w-sm sm:max-w-md flex flex-col items-center text-center space-y-2 sm:space-y-3">
+          <div className="w-full max-w-sm sm:max-w-md flex flex-col items-center text-center space-y-1.5 sm:space-y-3">
             
             {/* Mobile Header: character lying beside the title (no container) */}
             {step !== 3 && (
-              <div className="sm:hidden flex items-center justify-center w-full gap-1 -mb-0.5">
+              <div className="sm:hidden flex items-center justify-center w-full gap-1.5 -mb-1 pt-0.5">
                 <img
                   src="/onboarding-character.png"
                   alt="Welcome"
-                  className="w-[52px] shrink-0 h-auto object-contain select-none pointer-events-none drop-shadow-xl -mr-0.5 z-10"
+                  className="w-[68px] shrink-0 h-auto object-contain select-none pointer-events-none drop-shadow-xl -mr-1 z-10"
                 />
                 <div className="text-left min-w-0">
-                  <h1 className="text-[1.25rem] font-extrabold text-[#EBDBFF] tracking-tight leading-[1.08]">
+                  <h1 className="text-[1.45rem] font-extrabold text-[#EBDBFF] tracking-tight leading-[1.06]">
                     {step === 1 ? (
                       <>
                         Get started
-                        <span className="block text-[1.05rem] text-[#D8B4FE]">with Ooma Labs</span>
+                        <span className="block text-[1.15rem] text-[#D8B4FE]">with Ooma Labs</span>
                       </>
                     ) : (
                       "Project Setup"
                     )}
                   </h1>
-                  <p className="text-[10px] text-purple-200/70 leading-snug mt-0.5 max-w-[190px]">
+                  <p className="text-[11px] text-purple-200/70 leading-snug mt-0.5 max-w-[200px]">
                     {step === 1
                       ? "Share your details to set up your account."
                       : "Tell us what you want our engineering team to build."}
