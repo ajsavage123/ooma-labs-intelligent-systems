@@ -66,13 +66,13 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
           {/* Logo */}
           <a href="/" className="flex items-center gap-2 group shrink-0 relative z-[70]">
             <div className="relative w-6 h-6 sm:w-8 md:w-7 sm:h-8 md:h-7 flex items-center justify-center">
-              <svg viewBox="0 0 100 100" className="w-full h-full group-hover:scale-110 transition-transform duration-300 fill-none stroke-[#FFD700] stroke-[4] md:stroke-[5]" style={{ strokeLinecap: 'round' }}>
+              <svg viewBox="0 0 100 100" className="w-full h-full group-hover:scale-110 transition-transform duration-300 fill-none stroke-white stroke-[4] md:stroke-[5] opacity-90" style={{ strokeLinecap: 'round' }}>
                 <path d="M 35 15 A 40 40 0 1 1 20 35" />
               </svg>
             </div>
             <div className="flex flex-col">
               <span className="text-xs sm:text-base md:text-sm font-display tracking-[0.2em] sm:tracking-[0.3em] font-black text-white uppercase leading-none">OOMA LABS</span>
-              <span className="text-[7px] tracking-[0.4em] text-[#FFD700] font-bold mt-1 hidden sm:block">INTELLIGENT SYSTEMS</span>
+              <span className="text-[7px] tracking-[0.4em] text-white/55 font-semibold mt-1 hidden sm:block">INTELLIGENT SYSTEMS</span>
             </div>
           </a>
 
@@ -174,19 +174,10 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                       }}
                       className="group flex items-center gap-6"
                     >
-                      <span className={`text-3xl sm:text-4xl lg:text-5xl font-display font-bold transition-all duration-500 group-hover:pl-4 ${
-                        item.isSpecial ? "text-[#FFD700] group-hover:text-white flex items-center gap-3" : "text-white/20 group-hover:text-white"
-                      }`}>
+                      <span className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold transition-all duration-500 group-hover:pl-4 text-white/20 group-hover:text-white">
                         {item.label}
-                        {item.isSpecial && (
-                          <span className="text-[10px] tracking-wider uppercase bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/40 px-2 py-0.5 rounded-full font-sans">
-                            Live Portal
-                          </span>
-                        )}
                       </span>
-                      <ArrowRight className={`w-5 h-5 lg:w-8 lg:h-8 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500 ${
-                        item.isSpecial ? "text-[#FFD700]" : "text-[#4285F4]"
-                      }`} />
+                      <ArrowRight className="w-5 h-5 lg:w-8 lg:h-8 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500 text-[#4285F4]" />
                     </motion.a>
                   ))}
                 </div>
