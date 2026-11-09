@@ -541,21 +541,21 @@ export const ClientPortalLogin: React.FC = () => {
             {/* FORM: Sign In */}
             {authMode === "signin" && (
               <form onSubmit={handleSignIn} className="space-y-3 sm:space-y-3.5">
-                {/* Username / Email */}
+                {/* Email */}
                 <div>
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1.5">
-                    <User className="w-3.5 h-3.5 text-[#DC33CE]" />
-                    <span>Username</span>
+                    <Mail className="w-3.5 h-3.5 text-[#DC33CE]" />
+                    <span>Email</span>
                   </div>
                   <div className="relative">
-                    <User className="w-4 h-4 text-[#C4B5FD] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <Mail className="w-4 h-4 text-[#C4B5FD] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <Input
                       id="signin-email"
                       name="signin_email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="username"
+                      placeholder="you@company.com"
                       autoComplete="email"
                       className="neon-input h-12 pl-10 pr-4 text-xs font-medium placeholder:text-purple-300/40"
                       required
