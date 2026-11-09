@@ -364,21 +364,13 @@ export const ClientPortalLogin: React.FC = () => {
         {/* Card Container */}
         <div className="w-full max-w-sm sm:max-w-md relative">
           
-          {/* 3D Character Sitting on Top - Pure Character, Pristine Transparent Background, 100% Intact Details */}
+          {/* 3D Character Sitting on Top */}
           <div className="relative z-30 flex justify-center pointer-events-none -mb-2 sm:-mb-3 px-2">
-            {authMode === "signin" ? (
-              <img
-                src="/auth-signin-character.png"
-                alt="Welcome Back"
-                className="w-full max-w-[340px] sm:max-w-[380px] h-auto drop-shadow-[0_16px_32px_rgba(170,52,248,0.4)] object-contain select-none"
-              />
-            ) : (
-              <img
-                src="/auth-signup-character.png"
-                alt="Get Started Free"
-                className="w-full max-w-[340px] sm:max-w-[380px] h-auto drop-shadow-[0_16px_32px_rgba(220,51,206,0.4)] object-contain select-none"
-              />
-            )}
+            <img
+              src={authMode === "signin" ? "/auth-signin-character.png" : "/auth-signup-character.png"}
+              alt={authMode === "signin" ? "Welcome Back" : "Get Started Free"}
+              className="w-full max-w-[340px] sm:max-w-[380px] h-auto drop-shadow-[0_16px_32px_rgba(170,52,248,0.4)] object-contain select-none"
+            />
           </div>
 
           {/* Main Glowing Neon Glass Card */}
