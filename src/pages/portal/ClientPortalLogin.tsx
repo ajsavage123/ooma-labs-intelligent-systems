@@ -352,7 +352,7 @@ export const ClientPortalLogin: React.FC = () => {
 
         <Link
           to="/"
-          className="text-[11px] sm:text-xs text-purple-200/70 hover:text-white flex items-center gap-1.5 transition-colors font-medium shrink-0"
+          className="text-xs text-purple-200/70 hover:text-white flex items-center gap-1.5 transition-colors font-medium shrink-0"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span className="hidden min-[360px]:inline">Back to Site</span>
@@ -365,28 +365,28 @@ export const ClientPortalLogin: React.FC = () => {
         {/* Card Container */}
         <div className="w-full max-w-[calc(100vw-1.5rem)] sm:max-w-md relative my-auto">
           
-          {/* 3D Character Sitting on Top - compact on mobile; hidden on signup mobile to save space */}
-          <div className={`relative z-30 flex justify-center pointer-events-none -mb-1 sm:-mb-3 px-1 sm:px-2 ${authMode === "signup" ? "hidden sm:flex" : ""}`}>
+          {/* 3D Character Sitting on Top */}
+          <div className={`relative z-30 flex justify-center pointer-events-none -mb-1.5 sm:-mb-3 px-1 sm:px-2 ${authMode === "signup" ? "hidden min-[400px]:flex" : ""}`}>
             <img
               src={authMode === "signin" ? "/auth-signin-character.png" : "/auth-signup-character.png"}
               alt={authMode === "signin" ? "Welcome Back" : "Get Started Free"}
-              className="w-auto h-[64px] min-[380px]:h-[80px] min-[420px]:h-[96px] sm:h-auto sm:max-w-[380px] drop-shadow-[0_16px_32px_rgba(170,52,248,0.4)] object-contain select-none"
+              className="w-auto h-[100px] min-[380px]:h-[120px] sm:h-auto sm:max-w-[380px] drop-shadow-[0_16px_32px_rgba(170,52,248,0.4)] object-contain select-none"
             />
           </div>
 
           {/* Main Glowing Neon Glass Card */}
-          <div className="neon-glass-card p-3 min-[380px]:p-4 sm:p-7 space-y-2 min-[380px]:space-y-2.5 sm:space-y-4 relative z-20">
+          <div className="neon-glass-card p-4 min-[380px]:p-5 sm:p-7 space-y-3 sm:space-y-4 relative z-20">
             {/* Ambient 3D Glowing Purple Orbs (Sampled from Reference Image) */}
             <div className="absolute top-20 -left-2 sm:-left-3.5 w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-[#DC33CE] to-[#7B21D1] shadow-[0_0_16px_rgba(220,51,206,0.9)] pointer-events-none" />
             <div className="absolute top-28 -right-1.5 sm:-right-3 w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-[#AA34F8] to-[#7B21D1] shadow-[0_0_14px_rgba(170,52,248,0.9)] pointer-events-none" />
             <div className="absolute top-44 -right-1 sm:-right-1.5 w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full bg-gradient-to-br from-[#DC33CE] to-[#AA34F8] shadow-[0_0_10px_rgba(220,51,206,0.9)] pointer-events-none" />
 
             {/* Mode Switcher Tabs */}
-                <div className="flex items-center justify-center p-0.5 sm:p-1 bg-white/[0.04] border border-purple-500/20 rounded-full text-[11px] sm:text-xs font-semibold text-purple-200/70">
+                <div className="flex items-center justify-center p-1 bg-white/[0.04] border border-purple-500/20 rounded-full text-xs font-semibold text-purple-200/70">
               <button
                 type="button"
                 onClick={() => setAuthMode("signin")}
-                  className={`flex-1 py-1 sm:py-1.5 px-2 sm:px-3 rounded-full transition-all cursor-pointer ${
+                  className={`flex-1 py-1.5 px-3 rounded-full transition-all cursor-pointer ${
                     authMode === "signin"
                       ? "bg-gradient-to-r from-[#AA34F8] to-[#DC33CE] text-white font-bold shadow-[0_2px_12px_rgba(220,51,206,0.45)]"
                       : "hover:text-white"
@@ -397,7 +397,7 @@ export const ClientPortalLogin: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setAuthMode("signup")}
-                  className={`flex-1 py-1 sm:py-1.5 px-2 sm:px-3 rounded-full transition-all cursor-pointer ${
+                  className={`flex-1 py-1.5 px-3 rounded-full transition-all cursor-pointer ${
                     authMode === "signup"
                       ? "bg-gradient-to-r from-[#AA34F8] to-[#DC33CE] text-white font-bold shadow-[0_2px_12px_rgba(220,51,206,0.45)]"
                       : "hover:text-white"
@@ -414,7 +414,7 @@ export const ClientPortalLogin: React.FC = () => {
                   <h1 className="text-xl min-[380px]:text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
                     Welcome Back!
                   </h1>
-                  <p className="text-[11px] sm:text-xs text-purple-200/70 mt-0.5 sm:mt-1 leading-snug">
+                  <p className="text-xs text-purple-200/70 mt-1 leading-snug">
                     Welcome back we missed you
                   </p>
                 </>
@@ -427,7 +427,7 @@ export const ClientPortalLogin: React.FC = () => {
                       Free
                     </span>
                   </h1>
-                  <p className="text-[11px] sm:text-xs text-purple-200/70 mt-0.5 sm:mt-1 leading-snug">
+                  <p className="text-xs text-purple-200/70 mt-1 leading-snug">
                     Free Forever. No Credit Card Needed.
                   </p>
                 </>
@@ -440,7 +440,7 @@ export const ClientPortalLogin: React.FC = () => {
                       Login
                     </span>
                   </h1>
-                  <p className="text-[11px] sm:text-xs text-purple-200/70 mt-0.5 sm:mt-1 leading-snug">
+                  <p className="text-xs text-purple-200/70 mt-1 leading-snug">
                     Instant secure magic link to your work inbox
                   </p>
                 </>
@@ -519,11 +519,11 @@ export const ClientPortalLogin: React.FC = () => {
 
             {/* FORM: Sign In */}
             {authMode === "signin" && (
-              <form onSubmit={handleSignIn} className="space-y-2 min-[380px]:space-y-2.5 sm:space-y-3.5">
+              <form onSubmit={handleSignIn} className="space-y-3 sm:space-y-3.5">
                 {/* Username / Email */}
                 <div>
-                  <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-white mb-1 sm:mb-1.5">
-                    <User className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#DC33CE]" />
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1.5">
+                    <User className="w-3.5 h-3.5 text-[#DC33CE]" />
                     <span>Username</span>
                   </div>
                   <div className="relative">
@@ -544,9 +544,9 @@ export const ClientPortalLogin: React.FC = () => {
 
                 {/* Password */}
                 <div>
-                  <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-white mb-1 sm:mb-1.5">
+                  <div className="flex items-center justify-between text-xs font-semibold text-white mb-1.5">
                     <div className="flex items-center gap-1.5">
-                      <Key className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#DC33CE]" />
+                      <Key className="w-3.5 h-3.5 text-[#DC33CE]" />
                       <span>Password</span>
                     </div>
                   </div>
@@ -560,7 +560,7 @@ export const ClientPortalLogin: React.FC = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       autoComplete="current-password"
-                      className="neon-input h-10 sm:h-12 pl-10 pr-12 text-xs font-medium placeholder:text-purple-300/40 tracking-widest"
+                      className="neon-input h-11 sm:h-12 pl-10 pr-12 text-xs font-medium placeholder:text-purple-300/40 tracking-widest"
                       required
                     />
                     <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center text-[#C4B5FD]">
@@ -578,13 +578,13 @@ export const ClientPortalLogin: React.FC = () => {
                   <div className="flex items-center justify-between pt-1 sm:pt-1.5">
                     <label
                       htmlFor="signin-remember-me"
-                      className="flex items-center gap-1.5 cursor-pointer text-[10px] sm:text-[11px] text-purple-200/70 select-none"
+                      className="flex items-center gap-1.5 cursor-pointer text-[11px] text-purple-200/70 select-none"
                     >
                       <Checkbox
                         id="signin-remember-me"
                         checked={rememberMe}
                         onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
-                        className="rounded border-purple-400/40 data-[state=checked]:bg-[#DC33CE] data-[state=checked]:border-[#DC33CE] h-3.5 w-3.5 sm:h-4 sm:w-4"
+                        className="rounded border-purple-400/40 data-[state=checked]:bg-[#DC33CE] data-[state=checked]:border-[#DC33CE] "
                       />
                       <span>Remember me</span>
                     </label>
@@ -595,7 +595,7 @@ export const ClientPortalLogin: React.FC = () => {
                         setForgotEmail(email);
                         setShowForgotModal(true);
                       }}
-                      className="text-[10px] sm:text-xs text-purple-300/80 hover:text-white transition-colors cursor-pointer"
+                      className="text-xs text-purple-300/80 hover:text-white transition-colors cursor-pointer"
                     >
                       Forgot Password?
                     </button>
@@ -606,7 +606,7 @@ export const ClientPortalLogin: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="neon-btn-pill w-full h-10 sm:h-12 text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-0.5 sm:mt-1"
+                  className="neon-btn-pill w-full h-11 sm:h-12 text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-1"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">
@@ -622,10 +622,10 @@ export const ClientPortalLogin: React.FC = () => {
 
             {/* FORM: Sign Up */}
             {authMode === "signup" && (
-              <form onSubmit={handleSignUp} className="space-y-1.5 min-[380px]:space-y-2 sm:space-y-3">
+              <form onSubmit={handleSignUp} className="space-y-2.5 sm:space-y-3">
                 {/* Email Address */}
                 <div>
-                  <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-white mb-0.5 sm:mb-1">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1.5">
                     <Mail className="w-3.5 h-3.5 text-[#DC33CE]" />
                     <span>Email Address</span>
                   </div>
@@ -639,7 +639,7 @@ export const ClientPortalLogin: React.FC = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="youname@gmail.com"
                       autoComplete="email"
-                      className="neon-input h-10 sm:h-11 pl-10 pr-4 text-xs font-medium placeholder:text-purple-300/40"
+                      className="neon-input h-11 pl-10 pr-4 text-xs font-medium placeholder:text-purple-300/40"
                       required
                     />
                   </div>
@@ -648,7 +648,7 @@ export const ClientPortalLogin: React.FC = () => {
                 {/* Your Name & Business Name */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
-                    <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-white mb-0.5 sm:mb-1">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1.5">
                       <User className="w-3.5 h-3.5 text-[#DC33CE]" />
                       <span>Your Name</span>
                     </div>
@@ -669,7 +669,7 @@ export const ClientPortalLogin: React.FC = () => {
                   </div>
 
                   <div>
-                    <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-white mb-0.5 sm:mb-1">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1.5">
                       <Building className="w-3.5 h-3.5 text-[#DC33CE]" />
                       <span>Business Name</span>
                     </div>
@@ -692,8 +692,8 @@ export const ClientPortalLogin: React.FC = () => {
 
                 {/* Phone (Optional) - hidden on very small screens */}
                 <div className="hidden min-[380px]:block">
-                  <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-white mb-0.5 sm:mb-1">
-                    <Phone className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#DC33CE]" />
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1.5">
+                    <Phone className="w-3.5 h-3.5 text-[#DC33CE]" />
                     <span>Phone (Optional)</span>
                   </div>
                   <div className="relative">
@@ -706,14 +706,14 @@ export const ClientPortalLogin: React.FC = () => {
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+91 98000 00000"
                       autoComplete="tel"
-                      className="neon-input h-10 sm:h-11 pl-10 pr-3 text-xs font-medium placeholder:text-purple-300/40"
+                      className="neon-input h-11 pl-10 pr-3 text-xs font-medium placeholder:text-purple-300/40"
                     />
                   </div>
                 </div>
 
                 {/* Password with Strength Indicator */}
                 <div>
-                  <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-white mb-0.5 sm:mb-1">
+                  <div className="flex items-center justify-between text-xs font-semibold text-white mb-1.5">
                     <div className="flex items-center gap-1.5">
                       <Key className="w-3.5 h-3.5 text-[#DC33CE]" />
                       <span>Password</span>
@@ -739,7 +739,7 @@ export const ClientPortalLogin: React.FC = () => {
                       onChange={(e) => setSignUpPassword(e.target.value)}
                       placeholder="••••••••"
                       autoComplete="new-password"
-                      className="neon-input h-10 sm:h-11 pl-10 pr-12 text-xs font-medium placeholder:text-purple-300/40 tracking-widest"
+                      className="neon-input h-11 pl-10 pr-12 text-xs font-medium placeholder:text-purple-300/40 tracking-widest"
                       required
                     />
                     <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center text-[#C4B5FD]">
@@ -757,7 +757,7 @@ export const ClientPortalLogin: React.FC = () => {
 
                 {/* Confirm Password */}
                 <div>
-                  <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-white mb-0.5 sm:mb-1">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1.5">
                     <Lock className="w-3.5 h-3.5 text-[#DC33CE]" />
                     <span>Confirm Password</span>
                   </div>
@@ -771,7 +771,7 @@ export const ClientPortalLogin: React.FC = () => {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••"
                       autoComplete="new-password"
-                      className="neon-input h-10 sm:h-11 pl-10 pr-12 text-xs font-medium placeholder:text-purple-300/40 tracking-widest"
+                      className="neon-input h-11 pl-10 pr-12 text-xs font-medium placeholder:text-purple-300/40 tracking-widest"
                       required
                     />
                     <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center text-[#C4B5FD]">
@@ -814,7 +814,7 @@ export const ClientPortalLogin: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting || !agreedTerms}
-                  className="neon-btn-pill w-full h-10 sm:h-12 text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-0.5 sm:mt-1"
+                  className="neon-btn-pill w-full h-11 sm:h-12 text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-1"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">
@@ -830,7 +830,7 @@ export const ClientPortalLogin: React.FC = () => {
 
             {/* FORM: Magic Link */}
             {authMode === "magic" && (
-              <form onSubmit={handleMagicLink} className="space-y-2 sm:space-y-4">
+              <form onSubmit={handleMagicLink} className="space-y-3 sm:space-y-4">
                 <div>
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1.5">
                     <Mail className="w-3.5 h-3.5 text-[#DC33CE]" />
@@ -846,7 +846,7 @@ export const ClientPortalLogin: React.FC = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="youname@gmail.com"
                       autoComplete="email"
-                      className="neon-input h-10 sm:h-12 pl-10 pr-4 text-xs font-medium placeholder:text-purple-300/40"
+                      className="neon-input h-11 sm:h-12 pl-10 pr-4 text-xs font-medium placeholder:text-purple-300/40"
                       required
                     />
                   </div>
@@ -864,7 +864,7 @@ export const ClientPortalLogin: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="neon-btn-pill w-full h-10 sm:h-12 text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="neon-btn-pill w-full h-11 sm:h-12 text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">
@@ -889,25 +889,25 @@ export const ClientPortalLogin: React.FC = () => {
             )}
 
             {/* Divider - compact on mobile */}
-            <div className="relative my-1.5 sm:my-3">
+            <div className="relative my-2 sm:my-3">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-purple-500/20" />
               </div>
-              <div className="relative flex justify-center text-[10px] sm:text-[11px]">
-                <span className="bg-[#120B24] px-2 sm:px-3 text-purple-200/60 font-medium">
+              <div className="relative flex justify-center text-[11px]">
+                <span className="bg-[#120B24] px-3 text-purple-200/60 font-medium">
                   {authMode === "signin" ? "Or continue with" : "Or sign up with"}
                 </span>
               </div>
             </div>
 
             {/* Social OAuth Buttons */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
               {/* Google */}
               <button
                 type="button"
                 disabled={oauthLoading !== null || isSubmitting}
                 onClick={() => handleOAuth("google")}
-                className="neon-oauth-tile h-9 sm:h-12 flex items-center justify-center cursor-pointer disabled:opacity-50"
+                className="neon-oauth-tile h-11 sm:h-12 flex items-center justify-center cursor-pointer disabled:opacity-50"
                 title="Continue with Google"
                 aria-label="Continue with Google"
               >
@@ -936,7 +936,7 @@ export const ClientPortalLogin: React.FC = () => {
                 type="button"
                 disabled={oauthLoading !== null || isSubmitting}
                 onClick={() => toast.info("Apple Sign-In is configured for production deployments.")}
-                className="neon-oauth-tile h-9 sm:h-12 flex items-center justify-center cursor-pointer disabled:opacity-50"
+                className="neon-oauth-tile h-11 sm:h-12 flex items-center justify-center cursor-pointer disabled:opacity-50"
                 title="Continue with Apple"
                 aria-label="Continue with Apple"
               >
@@ -950,7 +950,7 @@ export const ClientPortalLogin: React.FC = () => {
                 type="button"
                 disabled={oauthLoading !== null || isSubmitting}
                 onClick={() => handleOAuth("facebook")}
-                className="neon-oauth-tile h-9 sm:h-12 flex items-center justify-center cursor-pointer disabled:opacity-50"
+                className="neon-oauth-tile h-11 sm:h-12 flex items-center justify-center cursor-pointer disabled:opacity-50"
                 title="Continue with Facebook"
                 aria-label="Continue with Facebook"
               >
@@ -989,9 +989,9 @@ export const ClientPortalLogin: React.FC = () => {
             )}
 
             {/* Security Notice - hidden on small mobile to save space */}
-            <div className="pt-0.5 sm:pt-1 text-center text-[10px] sm:text-[11px] text-purple-300/50 hidden min-[380px]:flex items-center justify-center gap-1.5">
+            <div className="pt-1 text-center text-[11px] text-purple-300/50 flex items-center justify-center gap-1.5">
               <ShieldCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-400/60" />
-              <span>256-Bit SSL Encrypted</span>
+              <span>256-Bit SSL Encrypted Project Dashboard</span>
             </div>
           </div>
         </div>
@@ -1065,7 +1065,7 @@ export const ClientPortalLogin: React.FC = () => {
 
             <form onSubmit={handleForgotPassword} className="space-y-3">
               <div>
-                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-white mb-0.5 sm:mb-1">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1.5">
                   <Mail className="w-3.5 h-3.5 text-[#DC33CE]" />
                   <span>Email Address</span>
                 </div>
@@ -1104,8 +1104,8 @@ export const ClientPortalLogin: React.FC = () => {
       )}
 
       {/* Footer - compact/hidden feel on very small screens to save space */}
-      <footer className="shrink-0 px-3 py-2 sm:p-5 text-center text-[10px] sm:text-xs text-purple-300/40 border-t border-white/5 relative z-20 leading-tight">
-        © {new Date().getFullYear()} OOMA LABS INC.
+      <footer className="shrink-0 px-3 py-2 sm:p-5 text-center text-xs text-purple-300/40 border-t border-white/5 relative z-20 leading-tight">
+        © {new Date().getFullYear()} OOMA LABS INC. All rights reserved.
       </footer>
     </div>
   );
