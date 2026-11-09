@@ -110,14 +110,24 @@ export const ClientPortal: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-4 bg-[#121316] border border-[#27272a] rounded-xl space-y-2 text-xs text-zinc-300">
-              <div className="font-semibold text-white flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                Dedicated Project Workspace
+            <div className="p-4 bg-[#121316] border border-[#27272a] rounded-xl overflow-hidden">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <img
+                  src="/portal-accent.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-[#27272a] bg-[#09090b] shrink-0"
+                />
+                <div className="space-y-1 min-w-0">
+                  <div className="font-semibold text-white text-xs sm:text-sm flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                    Dedicated Project Workspace
+                  </div>
+                  <p className="text-zinc-400 leading-relaxed text-[11px] sm:text-xs">
+                    Your workspace is ready. Set up your project details to view development progress, team updates, live demo links, and invoices in one place.
+                  </p>
+                </div>
               </div>
-              <p className="text-zinc-400 leading-relaxed text-[11px] sm:text-xs">
-                Your workspace is ready. Set up your project details to view development progress, team updates, live demo links, and invoices in one place.
-              </p>
             </div>
 
             {/* Complete Onboarding Action */}
