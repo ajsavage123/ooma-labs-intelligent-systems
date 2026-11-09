@@ -365,12 +365,16 @@ export const ClientPortalLogin: React.FC = () => {
         {/* Card Container */}
         <div className="w-full max-w-[calc(100vw-1.5rem)] sm:max-w-md relative my-auto">
           
-          {/* 3D Character Sitting on Top */}
-          <div className={`relative z-30 flex justify-center pointer-events-none -mb-1.5 sm:-mb-3 px-1 sm:px-2 ${authMode === "signup" ? "hidden min-[400px]:flex" : ""}`}>
+          {/* 3D Character Sitting on Top - visible on all modes; compact on Get Started mobile to fit form */}
+          <div className="relative z-30 flex justify-center pointer-events-none -mb-1 sm:-mb-3 px-1 sm:px-2">
             <img
               src={authMode === "signin" ? "/auth-signin-character.png" : "/auth-signup-character.png"}
               alt={authMode === "signin" ? "Welcome Back" : "Get Started Free"}
-              className="w-auto h-[100px] min-[380px]:h-[120px] sm:h-auto sm:max-w-[380px] drop-shadow-[0_16px_32px_rgba(170,52,248,0.4)] object-contain select-none"
+              className={`w-auto drop-shadow-[0_16px_32px_rgba(170,52,248,0.4)] object-contain select-none ${
+                authMode === "signup"
+                  ? "h-[56px] min-[380px]:h-[68px] sm:h-auto sm:max-w-[380px]"
+                  : "h-[96px] min-[380px]:h-[116px] sm:h-auto sm:max-w-[380px]"
+              }`}
             />
           </div>
 
@@ -421,13 +425,13 @@ export const ClientPortalLogin: React.FC = () => {
               )}
               {authMode === "signup" && (
                 <>
-                  <h1 className="text-xl min-[380px]:text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  <h1 className={`text-xl min-[380px]:text-2xl sm:text-3xl font-extrabold text-white tracking-tight ${authMode === "signup" ? "text-lg min-[380px]:text-xl sm:text-3xl" : ""}`}>
                     Get Started{" "}
                     <span className="bg-gradient-to-r from-[#AA34F8] via-[#DC33CE] to-[#F8477E] bg-clip-text text-transparent">
                       Free
                     </span>
                   </h1>
-                  <p className="text-xs text-purple-200/70 mt-1 leading-snug">
+                  <p className="text-[11px] sm:text-xs text-purple-200/70 mt-0.5 sm:mt-1 leading-snug hidden min-[380px]:block">
                     Free Forever. No Credit Card Needed.
                   </p>
                 </>
@@ -622,12 +626,12 @@ export const ClientPortalLogin: React.FC = () => {
 
             {/* FORM: Sign Up */}
             {authMode === "signup" && (
-              <form onSubmit={handleSignUp} className="space-y-2.5 sm:space-y-3">
+              <form onSubmit={handleSignUp} className="space-y-2 sm:space-y-3">
                 {/* Email Address */}
                 <div>
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1.5">
-                    <Mail className="w-3.5 h-3.5 text-[#DC33CE]" />
-                    <span>Email Address</span>
+                  <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-white mb-1 sm:mb-1.5">
+                    <Mail className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[#DC33CE]" />
+                    <span>Email</span>
                   </div>
                   <div className="relative">
                     <Mail className="w-4 h-4 text-[#C4B5FD] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -639,62 +643,62 @@ export const ClientPortalLogin: React.FC = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="youname@gmail.com"
                       autoComplete="email"
-                      className="neon-input h-11 pl-10 pr-4 text-xs font-medium placeholder:text-purple-300/40"
+                      className="neon-input h-10 sm:h-11 pl-10 pr-4 text-xs font-medium placeholder:text-purple-300/40"
                       required
                     />
                   </div>
                 </div>
 
                 {/* Your Name & Business Name */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
                   <div>
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1.5">
-                      <User className="w-3.5 h-3.5 text-[#DC33CE]" />
-                      <span>Your Name</span>
+                    <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-white mb-1 sm:mb-1.5">
+                      <User className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[#DC33CE]" />
+                      <span>Name</span>
                     </div>
                     <div className="relative">
-                      <User className="w-4 h-4 text-[#C4B5FD] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C4B5FD] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                       <Input
                         id="signup-fullname"
                         name="signup_fullname"
                         type="text"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        placeholder="@yourname"
+                        placeholder="Your name"
                         autoComplete="name"
-                        className="neon-input h-11 pl-10 pr-3 text-xs font-medium placeholder:text-purple-300/40"
+                        className="neon-input h-10 sm:h-11 pl-8 sm:pl-10 pr-2 sm:pr-3 text-xs font-medium placeholder:text-purple-300/40"
                         required
                       />
                     </div>
                   </div>
 
                   <div>
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1.5">
-                      <Building className="w-3.5 h-3.5 text-[#DC33CE]" />
-                      <span>Business Name</span>
+                    <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-white mb-1 sm:mb-1.5">
+                      <Building className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[#DC33CE]" />
+                      <span>Business</span>
                     </div>
                     <div className="relative">
-                      <Building className="w-4 h-4 text-[#C4B5FD] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <Building className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C4B5FD] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                       <Input
                         id="signup-company"
                         name="signup_company"
                         type="text"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder="Apex Health"
+                        placeholder="Company"
                         autoComplete="organization"
-                        className="neon-input h-11 pl-10 pr-3 text-xs font-medium placeholder:text-purple-300/40"
+                        className="neon-input h-10 sm:h-11 pl-8 sm:pl-10 pr-2 sm:pr-3 text-xs font-medium placeholder:text-purple-300/40"
                         required
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Phone (Optional) - hidden on very small screens */}
-                <div className="hidden min-[380px]:block">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1.5">
-                    <Phone className="w-3.5 h-3.5 text-[#DC33CE]" />
-                    <span>Phone (Optional)</span>
+                {/* Phone (Optional) */}
+                <div>
+                  <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-white mb-1 sm:mb-1.5">
+                    <Phone className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[#DC33CE]" />
+                    <span>Phone <span className="text-purple-300/50 font-normal">(optional)</span></span>
                   </div>
                   <div className="relative">
                     <Phone className="w-4 h-4 text-[#C4B5FD] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -706,107 +710,100 @@ export const ClientPortalLogin: React.FC = () => {
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+91 98000 00000"
                       autoComplete="tel"
-                      className="neon-input h-11 pl-10 pr-3 text-xs font-medium placeholder:text-purple-300/40"
+                      className="neon-input h-10 sm:h-11 pl-10 pr-3 text-xs font-medium placeholder:text-purple-300/40"
                     />
                   </div>
                 </div>
 
-                {/* Password with Strength Indicator */}
-                <div>
-                  <div className="flex items-center justify-between text-xs font-semibold text-white mb-1.5">
-                    <div className="flex items-center gap-1.5">
-                      <Key className="w-3.5 h-3.5 text-[#DC33CE]" />
-                      <span>Password</span>
+                {/* Password & Confirm - side by side on sm, stacked on very small */}
+                <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-2 sm:gap-2.5">
+                  <div>
+                    <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-white mb-1 sm:mb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <Key className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[#DC33CE]" />
+                        <span>Password</span>
+                      </div>
+                      {signUpPassword.length >= 6 && (
+                        <span className="text-[10px] font-semibold text-emerald-400 hidden sm:inline">Strong</span>
+                      )}
                     </div>
-                    {signUpPassword.length >= 6 && (
-                      <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
-                        <span className="flex gap-0.5">
-                          <span className="w-2.5 h-1 bg-emerald-400 rounded-full" />
-                          <span className="w-2.5 h-1 bg-emerald-400 rounded-full" />
-                          <span className="w-2.5 h-1 bg-emerald-400 rounded-full" />
-                        </span>
-                        <span>Strong</span>
-                      </span>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <Lock className="w-4 h-4 text-[#C4B5FD] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <Input
-                      id="signup-password"
-                      name="signup_password"
-                      type={showPassword ? "text" : "password"}
-                      value={signUpPassword}
-                      onChange={(e) => setSignUpPassword(e.target.value)}
-                      placeholder="••••••••"
-                      autoComplete="new-password"
-                      className="neon-input h-11 pl-10 pr-12 text-xs font-medium placeholder:text-purple-300/40 tracking-widest"
-                      required
-                    />
-                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center text-[#C4B5FD]">
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="hover:text-white transition-colors p-1 cursor-pointer"
-                        aria-label={showPassword ? "Hide password" : "Show password"}
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
+                    <div className="relative">
+                      <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C4B5FD] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <Input
+                        id="signup-password"
+                        name="signup_password"
+                        type={showPassword ? "text" : "password"}
+                        value={signUpPassword}
+                        onChange={(e) => setSignUpPassword(e.target.value)}
+                        placeholder="••••••"
+                        autoComplete="new-password"
+                        className="neon-input h-10 sm:h-11 pl-8 sm:pl-10 pr-9 text-xs font-medium placeholder:text-purple-300/40 tracking-widest"
+                        required
+                      />
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center text-[#C4B5FD]">
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="hover:text-white transition-colors p-0.5 cursor-pointer"
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? <EyeOff className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Confirm Password */}
-                <div>
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-white mb-1.5">
-                    <Lock className="w-3.5 h-3.5 text-[#DC33CE]" />
-                    <span>Confirm Password</span>
-                  </div>
-                  <div className="relative">
-                    <Lock className="w-4 h-4 text-[#C4B5FD] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <Input
-                      id="signup-confirm-password"
-                      name="signup_confirm_password"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="••••••••"
-                      autoComplete="new-password"
-                      className="neon-input h-11 pl-10 pr-12 text-xs font-medium placeholder:text-purple-300/40 tracking-widest"
-                      required
-                    />
-                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center text-[#C4B5FD]">
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="hover:text-white transition-colors p-1 cursor-pointer"
-                        aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                      >
-                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
+                  <div>
+                    <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-white mb-1 sm:mb-1.5">
+                      <Lock className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[#DC33CE]" />
+                      <span>Confirm</span>
+                    </div>
+                    <div className="relative">
+                      <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C4B5FD] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <Input
+                        id="signup-confirm-password"
+                        name="signup_confirm_password"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••"
+                        autoComplete="new-password"
+                        className="neon-input h-10 sm:h-11 pl-8 sm:pl-10 pr-9 text-xs font-medium placeholder:text-purple-300/40 tracking-widest"
+                        required
+                      />
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center text-[#C4B5FD]">
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="hover:text-white transition-colors p-0.5 cursor-pointer"
+                          aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Terms Checkbox */}
-                <div className="flex items-start gap-2 pt-1 text-xs text-purple-200/70">
+                <div className="flex items-start gap-2 pt-0.5 text-xs text-purple-200/70">
                   <input
                     type="checkbox"
                     id="agreeTermsPortalSignUp"
                     checked={agreedTerms}
                     onChange={(e) => setAgreedTerms(e.target.checked)}
-                    className="mt-0.5 rounded border-purple-400/30 bg-[#1A1433] text-[#DC33CE] focus:ring-[#D946EF] cursor-pointer"
+                    className="mt-0.5 rounded border-purple-400/30 bg-[#1A1433] text-[#DC33CE] focus:ring-[#D946EF] cursor-pointer shrink-0"
                     required
                   />
-                  <label htmlFor="agreeTermsPortalSignUp" className="cursor-pointer leading-tight text-[11px]">
-                    I agree to OOMA LABS{" "}
+                  <label htmlFor="agreeTermsPortalSignUp" className="cursor-pointer leading-tight text-[10px] sm:text-[11px]">
+                    I agree to{" "}
                     <Link to="/terms-of-service" target="_blank" className="text-[#DC33CE] hover:underline">
-                      Terms of Service
+                      Terms
                     </Link>{" "}
-                    and{" "}
+                    &{" "}
                     <Link to="/privacy-policy" target="_blank" className="text-[#DC33CE] hover:underline">
                       Privacy Policy
                     </Link>
-                    .
                   </label>
                 </div>
 
@@ -814,12 +811,12 @@ export const ClientPortalLogin: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting || !agreedTerms}
-                  className="neon-btn-pill w-full h-11 sm:h-12 text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-1"
+                  className="neon-btn-pill w-full h-11 sm:h-12 text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-0.5"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">
                       <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Registering Account...
+                      Creating...
                     </span>
                   ) : (
                     <span>Sign up →</span>
