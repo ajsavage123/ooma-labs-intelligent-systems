@@ -347,12 +347,12 @@ export const ClientPortalLogin: React.FC = () => {
       }}
     >
       {/* Top Header */}
-      <header className="p-4 sm:px-8 flex items-center justify-between max-w-5xl mx-auto w-full border-b border-white/5 relative z-20">
+      <header className="px-3 py-3 sm:px-8 sm:py-4 flex items-center justify-between max-w-5xl mx-auto w-full border-b border-white/5 relative z-20 gap-2">
         <OomaLogo linkTo="/" variant="dark" size="sm" subtitle="CLIENT PORTAL" />
 
         <Link
           to="/"
-          className="text-xs text-purple-200/70 hover:text-white flex items-center gap-1.5 transition-colors font-medium"
+          className="text-[11px] sm:text-xs text-purple-200/70 hover:text-white flex items-center gap-1.5 transition-colors font-medium shrink-0"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Site</span>
@@ -360,25 +360,25 @@ export const ClientPortalLogin: React.FC = () => {
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4 my-2 sm:my-6 relative z-10">
+      <main className="flex-1 flex flex-col items-center justify-center px-3 py-3 sm:p-4 sm:my-6 relative z-10 w-full min-w-0">
         {/* Card Container */}
-        <div className="w-full max-w-sm sm:max-w-md relative">
+        <div className="w-full max-w-[calc(100vw-1.5rem)] sm:max-w-md relative">
           
           {/* 3D Character Sitting on Top */}
-          <div className="relative z-30 flex justify-center pointer-events-none -mb-2 sm:-mb-3 px-2">
+          <div className="relative z-30 flex justify-center pointer-events-none -mb-1 sm:-mb-3 px-1 sm:px-2">
             <img
               src={authMode === "signin" ? "/auth-signin-character.png" : "/auth-signup-character.png"}
               alt={authMode === "signin" ? "Welcome Back" : "Get Started Free"}
-              className="w-full max-w-[340px] sm:max-w-[380px] h-auto drop-shadow-[0_16px_32px_rgba(170,52,248,0.4)] object-contain select-none"
+              className="w-full max-w-[260px] min-[380px]:max-w-[300px] sm:max-w-[380px] h-auto drop-shadow-[0_16px_32px_rgba(170,52,248,0.4)] object-contain select-none"
             />
           </div>
 
           {/* Main Glowing Neon Glass Card */}
-          <div className="neon-glass-card p-6 sm:p-7 space-y-4 relative z-20">
+          <div className="neon-glass-card p-4 sm:p-7 space-y-3 sm:space-y-4 relative z-20">
             {/* Ambient 3D Glowing Purple Orbs (Sampled from Reference Image) */}
-            <div className="absolute top-20 -left-3.5 w-6 h-6 rounded-full bg-gradient-to-br from-[#DC33CE] to-[#7B21D1] shadow-[0_0_16px_rgba(220,51,206,0.9)] pointer-events-none" />
-            <div className="absolute top-28 -right-3 w-5 h-5 rounded-full bg-gradient-to-br from-[#AA34F8] to-[#7B21D1] shadow-[0_0_14px_rgba(170,52,248,0.9)] pointer-events-none" />
-            <div className="absolute top-44 -right-1.5 w-3.5 h-3.5 rounded-full bg-gradient-to-br from-[#DC33CE] to-[#AA34F8] shadow-[0_0_10px_rgba(220,51,206,0.9)] pointer-events-none" />
+            <div className="absolute top-20 -left-2 sm:-left-3.5 w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-[#DC33CE] to-[#7B21D1] shadow-[0_0_16px_rgba(220,51,206,0.9)] pointer-events-none" />
+            <div className="absolute top-28 -right-1.5 sm:-right-3 w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-[#AA34F8] to-[#7B21D1] shadow-[0_0_14px_rgba(170,52,248,0.9)] pointer-events-none" />
+            <div className="absolute top-44 -right-1 sm:-right-1.5 w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full bg-gradient-to-br from-[#DC33CE] to-[#AA34F8] shadow-[0_0_10px_rgba(220,51,206,0.9)] pointer-events-none" />
 
             {/* Mode Switcher Tabs */}
             <div className="flex items-center justify-center p-1 bg-white/[0.04] border border-purple-500/20 rounded-full text-xs font-semibold text-purple-200/70">
@@ -420,7 +420,7 @@ export const ClientPortalLogin: React.FC = () => {
               )}
               {authMode === "signup" && (
                 <>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  <h1 className="text-xl min-[380px]:text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                     Get Started{" "}
                     <span className="bg-gradient-to-r from-[#AA34F8] via-[#DC33CE] to-[#F8477E] bg-clip-text text-transparent">
                       Free
@@ -433,7 +433,7 @@ export const ClientPortalLogin: React.FC = () => {
               )}
               {authMode === "magic" && (
                 <>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  <h1 className="text-xl min-[380px]:text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                     Passwordless{" "}
                     <span className="bg-gradient-to-r from-[#AA34F8] to-[#F8477E] bg-clip-text text-transparent">
                       Login
@@ -998,8 +998,8 @@ export const ClientPortalLogin: React.FC = () => {
 
       {/* Provider Disabled Modal */}
       {providerDisabledModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-md neon-glass-card p-6 space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+          <div className="w-full max-w-[calc(100vw-1.5rem)] sm:max-w-md neon-glass-card p-4 sm:p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-amber-400" />
@@ -1042,8 +1042,8 @@ export const ClientPortalLogin: React.FC = () => {
 
       {/* Forgot Password Modal */}
       {showForgotModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-sm neon-glass-card p-6 space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+          <div className="w-full max-w-[calc(100vw-1.5rem)] sm:max-w-sm neon-glass-card p-4 sm:p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
                 <Key className="w-4 h-4 text-[#DC33CE]" />
@@ -1103,7 +1103,7 @@ export const ClientPortalLogin: React.FC = () => {
       )}
 
       {/* Footer */}
-      <footer className="p-5 text-center text-xs text-purple-300/40 border-t border-white/5 relative z-20">
+      <footer className="px-3 py-4 sm:p-5 text-center text-[11px] sm:text-xs text-purple-300/40 border-t border-white/5 relative z-20">
         © {new Date().getFullYear()} OOMA LABS INC. All rights reserved. Hyderabad, India.
       </footer>
     </div>
