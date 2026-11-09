@@ -39,10 +39,8 @@ export const ClientPortal: React.FC = () => {
   // 1. Loading State (only display full-screen blocker if no cached user session exists to render immediately)
   if (authLoading && !clientUser) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center p-4 text-white">
-        <OomaLogoGlyph sizeClass="w-16 h-16" strokeColor="#FFD700" className="mb-4 animate-pulse" />
-        <div className="w-5 h-5 border-2 border-amber-500/30 border-t-[#FFD700] rounded-full animate-spin mb-3" />
-        <p className="text-xs text-zinc-400 font-medium">Connecting to OOMA LABS real-time database...</p>
+      <div className="min-h-[100dvh] bg-[#050505] flex items-center justify-center p-4">
+        <AppleSpinner size={24} label="Loading" />
       </div>
     );
   }
