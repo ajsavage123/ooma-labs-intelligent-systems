@@ -103,34 +103,34 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                     strokeLinejoin="round"
                     aria-hidden="true"
                   >
-                    {/* waving arm/hand - cylindrical, pops out briefly */}
+                    {/* waving arm/hand - cylindrical, pops out from shoulder */}
                     <motion.g
-                      style={{ originX: "7.9px", originY: "13.0px" }}
+                      style={{ originX: "7.4px", originY: "12.9px" }}
                       initial={{ opacity: 0, rotate: 0, x: 0, y: 0 }}
                       animate={{
                         opacity: [0, 1, 1, 1, 1, 0],
-                        rotate: [12, -34, 22, -26, 16, -8, 0],
-                        x: [0, -0.4, -0.12, -0.28, -0.08, 0],
-                        y: [0, -0.45, -0.08, -0.22, 0, 0],
+                        rotate: [10, -34, 20, -28, 16, -8, 0],
+                        x: [0, -0.35, -0.1, -0.25, -0.08, 0],
+                        y: [0, -0.35, -0.05, -0.2, 0, 0],
                       }}
                       transition={{ duration: 1.3, ease: "easeInOut", repeat: Infinity, repeatDelay: 1.6 }}
                     >
                       {/* arm */}
                       <path
-                        d="M8.2 13.0C7.25 12.1 6.55 11.0 6.15 9.85"
+                        d="M7.4 12.9C6.45 11.7 5.6 10.45 5.05 9.3"
                         stroke="currentColor"
-                        strokeWidth="1.8"
+                        strokeWidth="1.7"
                         strokeLinecap="round"
                         fill="none"
                       />
                       {/* palm */}
-                      <circle cx="5.9" cy="8.95" r="1.1" fill="currentColor" />
+                      <circle cx="4.8" cy="8.35" r="1.0" fill="currentColor" />
                       {/* fingers (cylindrical) */}
-                      <rect x="4.95" y="6.85" width="0.75" height="2.05" rx="0.375" fill="currentColor" transform="rotate(-10 5.325 7.875)" />
-                      <rect x="5.7" y="6.65" width="0.75" height="2.2" rx="0.375" fill="currentColor" transform="rotate(0 6.075 7.75)" />
-                      <rect x="6.45" y="6.9" width="0.72" height="1.95" rx="0.36" fill="currentColor" transform="rotate(10 6.81 7.875)" />
+                      <rect x="3.95" y="6.35" width="0.7" height="1.95" rx="0.35" fill="currentColor" transform="rotate(-10 4.3 7.325)" />
+                      <rect x="4.65" y="6.15" width="0.7" height="2.1" rx="0.35" fill="currentColor" transform="rotate(2 5.0 7.2)" />
+                      <rect x="5.35" y="6.4" width="0.68" height="1.85" rx="0.34" fill="currentColor" transform="rotate(14 5.69 7.325)" />
                       {/* thumb */}
-                      <rect x="6.85" y="8.2" width="0.68" height="1.45" rx="0.34" fill="currentColor" transform="rotate(48 7.19 8.925)" />
+                      <rect x="5.55" y="7.75" width="0.62" height="1.35" rx="0.31" fill="currentColor" transform="rotate(55 5.86 8.425)" />
                     </motion.g>
                     {/* person silhouette */}
                     <circle cx="12.2" cy="7.7" r="3.2" fill="none" />
