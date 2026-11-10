@@ -123,7 +123,7 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                     </motion.g>
                     {/* person silhouette */}
                     <circle cx="13.4" cy="7.8" r="3.2" />
-                    <path d="M8.2 18.8V15.3q0-.9.9-.9h8.6q.9 0 .9.9v3.5" />
+                    <path d="M8.2 18.8v-2.7c0-1.55 1.25-2.8 2.8-2.8h4.8c1.55 0 2.8 1.25 2.8 2.8v2.7" />
                   </svg>
                 </span>
               </Link>
