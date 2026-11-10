@@ -86,7 +86,18 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
             >
               <User className="w-5 h-5 sm:w-[22px] sm:h-[22px] text-white shrink-0" strokeWidth={1.8} />
               <span className="flex flex-col items-start justify-center leading-[1.1] text-left">
-                <span className="text-[10px] sm:text-[11px] text-white/70 font-normal tracking-wide">Hello, sign in</span>
+                <span className="text-[10px] sm:text-[11px] text-white/70 font-normal tracking-wide flex items-center gap-0.5">
+                  Hello, sign in
+                  <motion.span
+                    className="inline-block origin-[70%_80%]"
+                    initial={{ rotate: 0 }}
+                    animate={{ rotate: [0, 16, -8, 16, -4, 10, 0] }}
+                    transition={{ duration: 1.2, ease: "easeInOut", delay: 0.6 }}
+                    aria-hidden="true"
+                  >
+                    👋
+                  </motion.span>
+                </span>
                 <span className="text-[12px] sm:text-sm text-white font-bold tracking-tight">Client Portal</span>
               </span>
             </Link>
