@@ -84,13 +84,14 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
 
           {/* Right Side Buttons */}
           <div className="flex items-center gap-3 sm:gap-6 relative z-[70]">
-            {/* Client Portal / Account (Amazon-style greeting) */}
+            {/* Client Portal / Account */}
             <Link
               to="/portal"
-              className="inline-flex items-center gap-2 sm:gap-2.5 h-11 px-1.5 sm:px-2 rounded-md hover:bg-white/10 transition-colors shrink-0 group"
-              aria-label="Client Portal - Hello, sign in"
+              className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full hover:bg-white/10 transition-colors shrink-0"
+              aria-label="Client Portal"
+              title="Client Portal"
             >
-              <span className="relative flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 shrink-0">
+              <span className="relative flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8">
                 <svg
                   viewBox="0 0 24 24"
                   className="w-6 h-6 sm:w-7 sm:h-7 text-white overflow-visible"
@@ -120,10 +121,6 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                   <circle cx="12" cy="7.8" r="3.3" fill="none" />
                   <path d="M5.4 19.4c0-3.3 2.95-6 6.6-6s6.6 2.7 6.6 6" fill="none" />
                 </svg>
-              </span>
-              <span className="flex flex-col items-start justify-center leading-[1.1] text-left">
-                <span className="text-[10px] sm:text-[11px] text-white/70 font-normal tracking-wide">Hello, sign in</span>
-                <span className="text-[12px] sm:text-sm text-white font-bold tracking-tight">Client Portal</span>
               </span>
             </Link>
 
