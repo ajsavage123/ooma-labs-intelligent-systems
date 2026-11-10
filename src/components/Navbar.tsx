@@ -107,8 +107,8 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                     <motion.g
                       style={{ originX: "8.6px", originY: "14.4px" }}
                       initial={{ rotate: 0 }}
-                      animate={{ rotate: [0, -30, 18, -24, 14, -6, 0] }}
-                      transition={{ duration: 1.3, ease: "easeInOut", repeat: Infinity, repeatDelay: 1.8 }}
+                      animate={{ rotate: [0, -22, 14, -18, 10, -4, 0] }}
+                      transition={{ duration: 1.25, ease: "easeInOut", repeat: Infinity, repeatDelay: 1.9 }}
                     >
                       {/* arm */}
                       <line x1="8.6" y1="14.4" x2="5.8" y2="11.3" strokeWidth="1.9" stroke="currentColor" />
