@@ -85,44 +85,74 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
           {/* Right Side Buttons */}
           <div className="flex items-center gap-3 sm:gap-6 relative z-[70]">
             {/* Client Portal / Account */}
-            <Link
-              to="/portal"
-              className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full hover:bg-white/10 transition-colors shrink-0"
-              aria-label="Client Portal"
-              title="Client Portal"
-            >
-              <span className="relative flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="w-6 h-6 sm:w-7 sm:h-7 text-white overflow-visible"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.9"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  {/* waving arm - pops out briefly */}
-                  <motion.g
-                    style={{ originX: "7px", originY: "13px" }}
-                    initial={{ opacity: 0, rotate: 0, x: 0, y: 0 }}
-                    animate={{
-                      opacity: [0, 1, 1, 1, 1, 0],
-                      rotate: [8, -32, 20, -24, 14, -6, 0],
-                      x: [0, -0.4, -0.15, -0.3, -0.1, 0],
-                      y: [0, -0.4, 0, -0.2, 0],
-                    }}
-                    transition={{ duration: 1.2, ease: "easeInOut", repeat: Infinity, repeatDelay: 1.8 }}
+            <div className="relative shrink-0">
+              <Link
+                to="/portal"
+                className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full hover:bg-white/10 transition-colors"
+                aria-label="Client Portal"
+                title="Client Portal"
+              >
+                <span className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="w-7 h-7 sm:w-8 sm:h-8 text-white overflow-visible"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
                   >
-                    <path d="M7 13.2c-1.3-1.2-2.2-2.4-2.7-3.6-.28-.72.08-1.5.8-1.75.55-.2 1.16 0 1.52.46.58.74 1.28 1.52 2.05 2.25" fill="currentColor" stroke="none" />
-                    <path d="M7 13.2c-1.3-1.2-2.2-2.4-2.7-3.6-.28-.72.08-1.5.8-1.75.55-.2 1.16 0 1.52.46.58.74 1.28 1.52 2.05 2.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                  </motion.g>
-                  {/* person silhouette */}
-                  <circle cx="12" cy="7.8" r="3.3" fill="none" />
-                  <path d="M5.4 19.4c0-3.3 2.95-6 6.6-6s6.6 2.7 6.6 6" fill="none" />
-                </svg>
-              </span>
-            </Link>
+                    {/* waving arm/hand - pops out briefly */}
+                    <motion.g
+                      style={{ originX: "6.8px", originY: "13.5px" }}
+                      initial={{ opacity: 0, rotate: 0, x: 0, y: 0 }}
+                      animate={{
+                        opacity: [0, 1, 1, 1, 1, 0],
+                        rotate: [12, -42, 26, -34, 20, -10, 0],
+                        x: [0, -0.8, -0.2, -0.5, -0.1, 0],
+                        y: [0, -0.9, -0.1, -0.5, 0, 0],
+                      }}
+                      transition={{ duration: 1.35, ease: "easeInOut", repeat: Infinity, repeatDelay: 1.6 }}
+                    >
+                      <path
+                        d="M7.2 13.8c-1.7-1.35-2.95-2.8-3.55-4.2-.35-.82.08-1.72.92-2.02.62-.22 1.32 0 1.7.52.55.74 1.25 1.55 2.05 2.35"
+                        fill="currentColor"
+                        stroke="none"
+                      />
+                      <path
+                        d="M8.3 10.45c.15-.95.55-1.85 1.05-2.55.28-.4.82-.5 1.22-.22.35.24.46.7.28 1.08-.22.48-.4 1.02-.5 1.6M7.45 10.05c-.15-1-.1-1.95.15-2.8.14-.48.64-.76 1.12-.62.42.12.68.52.62.95-.08.55-.1 1.15-.02 1.78M6.55 10.2c-.45-.85-.75-1.72-.85-2.55-.06-.5.28-.95.78-1.02.42-.06.82.18.98.58.18.48.44 1 .78 1.55"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.15"
+                        strokeLinecap="round"
+                      />
+                    </motion.g>
+                    {/* person silhouette */}
+                    <circle cx="12.2" cy="7.7" r="3.2" fill="none" />
+                    <path d="M5.6 19.3c0-3.25 2.95-5.9 6.6-5.9s6.6 2.65 6.6 5.9" fill="none" />
+                  </svg>
+                </span>
+              </Link>
+
+              <AnimatePresence>
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1], delay: 0.9 }}
+                  className="absolute top-full right-0 mt-2 w-max max-w-[220px] sm:max-w-[240px] z-[80] pointer-events-none"
+                >
+                  <div className="relative rounded-xl bg-white text-[#0b0b0f] shadow-[0_12px_30px_rgba(0,0,0,0.35)] border border-black/5 px-3.5 py-2.5">
+                    <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white rotate-45 border-l border-t border-black/5" />
+                    <p className="text-[12px] sm:text-[13px] font-bold leading-tight">Get started</p>
+                    <p className="text-[11px] sm:text-[12px] text-slate-600 leading-snug mt-0.5">
+                      Build your software solution with us
+                    </p>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
             <button
               onClick={() => setMenuOpen(!menuOpen)}
