@@ -426,20 +426,18 @@ export const ClientPortalLogin: React.FC = () => {
               aria-label={authMode === "signin" ? "Create an account" : "Back to sign in"}
             >
               <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-[#AA34F8] to-[#DC33CE] flex items-center justify-center shadow-[0_4px_16px_rgba(220,51,206,0.35)] shrink-0 ring-1 ring-white/10">
-                <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <motion.span
+                  className="inline-flex items-center justify-center text-[22px] sm:text-[26px] leading-none origin-[70%_80%] select-none"
+                  animate={{ rotate: [0, 22, -10, 22, -6, 16, 0] }}
+                  transition={{ duration: 1.4, ease: "easeInOut", delay: 0.15, repeat: Infinity, repeatDelay: 3.5 }}
+                  aria-hidden="true"
+                >
+                  👋
+                </motion.span>
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 text-sm sm:text-[15px] font-bold text-white leading-tight">
                   <span>Hi!</span>
-                  <motion.span
-                    className="inline-block origin-[70%_70%]"
-                    initial={{ rotate: 0 }}
-                    animate={{ rotate: [0, 18, -8, 18, -4, 12, 0] }}
-                    transition={{ duration: 1.15, ease: "easeInOut", delay: 0.25 }}
-                    aria-hidden="true"
-                  >
-                    👋
-                  </motion.span>
                   <span className="text-purple-200/90 font-semibold text-xs sm:text-sm">
                     {authMode === "signin" ? "New here?" : "Welcome"}
                   </span>
