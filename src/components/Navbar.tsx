@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Rocket, BookOpen, Menu, X, ArrowRight, Instagram, Twitter, Linkedin, Mail, LayoutDashboard, UserCircle } from "lucide-react";
+import { ChevronDown, Rocket, BookOpen, Menu, X, ArrowRight, Instagram, Twitter, Linkedin, Mail, User } from "lucide-react";
 
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -78,24 +78,17 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
 
           {/* Right Side Buttons */}
           <div className="flex items-center gap-3 sm:gap-6 relative z-[70]">
-            {/* Account Greeting / Client Portal Button */}
+            {/* Client Portal / Account (Amazon-style greeting) */}
             <Link
               to="/portal"
-              className="inline-flex items-center justify-center gap-1.5 sm:gap-2 h-11 px-2.5 sm:px-4 bg-[#2563eb] hover:bg-[#1d4ed8] active:scale-[0.98] text-white rounded-full transition-all shadow-lg shadow-blue-600/25 shrink-0"
-              aria-label="Hi! Open Client Portal account"
+              className="inline-flex items-center gap-2 sm:gap-2.5 h-11 px-1.5 sm:px-2 rounded-md hover:bg-white/10 transition-colors shrink-0 group"
+              aria-label="Client Portal - Hello, sign in"
             >
-              <div className="relative flex items-center justify-center">
-                <UserCircle className="w-[22px] h-[22px] sm:w-6 sm:h-6" />
-                <motion.span
-                  className="absolute -top-1.5 -right-2 text-[13px] sm:text-sm leading-none origin-[70%_80%] select-none pointer-events-none"
-                  animate={{ rotate: [0, 22, -10, 22, -6, 16, 0] }}
-                  transition={{ duration: 1.4, ease: "easeInOut", delay: 0.2, repeat: Infinity, repeatDelay: 3 }}
-                  aria-hidden="true"
-                >
-                  👋
-                </motion.span>
-              </div>
-              <span className="text-[13px] sm:text-sm font-semibold tracking-wide leading-none">Hi!</span>
+              <User className="w-5 h-5 sm:w-[22px] sm:h-[22px] text-white shrink-0" strokeWidth={1.8} />
+              <span className="flex flex-col items-start justify-center leading-[1.1] text-left">
+                <span className="text-[10px] sm:text-[11px] text-white/70 font-normal tracking-wide">Hello, sign in</span>
+                <span className="text-[12px] sm:text-sm text-white font-bold tracking-tight">Client Portal</span>
+              </span>
             </Link>
 
             <button
