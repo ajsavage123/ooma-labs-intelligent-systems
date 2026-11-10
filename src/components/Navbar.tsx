@@ -31,7 +31,7 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
 
   useEffect(() => {
     if (!showPopup) return;
-    const t = window.setTimeout(() => setShowPopup(false), 3500);
+    const t = window.setTimeout(() => setShowPopup(false), 6500);
     return () => window.clearTimeout(t);
   }, [showPopup]);
 
