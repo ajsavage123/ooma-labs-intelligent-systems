@@ -105,8 +105,8 @@ export const ClientPortal: React.FC = () => {
                 </p>
               </div>
 
-              <div className="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
-                <Layers className="w-6 h-6" />
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                <Layers className="w-7 h-7 sm:w-8 sm:h-8" />
               </div>
             </div>
 

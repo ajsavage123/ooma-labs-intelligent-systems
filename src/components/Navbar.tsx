@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Rocket, BookOpen, Menu, X, ArrowRight, Instagram, Twitter, Linkedin, Mail } from "lucide-react";
+import { ChevronDown, Rocket, BookOpen, Menu, X, ArrowRight, Instagram, Twitter, Linkedin, Mail, LayoutDashboard } from "lucide-react";
 
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -78,12 +78,14 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
 
           {/* Right Side Buttons */}
           <div className="flex items-center gap-3 sm:gap-6 relative z-[70]">
-            {/* Desktop Client Portal Button */}
+            {/* Client Portal Button */}
             <Link
               to="/portal"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-full transition-colors text-xs font-semibold tracking-wide"
+              className="inline-flex items-center justify-center gap-2 h-11 w-11 sm:w-auto sm:h-11 sm:px-5 bg-[#2563eb] hover:bg-[#1d4ed8] active:scale-[0.98] text-white rounded-full transition-all text-sm font-semibold tracking-wide shadow-lg shadow-blue-600/25 shrink-0"
+              aria-label="Open Client Portal"
             >
-              <span>Client Portal</span>
+              <LayoutDashboard className="w-5 h-5 sm:w-[18px] sm:h-[18px]" />
+              <span className="hidden sm:inline">Client Portal</span>
             </Link>
 
             <button
