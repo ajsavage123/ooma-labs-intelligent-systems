@@ -24,23 +24,8 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("wave_profile") === "1") {
-        const t = window.setTimeout(() => setWaveProfile(true), 400);
-        return () => window.clearTimeout(t);
-      }
-      const key = "ooma_nav_profile_wave_at";
-      const last = Number(localStorage.getItem(key) || 0);
-      const now = Date.now();
-      if (!last || now - last > 24 * 60 * 60 * 1000) {
-        const t = window.setTimeout(() => setWaveProfile(true), 500);
-        localStorage.setItem(key, String(now));
-        return () => window.clearTimeout(t);
-      }
-    } catch {
-      // ignore storage access issues
-    }
+    const t = window.setTimeout(() => setWaveProfile(true), 600);
+    return () => window.clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -120,24 +105,13 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                   <motion.g
                     style={{ originX: "7px", originY: "13px" }}
                     initial={{ opacity: 0, rotate: 0, x: 0, y: 0 }}
-                    animate={
-                      waveProfile
-                        ? {
-                            opacity: [0, 1, 1, 1, 1, 0],
-                            rotate: [8, -32, 20, -24, 14, -6, 0],
-                            x: [0, -0.4, -0.15, -0.3, -0.1, 0],
-                            y: [0, -0.4, 0, -0.2, 0],
-                          }
-                        : { opacity: 0, rotate: 0, x: 0, y: 0 }
-                    }
-                    transition={
-                      waveProfile
-                        ? { duration: 1.1, ease: "easeInOut", delay: 0.05 }
-                        : { duration: 0 }
-                    }
-                    onAnimationComplete={() => {
-                      if (waveProfile) setWaveProfile(false);
+                    animate={{
+                      opacity: [0, 1, 1, 1, 1, 0],
+                      rotate: [8, -32, 20, -24, 14, -6, 0],
+                      x: [0, -0.4, -0.15, -0.3, -0.1, 0],
+                      y: [0, -0.4, 0, -0.2, 0],
                     }}
+                    transition={{ duration: 1.2, ease: "easeInOut", repeat: Infinity, repeatDelay: 1.8 }}
                   >
                     <path d="M7 13.2c-1.3-1.2-2.2-2.4-2.7-3.6-.28-.72.08-1.5.8-1.75.55-.2 1.16 0 1.52.46.58.74 1.28 1.52 2.05 2.25" fill="currentColor" stroke="none" />
                     <path d="M7 13.2c-1.3-1.2-2.2-2.4-2.7-3.6-.28-.72.08-1.5.8-1.75.55-.2 1.16 0 1.52.46.58.74 1.28 1.52 2.05 2.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
