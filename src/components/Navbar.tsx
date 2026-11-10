@@ -96,7 +96,7 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
               <Link
                 to="/portal"
                 className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full hover:bg-white/10 transition-colors"
-                aria-label="Client Portal"
+                aria-label="Client Portal - Sign in or get started"
                 title="Client Portal"
               >
                 <span className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9">
@@ -160,9 +160,9 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                   >
                     <div className="relative rounded-xl bg-white text-[#0b0b0f] shadow-[0_12px_30px_rgba(0,0,0,0.35)] border border-black/5 px-3.5 py-2.5">
                       <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white rotate-45 border-l border-t border-black/5" />
-                      <p className="text-[12px] sm:text-[13px] font-bold leading-tight">Get started</p>
+                      <p className="text-[12px] sm:text-[13px] font-bold leading-tight">Client Portal</p>
                       <p className="text-[11px] sm:text-[12px] text-slate-600 leading-snug mt-0.5">
-                        Build your software solution with us
+                        Sign in or start your software solution
                       </p>
                     </div>
                   </motion.div>
