@@ -418,31 +418,40 @@ export const ClientPortalLogin: React.FC = () => {
             <div className="absolute top-28 -right-1.5 sm:-right-3 w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-[#AA34F8] to-[#7B21D1] shadow-[0_0_14px_rgba(170,52,248,0.9)] pointer-events-none" />
             <div className="absolute top-44 -right-1 sm:-right-1.5 w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full bg-gradient-to-br from-[#DC33CE] to-[#AA34F8] shadow-[0_0_10px_rgba(220,51,206,0.9)] pointer-events-none" />
 
-            {/* Mode Switcher Tabs */}
-                <div className="flex items-center justify-center p-1 bg-white/[0.04] border border-purple-500/20 rounded-full text-xs font-semibold text-purple-200/70">
-              <button
-                type="button"
-                onClick={() => setAuthMode("signin")}
-                  className={`flex-1 py-1.5 px-3 rounded-full transition-all cursor-pointer ${
-                    authMode === "signin"
-                      ? "bg-gradient-to-r from-[#AA34F8] to-[#DC33CE] text-white font-bold shadow-[0_2px_12px_rgba(220,51,206,0.45)]"
-                      : "hover:text-white"
-                  }`}
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                onClick={() => setAuthMode("signup")}
-                  className={`flex-1 py-1.5 px-3 rounded-full transition-all cursor-pointer ${
-                    authMode === "signup"
-                      ? "bg-gradient-to-r from-[#AA34F8] to-[#DC33CE] text-white font-bold shadow-[0_2px_12px_rgba(220,51,206,0.45)]"
-                      : "hover:text-white"
-                  }`}
-              >
-                Get Started
-              </button>
-            </div>
+            {/* Account greeting CTA (replaces mode tabs) */}
+            <button
+              type="button"
+              onClick={() => setAuthMode(authMode === "signin" ? "signup" : "signin")}
+              className="w-full flex items-center gap-3 p-3 sm:p-3.5 rounded-2xl bg-white/[0.04] border border-purple-500/20 hover:border-purple-400/40 hover:bg-white/[0.07] transition-all text-left cursor-pointer group"
+              aria-label={authMode === "signin" ? "Create an account" : "Back to sign in"}
+            >
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-[#AA34F8] to-[#DC33CE] flex items-center justify-center shadow-[0_4px_16px_rgba(220,51,206,0.35)] shrink-0 ring-1 ring-white/10">
+                <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-sm sm:text-[15px] font-bold text-white leading-tight">
+                  <span>Hi!</span>
+                  <motion.span
+                    className="inline-block origin-[70%_70%]"
+                    initial={{ rotate: 0 }}
+                    animate={{ rotate: [0, 18, -8, 18, -4, 12, 0] }}
+                    transition={{ duration: 1.15, ease: "easeInOut", delay: 0.25 }}
+                    aria-hidden="true"
+                  >
+                    👋
+                  </motion.span>
+                  <span className="text-purple-200/90 font-semibold text-xs sm:text-sm">
+                    {authMode === "signin" ? "New here?" : "Welcome"}
+                  </span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-purple-200/70 leading-snug mt-0.5">
+                  {authMode === "signin"
+                    ? "Tap to create your account"
+                    : "Already have an account? Tap to sign in"}
+                </p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-purple-300/70 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
 
             {/* Card Header Title */}
             <div>
