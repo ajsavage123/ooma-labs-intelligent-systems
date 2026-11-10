@@ -89,13 +89,29 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                 <span className="text-[10px] sm:text-[11px] text-white/70 font-normal tracking-wide flex items-center gap-0.5">
                   Hello, sign in
                   <motion.span
-                    className="inline-block origin-[70%_80%]"
+                    className="inline-flex items-center justify-center origin-[70%_85%]"
                     initial={{ rotate: 0 }}
-                    animate={{ rotate: [0, 16, -8, 16, -4, 10, 0] }}
-                    transition={{ duration: 1.2, ease: "easeInOut", delay: 0.6 }}
+                    animate={
+                      !sessionStorage.getItem("ooma_nav_wave_seen")
+                        ? { rotate: [0, 18, -8, 18, -5, 12, 0] }
+                        : { rotate: 0 }
+                    }
+                    transition={{ duration: 1.15, ease: "easeInOut", delay: 0.5 }}
+                    onAnimationComplete={() => {
+                      try {
+                        sessionStorage.setItem("ooma_nav_wave_seen", "1");
+                      } catch {}
+                    }}
                     aria-hidden="true"
                   >
-                    👋
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="w-[13px] h-[13px] sm:w-[14px] sm:h-[14px] text-amber-200 fill-current"
+                      aria-hidden="true"
+                    >
+                      <path d="M7.5 11.2V5.5a1.25 1.25 0 1 1 2.5 0v4.7h.5V4.25a1.25 1.25 0 1 1 2.5 0V10.2h.5V5a1.25 1.25 0 1 1 2.5 0v6.35l.15 3.1c.05 1.02-.2 2.03-.72 2.9l-.7 1.17A4.5 4.5 0 0 1 10.87 21h-.62a4.5 4.5 0 0 1-3.44-1.6l-2.83-3.36a1.45 1.45 0 0 1 .2-2.04 1.45 1.45 0 0 1 1.98.15l1.34 1.4V11.2Z" />
+                      <path d="M6.3 9.1a.6.6 0 0 1 .6.6v2.9a.6.6 0 1 1-1.2 0V9.7a.6.6 0 0 1 .6-.6Z" opacity=".7" />
+                    </svg>
                   </motion.span>
                 </span>
                 <span className="text-[12px] sm:text-sm text-white font-bold tracking-tight">Client Portal</span>
