@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Rocket, BookOpen, Menu, X, ArrowRight, Instagram, Twitter, Linkedin, Mail, User } from "lucide-react";
+import { ChevronDown, Rocket, BookOpen, Menu, X, ArrowRight, Instagram, Twitter, Linkedin, Mail } from "lucide-react";
 
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -19,8 +19,24 @@ interface NavbarProps {
 const Navbar = ({ onOpenPartner }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [waveProfile, setWaveProfile] = useState(false);
   const { state, dispatch } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    try {
+      const key = "ooma_nav_profile_wave_at";
+      const last = Number(localStorage.getItem(key) || 0);
+      const now = Date.now();
+      if (!last || now - last > 24 * 60 * 60 * 1000) {
+        const t = window.setTimeout(() => setWaveProfile(true), 500);
+        localStorage.setItem(key, String(now));
+        return () => window.clearTimeout(t);
+      }
+    } catch {
+      // ignore storage access issues
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -84,36 +100,46 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
               className="inline-flex items-center gap-2 sm:gap-2.5 h-11 px-1.5 sm:px-2 rounded-md hover:bg-white/10 transition-colors shrink-0 group"
               aria-label="Client Portal - Hello, sign in"
             >
-              <User className="w-5 h-5 sm:w-[22px] sm:h-[22px] text-white shrink-0" strokeWidth={1.8} />
-              <span className="flex flex-col items-start justify-center leading-[1.1] text-left">
-                <span className="text-[10px] sm:text-[11px] text-white/70 font-normal tracking-wide flex items-center gap-0.5">
-                  Hello, sign in
-                  <motion.span
-                    className="inline-flex items-center justify-center origin-[70%_85%]"
-                    initial={{ rotate: 0 }}
+              <span className="relative flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 shrink-0">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="w-5 h-5 sm:w-[22px] sm:h-[22px] text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  {/* waving arm - pops out briefly */}
+                  <motion.path
+                    d="M6.2 13.2c-1.1-1.2-1.8-2.3-2.2-3.4-.25-.7.1-1.45.8-1.7.55-.2 1.15 0 1.5.45.55.7 1.2 1.45 1.9 2.15"
+                    style={{ originX: "7.5px", originY: "13px" }}
+                    initial={{ opacity: 0, rotate: 0 }}
                     animate={
-                      !sessionStorage.getItem("ooma_nav_wave_seen")
-                        ? { rotate: [0, 18, -8, 18, -5, 12, 0] }
-                        : { rotate: 0 }
+                      waveProfile
+                        ? {
+                            opacity: [0, 1, 1, 1, 1, 0],
+                            rotate: [0, -28, 18, -22, 14, -6, 0],
+                          }
+                        : { opacity: 0, rotate: 0 }
                     }
-                    transition={{ duration: 1.15, ease: "easeInOut", delay: 0.5 }}
+                    transition={
+                      waveProfile
+                        ? { duration: 1.15, ease: "easeInOut", times: [0, 0.12, 0.3, 0.48, 0.66, 0.84, 1] }
+                        : { duration: 0 }
+                    }
                     onAnimationComplete={() => {
-                      try {
-                        sessionStorage.setItem("ooma_nav_wave_seen", "1");
-                      } catch {}
+                      if (waveProfile) setWaveProfile(false);
                     }}
-                    aria-hidden="true"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="w-[13px] h-[13px] sm:w-[14px] sm:h-[14px] text-amber-200 fill-current"
-                      aria-hidden="true"
-                    >
-                      <path d="M7.5 11.2V5.5a1.25 1.25 0 1 1 2.5 0v4.7h.5V4.25a1.25 1.25 0 1 1 2.5 0V10.2h.5V5a1.25 1.25 0 1 1 2.5 0v6.35l.15 3.1c.05 1.02-.2 2.03-.72 2.9l-.7 1.17A4.5 4.5 0 0 1 10.87 21h-.62a4.5 4.5 0 0 1-3.44-1.6l-2.83-3.36a1.45 1.45 0 0 1 .2-2.04 1.45 1.45 0 0 1 1.98.15l1.34 1.4V11.2Z" />
-                      <path d="M6.3 9.1a.6.6 0 0 1 .6.6v2.9a.6.6 0 1 1-1.2 0V9.7a.6.6 0 0 1 .6-.6Z" opacity=".7" />
-                    </svg>
-                  </motion.span>
-                </span>
+                  />
+                  {/* person silhouette */}
+                  <circle cx="12" cy="8" r="3.25" />
+                  <path d="M5.5 19.2c0-3.2 2.9-5.8 6.5-5.8s6.5 2.6 6.5 5.8" />
+                </svg>
+              </span>
+              <span className="flex flex-col items-start justify-center leading-[1.1] text-left">
+                <span className="text-[10px] sm:text-[11px] text-white/70 font-normal tracking-wide">Hello, sign in</span>
                 <span className="text-[12px] sm:text-sm text-white font-bold tracking-tight">Client Portal</span>
               </span>
             </Link>
