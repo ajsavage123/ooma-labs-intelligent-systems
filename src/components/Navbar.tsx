@@ -103,30 +103,32 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                     strokeLinejoin="round"
                     aria-hidden="true"
                   >
-                    {/* waving arm/hand - pops out briefly */}
+                    {/* waving arm/hand - cylindrical, pops out briefly */}
                     <motion.g
-                      style={{ originX: "6.8px", originY: "13.5px" }}
+                      style={{ originX: "7px", originY: "13.6px" }}
                       initial={{ opacity: 0, rotate: 0, x: 0, y: 0 }}
                       animate={{
                         opacity: [0, 1, 1, 1, 1, 0],
-                        rotate: [12, -42, 26, -34, 20, -10, 0],
-                        x: [0, -0.8, -0.2, -0.5, -0.1, 0],
-                        y: [0, -0.9, -0.1, -0.5, 0, 0],
+                        rotate: [10, -40, 24, -32, 18, -8, 0],
+                        x: [0, -0.7, -0.2, -0.4, -0.1, 0],
+                        y: [0, -0.8, -0.1, -0.4, 0, 0],
                       }}
                       transition={{ duration: 1.35, ease: "easeInOut", repeat: Infinity, repeatDelay: 1.6 }}
                     >
+                      {/* arm */}
                       <path
-                        d="M7.2 13.8c-1.7-1.35-2.95-2.8-3.55-4.2-.35-.82.08-1.72.92-2.02.62-.22 1.32 0 1.7.52.55.74 1.25 1.55 2.05 2.35"
-                        fill="currentColor"
-                        stroke="none"
-                      />
-                      <path
-                        d="M8.3 10.45c.15-.95.55-1.85 1.05-2.55.28-.4.82-.5 1.22-.22.35.24.46.7.28 1.08-.22.48-.4 1.02-.5 1.6M7.45 10.05c-.15-1-.1-1.95.15-2.8.14-.48.64-.76 1.12-.62.42.12.68.52.62.95-.08.55-.1 1.15-.02 1.78M6.55 10.2c-.45-.85-.75-1.72-.85-2.55-.06-.5.28-.95.78-1.02.42-.06.82.18.98.58.18.48.44 1 .78 1.55"
-                        fill="none"
+                        d="M7.1 13.6C5.8 12.4 4.9 10.9 4.6 9.2"
                         stroke="currentColor"
-                        strokeWidth="1.15"
+                        strokeWidth="2.5"
+                        fill="none"
                         strokeLinecap="round"
                       />
+                      {/* palm */}
+                      <rect x="3.3" y="6.9" width="2.6" height="3.1" rx="1.3" fill="currentColor" />
+                      {/* fingers */}
+                      <path d="M3.85 7.2V5.55" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
+                      <path d="M4.6 7.0V5.2" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
+                      <path d="M5.35 7.25V5.65" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
                     </motion.g>
                     {/* person silhouette */}
                     <circle cx="12.2" cy="7.7" r="3.2" fill="none" />
