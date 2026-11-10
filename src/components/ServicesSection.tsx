@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import { Laptop, Cpu, TrendingUp, Link, Wrench, Palette, Workflow, CheckCircle2, ChevronDown } from "lucide-react";
 
 const serviceCategories = [
@@ -207,17 +208,13 @@ const ServiceCard = ({ category, index }: { category: ServiceCategory; index: nu
               </ul>
               
               <div className="mt-8">
-                <a
-                  href={`https://wa.me/919492827058?text=${encodeURIComponent(
-                    `Hi Ooma Labs! I'm interested in your ${category.title} services and would like to start a project. Please share more details.`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <RouterLink
+                  to="/portal"
                   onClick={(e) => e.stopPropagation()}
                   className={`inline-flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase ${category.color} animate-pulse hover:opacity-80 transition-opacity`}
                 >
                   Start Your Project →
-                </a>
+                </RouterLink>
               </div>
             </motion.div>
           )}
