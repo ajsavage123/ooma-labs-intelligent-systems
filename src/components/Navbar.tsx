@@ -19,14 +19,21 @@ interface NavbarProps {
 const Navbar = ({ onOpenPartner }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [waveProfile, setWaveProfile] = useState(false);
+  const [showWave, setShowWave] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
   const { state, dispatch } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const t = window.setTimeout(() => setWaveProfile(true), 600);
+    const t = window.setTimeout(() => setShowWave(true), 700);
     return () => window.clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    if (!showPopup) return;
+    const t = window.setTimeout(() => setShowPopup(false), 3500);
+    return () => window.clearTimeout(t);
+  }, [showPopup]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -106,9 +113,23 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                     {/* waving arm - pops out from shoulder */}
                     <motion.g
                       style={{ originX: "8.6px", originY: "14.6px" }}
-                      initial={{ rotate: 0 }}
-                      animate={{ rotate: [0, -22, 14, -18, 10, -4, 0] }}
-                      transition={{ duration: 1.25, ease: "easeInOut", repeat: Infinity, repeatDelay: 1.9 }}
+                      initial={{ opacity: 0, rotate: 0 }}
+                      animate={
+                        showWave
+                          ? { opacity: [0, 1, 1, 1, 1, 0], rotate: [0, -22, 14, -18, 10, -4, 0] }
+                          : { opacity: 0, rotate: 0 }
+                      }
+                      transition={
+                        showWave
+                          ? { duration: 1.25, ease: "easeInOut" }
+                          : { duration: 0 }
+                      }
+                      onAnimationComplete={() => {
+                        if (showWave) {
+                          setShowWave(false);
+                          setShowPopup(true);
+                        }
+                      }}
                     >
                       {/* arm */}
                       <line x1="8.6" y1="14.6" x2="5.9" y2="12.0" strokeWidth="1.9" stroke="currentColor" />
@@ -129,21 +150,23 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
               </Link>
 
               <AnimatePresence>
-                <motion.div
-                  initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1], delay: 0.9 }}
-                  className="absolute top-full right-0 mt-2 w-max max-w-[220px] sm:max-w-[240px] z-[80] pointer-events-none"
-                >
-                  <div className="relative rounded-xl bg-white text-[#0b0b0f] shadow-[0_12px_30px_rgba(0,0,0,0.35)] border border-black/5 px-3.5 py-2.5">
-                    <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white rotate-45 border-l border-t border-black/5" />
-                    <p className="text-[12px] sm:text-[13px] font-bold leading-tight">Get started</p>
-                    <p className="text-[11px] sm:text-[12px] text-slate-600 leading-snug mt-0.5">
-                      Build your software solution with us
-                    </p>
-                  </div>
-                </motion.div>
+                {showPopup && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                    className="absolute top-full right-0 mt-2 w-max max-w-[220px] sm:max-w-[240px] z-[80] pointer-events-none"
+                  >
+                    <div className="relative rounded-xl bg-white text-[#0b0b0f] shadow-[0_12px_30px_rgba(0,0,0,0.35)] border border-black/5 px-3.5 py-2.5">
+                      <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white rotate-45 border-l border-t border-black/5" />
+                      <p className="text-[12px] sm:text-[13px] font-bold leading-tight">Get started</p>
+                      <p className="text-[11px] sm:text-[12px] text-slate-600 leading-snug mt-0.5">
+                        Build your software solution with us
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
               </AnimatePresence>
             </div>
 
