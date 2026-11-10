@@ -162,7 +162,7 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                       <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white rotate-45 border-l border-t border-black/5" />
                       <p className="text-[12px] sm:text-[13px] font-bold leading-tight">Client Portal</p>
                       <p className="text-[11px] sm:text-[12px] text-slate-600 leading-snug mt-0.5">
-                        Sign in or start your software solution
+                        Sign up to start your software solution
                       </p>
                     </div>
                   </motion.div>
