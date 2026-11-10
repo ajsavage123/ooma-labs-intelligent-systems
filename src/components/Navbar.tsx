@@ -103,38 +103,27 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
                     strokeLinejoin="round"
                     aria-hidden="true"
                   >
-                    {/* waving arm/hand - cylindrical, pops out from shoulder */}
+                    {/* waving arm - pops out from shoulder */}
                     <motion.g
-                      style={{ originX: "8.0px", originY: "16.1px" }}
-                      initial={{ opacity: 0, rotate: 0, x: 0, y: 0 }}
-                      animate={{
-                        opacity: [0, 1, 1, 1, 1, 0],
-                        rotate: [6, -28, 18, -22, 14, -6, 0],
-                        x: [0, -0.35, -0.1, -0.22, -0.06, 0],
-                        y: [0, -0.25, -0.05, -0.15, 0, 0],
-                      }}
-                      transition={{ duration: 1.3, ease: "easeInOut", repeat: Infinity, repeatDelay: 1.6 }}
+                      style={{ originX: "9.2px", originY: "13.2px" }}
+                      initial={{ rotate: 0 }}
+                      animate={{ rotate: [0, -32, 20, -28, 16, -6, 0] }}
+                      transition={{ duration: 1.3, ease: "easeInOut", repeat: Infinity, repeatDelay: 1.8 }}
                     >
-                      {/* arm (from shoulder, low) */}
-                      <path
-                        d="M8.0 16.1C6.7 15.5 5.6 14.4 5.0 13.1"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                        fill="none"
-                      />
+                      {/* arm */}
+                      <line x1="9.2" y1="13.2" x2="5.8" y2="10.2" strokeWidth="2" stroke="currentColor" />
                       {/* palm */}
-                      <circle cx="4.7" cy="12.2" r="1.05" fill="currentColor" />
-                      {/* fingers (cylindrical) */}
-                      <rect x="3.9" y="10.15" width="0.72" height="2.0" rx="0.36" fill="currentColor" transform="rotate(-12 4.26 11.15)" />
-                      <rect x="4.6" y="9.95" width="0.72" height="2.15" rx="0.36" fill="currentColor" transform="rotate(0 4.96 11.025)" />
-                      <rect x="5.3" y="10.2" width="0.7" height="1.9" rx="0.35" fill="currentColor" transform="rotate(12 5.65 11.15)" />
+                      <rect x="4.2" y="8.3" width="2.9" height="2.5" rx="1.25" fill="currentColor" stroke="none" />
+                      {/* fingers */}
+                      <rect x="4.35" y="6.85" width="0.8" height="1.85" rx="0.4" fill="currentColor" stroke="none" />
+                      <rect x="5.2" y="6.65" width="0.8" height="2.05" rx="0.4" fill="currentColor" stroke="none" />
+                      <rect x="6.05" y="6.95" width="0.75" height="1.75" rx="0.375" fill="currentColor" stroke="none" />
                       {/* thumb */}
-                      <rect x="5.45" y="11.6" width="0.64" height="1.4" rx="0.32" fill="currentColor" transform="rotate(52 5.77 12.3)" />
+                      <rect x="6.45" y="8.15" width="0.75" height="1.45" rx="0.375" fill="currentColor" stroke="none" transform="rotate(35 6.825 8.875)" />
                     </motion.g>
                     {/* person silhouette */}
-                    <circle cx="12.2" cy="7.7" r="3.2" fill="none" />
-                    <path d="M5.6 19.3c0-3.25 2.95-5.9 6.6-5.9s6.6 2.65 6.6 5.9" fill="none" />
+                    <circle cx="13.4" cy="7.8" r="3.2" />
+                    <path d="M8.1 18.8c0-2.9 2.35-5.3 5.3-5.3s5.3 2.4 5.3 5.3" />
                   </svg>
                 </span>
               </Link>
