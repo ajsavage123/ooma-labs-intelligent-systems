@@ -25,6 +25,11 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
 
   useEffect(() => {
     try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("wave_profile") === "1") {
+        const t = window.setTimeout(() => setWaveProfile(true), 400);
+        return () => window.clearTimeout(t);
+      }
       const key = "ooma_nav_profile_wave_at";
       const last = Number(localStorage.getItem(key) || 0);
       const now = Date.now();
@@ -100,42 +105,46 @@ const Navbar = ({ onOpenPartner }: NavbarProps) => {
               className="inline-flex items-center gap-2 sm:gap-2.5 h-11 px-1.5 sm:px-2 rounded-md hover:bg-white/10 transition-colors shrink-0 group"
               aria-label="Client Portal - Hello, sign in"
             >
-              <span className="relative flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 shrink-0">
+              <span className="relative flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 shrink-0">
                 <svg
                   viewBox="0 0 24 24"
-                  className="w-5 h-5 sm:w-[22px] sm:h-[22px] text-white"
+                  className="w-6 h-6 sm:w-7 sm:h-7 text-white overflow-visible"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="1.8"
+                  strokeWidth="1.9"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   aria-hidden="true"
                 >
                   {/* waving arm - pops out briefly */}
-                  <motion.path
-                    d="M6.2 13.2c-1.1-1.2-1.8-2.3-2.2-3.4-.25-.7.1-1.45.8-1.7.55-.2 1.15 0 1.5.45.55.7 1.2 1.45 1.9 2.15"
-                    style={{ originX: "7.5px", originY: "13px" }}
-                    initial={{ opacity: 0, rotate: 0 }}
+                  <motion.g
+                    style={{ originX: "7px", originY: "13px" }}
+                    initial={{ opacity: 0, rotate: 0, x: 0, y: 0 }}
                     animate={
                       waveProfile
                         ? {
                             opacity: [0, 1, 1, 1, 1, 0],
-                            rotate: [0, -28, 18, -22, 14, -6, 0],
+                            rotate: [8, -32, 20, -24, 14, -6, 0],
+                            x: [0, -0.4, -0.15, -0.3, -0.1, 0],
+                            y: [0, -0.4, 0, -0.2, 0],
                           }
-                        : { opacity: 0, rotate: 0 }
+                        : { opacity: 0, rotate: 0, x: 0, y: 0 }
                     }
                     transition={
                       waveProfile
-                        ? { duration: 1.15, ease: "easeInOut", times: [0, 0.12, 0.3, 0.48, 0.66, 0.84, 1] }
+                        ? { duration: 1.1, ease: "easeInOut", delay: 0.05 }
                         : { duration: 0 }
                     }
                     onAnimationComplete={() => {
                       if (waveProfile) setWaveProfile(false);
                     }}
-                  />
+                  >
+                    <path d="M7 13.2c-1.3-1.2-2.2-2.4-2.7-3.6-.28-.72.08-1.5.8-1.75.55-.2 1.16 0 1.52.46.58.74 1.28 1.52 2.05 2.25" fill="currentColor" stroke="none" />
+                    <path d="M7 13.2c-1.3-1.2-2.2-2.4-2.7-3.6-.28-.72.08-1.5.8-1.75.55-.2 1.16 0 1.52.46.58.74 1.28 1.52 2.05 2.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  </motion.g>
                   {/* person silhouette */}
-                  <circle cx="12" cy="8" r="3.25" />
-                  <path d="M5.5 19.2c0-3.2 2.9-5.8 6.5-5.8s6.5 2.6 6.5 5.8" />
+                  <circle cx="12" cy="7.8" r="3.3" fill="none" />
+                  <path d="M5.4 19.4c0-3.3 2.95-6 6.6-6s6.6 2.7 6.6 6" fill="none" />
                 </svg>
               </span>
               <span className="flex flex-col items-start justify-center leading-[1.1] text-left">
